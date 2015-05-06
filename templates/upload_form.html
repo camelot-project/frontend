@@ -1,0 +1,30 @@
+<!doctype html>
+
+	<link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}" />
+	<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+  	<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+	<script>
+	$(function() {
+	    $.ajax({
+	        url: '{{ url_for("autocomplete") }}'
+	        }).done(function (data) {
+	            $('#units').autocomplete({
+	                source: data.json_list,
+	                minLength: 2
+	            });
+	        });
+	    });
+	</script>
+	
+    <title>Upload new File</title>
+    <h1>Upload new File</h1>
+    <div class="main">
+    	<div id="mainform">
+		    <form action="upload" method="post" enctype="multipart/form-data">
+		        <input type="file" name="file"><br />
+		        <input type="submit" value="Upload">
+		    </form>
+	  		<label for="units">Units: </label>
+	  		<input id="units">
+  		</div>
+	</div>
