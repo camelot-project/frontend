@@ -1,10 +1,13 @@
 import astropy.units as u
+import inspect
 
-allunits = []
-for unit in dir(u):
-	try:
-		allunits.append(u.__getattribute__(unit).name)
-	except:
-		continue
+allunits = set()
+for unitname,unit in inspect.getmembers(u):
+    if isinstance(unit, u.UnitBase):
+        try:
+            for name in unit.names:
+                allunits.add(name)
+        except AttributeError:
+            continue
 
 print allunits
