@@ -13,13 +13,11 @@
 <h1>Parse file {{filename}}</h1>
 <div class="main">
     <div id="column_form">
-        <form action="/set_columns" method="post">
+        <form action="{{ url_for('set_columns') }}" method="post">
            <div id="column_form_header">File Column Name  Real Column Name  Units</div> 
         {% for column_name in table.colnames %}
           <div class="column">{{ column_name }}
-          <!-- <label for="real_column_name">Real Column Name: </label> -->
-          <input class="real_column_name" id="{{column_name}}">
-          <!-- <label for="units">Units: </label> -->
+          <input class="real_column_name" name="{{column_name}}">
           <input class="units" id="units"></div>
         {% endfor %}
         <input type="submit" value="Submit">  

@@ -3,11 +3,13 @@
 	<head>
 		{% block head %}
 		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/theme.css') }}">
+		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}">
 		{% endblock %}
 
 		{% block scripts %}
 		<script src="//code.jquery.com/jquery-1.10.2.js"></script>
 		<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+		<script src="{{ url_for('static', filename='bootstrap/js/bootstrap.min.js') }}"></script>
 		<script>
 		$(function() {
 		    $.ajax({
@@ -45,8 +47,10 @@
 		{% endblock %}
 	</head>
 	<body>
+		<div class="container">
 		{% block body %}
 		{% endblock %}
+		</div>
 	</body>
 </html>
 
