@@ -5,11 +5,12 @@ from astropy.io import fits
 from astropy.io import ascii
 from astropy import table
 from astropy import units as u
-from flask import Flask, request, redirect, url_for, render_template, send_from_directory, jsonify
+from flask import (Flask, request, redirect, url_for, render_template,
+                   send_from_directory, jsonify)
 from werkzeug import secure_filename
 
 UPLOAD_FOLDER = 'uploads/'
-ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt'])
+ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -71,6 +72,11 @@ def autocomplete_filetypes():
     readable_formats = formats[formats['Read']=='Yes']['Format']
     print readable_formats
     return jsonify(json_list=list(readable_formats))
+
+@app.route('/autocomplete_column_names',methods=['GET'])
+def autocomplete_column_names():
+    return jsonify(json_list=['Ignore', 'IDs', 'SurfaceDensity',
+                              'VelocityDispersion', 'Radius', 'IsSimulated'])
 
 if __name__ == '__main__':
     app.run(debug=True)
