@@ -19,9 +19,9 @@ $(function() {
 
 $(function() {
     $.ajax({
-        url: '{{ url_for("autocomplete_filetypes") }}'
+        url: '{{ url_for("autocomplete_column_names") }}'
         }).done(function (data) {
-            $('#file_format').autocomplete({
+            $('.real_column_name').autocomplete({
                 source: data.json_list,
                 minLength: 2
             });
@@ -33,11 +33,11 @@ $(function() {
 <h1>Parse file {{filename}}</h1>
 <div class="main">
     <div id="mainform">
-        <form action="set_columns" method="post">
+        <form action="/set_columns" method="post">
         {% for column_name in table.colnames %}
           <div class="column">{{ column_name }}
           <label for="real_column_name">Real Column Name: </label>
-          <input id="real_column_name">
+          <input class="real_column_name" id="'{{column_name}}'">
           <label for="units">Units: </label>
           <input class="units" id="units"></div>
         {% endfor %}

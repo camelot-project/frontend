@@ -50,7 +50,7 @@ def uploaded_file(filename):
 @app.route('/autocomplete_units',methods=['GET'])
 def autocomplete_units():
     search = request.args.get('term')
-    print os.getcwd()
+    # print os.getcwd()
     allunits = set()
     for unitname,unit in inspect.getmembers(u):
         if isinstance(unit, u.UnitBase):
@@ -77,6 +77,11 @@ def autocomplete_filetypes():
 def autocomplete_column_names():
     return jsonify(json_list=['Ignore', 'IDs', 'SurfaceDensity',
                               'VelocityDispersion', 'Radius', 'IsSimulated'])
+
+@app.route('/uploads/set_columns/<filename>', methods=['POST'])
+def set_columns(filename):
+    import IPython
+    IPython.embed()
 
 if __name__ == '__main__':
     app.run(debug=True)
