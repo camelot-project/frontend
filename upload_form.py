@@ -33,23 +33,19 @@ def upload_file():
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-    file_ext = get_file_extension(file.filename)
-    if file_ext is 'fits':
-        print 'WILL READ FROM:', os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file_data = fits.getdata(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        print 'file_data:', file_data
-    elif file_ext is 'cvs' or file_ext is 'txt':
-        print 'WILL READ FROM:', os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file_data = ascii.read(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        print 'file_data:', file_data
     # print file_data
     return redirect(url_for('uploaded_file',
                             filename=filename))
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'],
-                               filename)
+
+    from astropy.table import Table
+    table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+    return render_template("parse_file.html"), table
+    #return send_from_directory(app.config['UPLOAD_FOLDER'],
+    #                           filename)
 
 @app.route('/autocomplete_units',methods=['GET'])
 def autocomplete_units():
