@@ -6,9 +6,22 @@
 	<script>
 	$(function() {
 	    $.ajax({
-	        url: '{{ url_for("autocomplete") }}'
+	        url: '{{ url_for("autocomplete_units") }}'
 	        }).done(function (data) {
 	            $('#units').autocomplete({
+	                source: data.json_list,
+	                minLength: 2
+	            });
+	        });
+	    });
+    </script>
+	<script>
+
+	$(function() {
+	    $.ajax({
+	        url: '{{ url_for("autocomplete_filetypes") }}'
+	        }).done(function (data) {
+	            $('#file_format').autocomplete({
 	                source: data.json_list,
 	                minLength: 2
 	            });
@@ -21,7 +34,8 @@
     <div class="main">
     	<div id="mainform">
 		    <form action="upload" method="post" enctype="multipart/form-data">
-		        <input type="file" name="file"><br />
+		        <input type="file" name="file">
+		        <input type="file_format" name="file_format" id="file_format"><br />
 		        <input type="submit" value="Upload">
 		    </form>
 	  		<label for="units">Units: </label>

@@ -51,8 +51,8 @@ def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'],
                                filename)
 
-@app.route('/autocomplete',methods=['GET'])
-def autocomplete():
+@app.route('/autocomplete_units',methods=['GET'])
+def autocomplete_units():
     search = request.args.get('term')
     print os.getcwd()
     allunits = set()
@@ -65,6 +65,17 @@ def autocomplete():
                 continue
     app.logger.debug(search)
     return jsonify(json_list=list(allunits))
+
+@app.route('/autocomplete_filetypes',methods=['GET'])
+def autocomplete_filetypes():
+    from astropy.io import registry
+    from astropy.table import Table
+    formats = registry.get_formats(Table)
+    print formats
+    search = request.args.get('term')
+    readable_formats = formats[formats['Read']=='Yes']['Format']
+    print readable_formats
+    return jsonify(json_list=list(readable_formats))
 
 if __name__ == '__main__':
     app.run(debug=True)
