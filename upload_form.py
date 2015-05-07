@@ -1,4 +1,5 @@
 import os
+import inspect
 import numpy as np
 from astropy.io import fits
 from astropy.io import ascii
@@ -55,10 +56,13 @@ def autocomplete():
     search = request.args.get('term')
     print os.getcwd()
     allunits = set()
-    for unit in dir(u):
-        if isinstance(unit, u.Unit):
-            for name in unit.names:
-                allunits.add(name)
+    for unitname,unit in inspect.getmembers(u):
+        if isinstance(unit, u.UnitBase):
+            try:
+                for name in unit.names:
+                    allunits.add(name)
+            except AttributeError:
+                continue
     app.logger.debug(search)
     return jsonify(json_list=list(allunits))
 
