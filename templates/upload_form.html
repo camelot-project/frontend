@@ -10,13 +10,19 @@
 {% endblock %}
 
 {% block body %}
-<div class="main">
-    <div id="upload_form">
+<div class="row">
+    <div class="col-md-6 col-md-offset-3" id="upload_form">
         <div id="upload_header">Upload new File</div>
-        <form action="upload" method="post" enctype="multipart/form-data">
-            <input type="file" name="file">
-            <input type="file_format" name="file_format" id="file_format">
-            <input id="upload_button" type="submit" value="Upload">
+        <form class="form-inline" action="upload" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <div class="input-group">
+                    <label class="sr-only" for="file">Choose File</label>
+                    <input class="form-control" type="file" name="file">
+                    <label for="file_format">Select File Format</label>
+                    <input class= "form-control" type="file_format" name="file_format" placeholder=".fits">
+                    <input class="btn btn-success" id="upload_button" type="submit" value="Upload">
+                </div>    
+            </div>
         </form>
     </div>
 </div>

@@ -78,10 +78,12 @@ def autocomplete_column_names():
     return jsonify(json_list=['Ignore', 'IDs', 'SurfaceDensity',
                               'VelocityDispersion', 'Radius', 'IsSimulated'])
 
-@app.route('/uploads/set_columns/<filename>', methods=['POST'])
-def set_columns(filename):
-    import IPython
-    IPython.embed()
+@app.route('/set_columns', methods=['POST', 'GET'])
+def set_columns():
+    print "ready to set columns", request.form
+    # import IPython
+    # IPython.embed()
+    return 'Ok'
 
 
 def upload_to_github(filename):
