@@ -54,16 +54,13 @@ def uploaded_file(filename):
 def autocomplete():
     search = request.args.get('term')
     print os.getcwd()
-    allunits = []
+    allunits = set()
     for unit in dir(u):
-        try:
-            name = u.__getattribute__(unit).name.lower()
-            if type(name) is unicode and name not in allunits:
-                allunits.append(name)
-        except:
-            continue
+        if isinstance(unit, u.Unit):
+            for name in unit.names:
+                allunits.add(name)
     app.logger.debug(search)
-    return jsonify(json_list=allunits)
+    return jsonify(json_list=list(allunits))
 
 if __name__ == '__main__':
     app.run(debug=True)
