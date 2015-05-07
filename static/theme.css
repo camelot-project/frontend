@@ -22,3 +22,8 @@ html, body{
     margin-left: auto;
     margin-right: auto;	
 }
+
+.column{
+	width: 100%;
+	height: 50px;
+}

@@ -42,7 +42,7 @@ def uploaded_file(filename):
     from astropy.table import Table
     table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-    return render_template("parse_file.html", table=table)
+    return render_template("parse_file.html", table=table, filename=filename)
     #return send_from_directory(app.config['UPLOAD_FOLDER'],
     #                           filename)
 
