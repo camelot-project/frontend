@@ -73,5 +73,10 @@ def autocomplete_filetypes():
     print readable_formats
     return jsonify(json_list=list(readable_formats))
 
+@app.route('/autocomplete_column_names',methods=['GET'])
+def autocomplete_column_names():
+    return jsonify(json_list=['IDs', 'SurfaceDensity', 'VelocityDispersion',
+                              'Radius', 'IsSimulated'])
+
 if __name__ == '__main__':
     app.run(debug=True)
