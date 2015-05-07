@@ -78,5 +78,17 @@ def autocomplete_column_names():
     return jsonify(json_list=['Ignore', 'IDs', 'SurfaceDensity',
                               'VelocityDispersion', 'Radius', 'IsSimulated'])
 
+
+def upload_to_github(filename):
+    with open(os.path.join(app.config['UPLOAD_FOLDER'], filename)) as f:
+        content = f.read()
+    data = {'path': 'data_files/',
+            'content': content,
+            'branch': 'master',
+            'message': 'Upload a new data file {0}'.format(filename)}
+
+    requests.post
+    pass
+
 if __name__ == '__main__':
     app.run(debug=True)
