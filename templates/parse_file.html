@@ -1,48 +1,29 @@
-<!doctype html>
+{% extends 'base.html' %}
 
-<link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}" />
-<script src="//code.jquery.com/jquery-1.10.2.js"></script>
-<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
-<script>
-$(function() {
-    $.ajax({
-        url: '{{ url_for("autocomplete_units") }}'
-        }).done(function (data) {
-            $('.units').autocomplete({
-                source: data.json_list,
-                minLength: 2
-            });
-        });
-    });
-</script>
-<script>
-
-$(function() {
-    $.ajax({
-        url: '{{ url_for("autocomplete_column_names") }}'
-        }).done(function (data) {
-            $('.real_column_name').autocomplete({
-                source: data.json_list,
-                minLength: 2
-            });
-        });
-    });
-</script>
-
+{% block head %}
+{{ super() }}
 <title>Parse file {{filename}}</title>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+{% block body %}
 <h1>Parse file {{filename}}</h1>
 <div class="main">
-    <div id="mainform">
+    <div id="column_form">
         <form action="/set_columns" method="post">
+           <div id="column_form_header">File Column Name  Real Column Name  Units</div> 
         {% for column_name in table.colnames %}
           <div class="column">{{ column_name }}
-          <label for="real_column_name">Real Column Name: </label>
-          <input class="real_column_name" id="'{{column_name}}'">
-          <label for="units">Units: </label>
+          <!-- <label for="real_column_name">Real Column Name: </label> -->
+          <input class="real_column_name" id="{{column_name}}">
+          <!-- <label for="units">Units: </label> -->
           <input class="units" id="units"></div>
         {% endfor %}
         <input type="submit" value="Submit">  
         </form>
     </div>
 </div>
-
+{% endblock %}
