@@ -11,16 +11,6 @@
 		<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
 		<script src="{{ url_for('static', filename='bootstrap/js/bootstrap.min.js') }}"></script>
 		<script>
-		$(function() {
-		    $.ajax({
-		        url: '{{ url_for(".autocomplete_units") }}'
-		    }).done(function (data) {
-		        $('.units').autocomplete({
-		            source: data.json_list,
-		            minLength: 2
-		        });
-		    });
-		});
 
 		$(function() {
 		    $.ajax({

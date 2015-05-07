@@ -14,14 +14,42 @@
 <div class="main">
     <div id="column_form">
         <form action="{{ url_for('set_columns') }}" method="post">
-           <div id="column_form_header">File Column Name  Real Column Name  Units</div> 
+           <table border=1>
+               <tr><th>File Column Name</th><th>Real Column Name</th><th>Units</th></tr>
+               
         {% for column_name in table.colnames %}
-          <div class="column">{{ column_name }}
-          <input class="real_column_name" name="{{column_name}}">
-          <input class="units" id="units"></div>
+        <tr>
+            <td>{{ column_name }}</td>
+            <td>
+                <select class="real_column_name" name="{{column_name}}">
+                    {% for real_column_name in real_column_names %}
+                    <option value={{real_column_name}}>{{real_column_name}}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <input class="units" id="units{{loop.index}}">
+            </td>
+        </tr>
         {% endfor %}
+    </table>
         <input type="submit" value="Submit">  
         </form>
     </div>
 </div>
+<script>
+        $(".units").on('input',
+            function() {
+                $.ajax({
+                    url: '{{ url_for(".validate_units", unit_str=units) }}'
+                }).done(function (data) {
+                    if (data.OK) {
+                        $('.units').css("background-color","#FFCCFF");
+                    } else {
+                        $('.units').css("background-color","#FFAAAA");
+                    };
+                });
+            });
+
+</script>
 {% endblock %}
