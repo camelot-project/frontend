@@ -43,14 +43,14 @@ def uploaded_file(filename):
     from astropy.table import Table
     table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-    return render_template("parse_file.html", table=table)
+    return render_template("parse_file.html", table=table, filename=filename)
     #return send_from_directory(app.config['UPLOAD_FOLDER'],
     #                           filename)
 
 @app.route('/autocomplete_units',methods=['GET'])
 def autocomplete_units():
     search = request.args.get('term')
-    print os.getcwd()
+    # print os.getcwd()
     allunits = set()
     for unitname,unit in inspect.getmembers(u):
         if isinstance(unit, u.UnitBase):
@@ -77,6 +77,11 @@ def autocomplete_filetypes():
 def autocomplete_column_names():
     return jsonify(json_list=['Ignore', 'IDs', 'SurfaceDensity',
                               'VelocityDispersion', 'Radius', 'IsSimulated'])
+
+@app.route('/uploads/set_columns/<filename>', methods=['POST'])
+def set_columns(filename):
+    import IPython
+    IPython.embed()
 
 
 def upload_to_github(filename):
