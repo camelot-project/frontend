@@ -75,8 +75,8 @@ def autocomplete_filetypes():
 
 @app.route('/autocomplete_column_names',methods=['GET'])
 def autocomplete_column_names():
-    return jsonify(json_list=['IDs', 'SurfaceDensity', 'VelocityDispersion',
-                              'Radius', 'IsSimulated'])
+    return jsonify(json_list=['Ignore', 'IDs', 'SurfaceDensity',
+                              'VelocityDispersion', 'Radius', 'IsSimulated'])
 
 if __name__ == '__main__':
     app.run(debug=True)
