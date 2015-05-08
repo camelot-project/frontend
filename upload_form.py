@@ -48,7 +48,8 @@ def index():
     return render_template('upload_form.html')
 
 @app.route('/upload', methods=['POST'])
-def upload_file():
+@app.route('/upload/<fileformat>', methods=['POST'])
+def upload_file(fileformat=None):
     file = request.files['file']
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
@@ -56,10 +57,10 @@ def upload_file():
 
     # print file_data
     return redirect(url_for('uploaded_file',
-                            filename=filename))
+                            filename=filename,
+                            fileformat=fileformat))
 
 @app.route('/uploads/<filename>')
-@app.route('/uploads/<filename>/<fileformat>')
 def uploaded_file(filename, fileformat=None):
     try:
         table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename),
@@ -89,6 +90,7 @@ def handle_ambiguous_table(filename, exception):
     else:
         best_match = ""
 
+    # This doesn't work right now - don't know why.
     return render_template('upload_form_filetype.html', filename=filename,
                            best_match_extension=best_match,
                            exception=exception)
