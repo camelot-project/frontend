@@ -10,6 +10,7 @@ from flask import (Flask, request, redirect, url_for, render_template,
 from wtforms.validators import ValidationError
 import wtforms
 from werkzeug import secure_filename
+import difflib
 
 UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
@@ -18,6 +19,17 @@ valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
+# Allow zipping in jinja templates: http://stackoverflow.com/questions/5208252/ziplist1-list2-in-jinja2
+import jinja2
+env = jinja2.Environment()
+env.globals.update(zip=zip)
+
+# http://stackoverflow.com/questions/21306134/iterating-over-multiple-lists-in-python-flask-jinja2-templates
+@app.template_global(name='zip')
+def _zip(*args, **kwargs): #to not overwrite builtin zip in globals
+    return __builtins__.zip(*args, **kwargs)
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -47,8 +59,17 @@ def uploaded_file(filename):
     from astropy.table import Table
     table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
+    best_matches = [difflib.get_close_matches(colname, valid_column_names, n=1,
+                                              cutoff=0.05)[0]
+                    if any(difflib.get_close_matches(colname, valid_column_names, n=1, cutoff=0.05))
+                    else 'Ignore'
+                    for colname in table.colnames]
+    print zip(table.colnames, best_matches)
+
     return render_template("parse_file.html", table=table, filename=filename,
-                           real_column_names=valid_column_names)
+                           real_column_names=valid_column_names,
+                           best_column_names=best_matches,
+                          )
     #return send_from_directory(app.config['UPLOAD_FOLDER'],
     #                           filename)
 
@@ -100,19 +121,16 @@ def set_columns():
     # IPython.embed()
     return 'Ok'
 
-class MyForm(wtforms.Form):
-    """
-    Validate the units instead of using a dropdown
-    """
-    unit = wtforms.StringField('unit', [])
-
-    def validate_unit(form, field):
-        try:
-            u.Unit(field.data)
-        except ValueError,u.UnitsError:
-            raise ValidationError('Invalid unit')
 
 def upload_to_github(filename):
+    """
+    WIP: Eventually, we want each file to be uploaded to github and submitted
+    as a pull request when people submit their data
+
+    This will be tricky: we need to have a "replace existing file" logic in
+    addition to the original submission.  We also need an account + API_KEY
+    etc, which may be the most challenging part.
+    """
     with open(os.path.join(app.config['UPLOAD_FOLDER'], filename)) as f:
         content = f.read()
     data = {'path': 'data_files/',
