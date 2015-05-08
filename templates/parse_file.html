@@ -12,11 +12,11 @@
 {% block body %}
 <h1>Parse file {{filename}}</h1>
 <div class="row">
-    <div class="col-lg-9 col-md-offset-2" id="column_form">
+    <div class="col-lg-8 col-lg-offset-2" id="column_form">
         <form action="{{ url_for('set_columns') }}" method="post">
-            <table class="table-striped">
-                <tr><th>File Column Name</th><th>Real Column Name</th><th>Units</th></tr>
-                   
+            <table class="table table-striped">
+                <thead><tr><th>File Column Name</th><th>Real Column Name</th><th>Units</th></tr></thead>
+                <tbody>
                 {% for column_name,best_column_name in zip(table.colnames, best_column_names) %}
                 <tr>
                     <td>{{ column_name }}</td>
@@ -36,8 +36,11 @@
                     </td>
                 </tr>
                 {% endfor %}
+                </tbody>
             </table>
-            <input class="btn btn-success" id="submit_button" type="submit" value="Submit"> 
+            <div class="col-md-2 col-md-offset-9">
+                <input class="btn btn-success" id="submit_button" type="submit" value="Submit"> 
+            </div>
         </form>
     </div>
 </div>
