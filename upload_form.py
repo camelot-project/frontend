@@ -70,9 +70,6 @@ def autocomplete_units():
 
 @app.route('/validate_units', methods=['GET', 'POST'])
 def validate_units():
-    # if request.method == "POST":
-    # import IPython
-    # IPython.embed()
     try:
         unit_str = request.args.get('unit_str', 'error', type=str)
         print 'unit_str:', unit_str
@@ -104,19 +101,16 @@ def set_columns():
     # IPython.embed()
     return 'Ok'
 
-class MyForm(wtforms.Form):
-    """
-    Validate the units instead of using a dropdown
-    """
-    unit = wtforms.StringField('unit', [])
-
-    def validate_unit(form, field):
-        try:
-            u.Unit(field.data)
-        except ValueError,u.UnitsError:
-            raise ValidationError('Invalid unit')
 
 def upload_to_github(filename):
+    """
+    WIP: Eventually, we want each file to be uploaded to github and submitted
+    as a pull request when people submit their data
+
+    This will be tricky: we need to have a "replace existing file" logic in
+    addition to the original submission.  We also need an account + API_KEY
+    etc, which may be the most challenging part.
+    """
     with open(os.path.join(app.config['UPLOAD_FOLDER'], filename)) as f:
         content = f.read()
     data = {'path': 'data_files/',
