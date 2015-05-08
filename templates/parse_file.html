@@ -40,11 +40,18 @@
 <script>
         $(".units").on('input', function(){
             var units = $(this).val();
+            var input_id = $(this)[0].id;
+            console.log(input_id);
             console.log("units: ", units);
             $.getJSON('/validate_units', {
                 unit_str: units
             }, function(data){
                 console.log(data);
+                if (data.OK) {
+                    $("#"+input_id).css("background-color","#66FF66");
+                } else {
+                    $("#"+input_id).css("background-color","#FFAAAA");
+                };
             })
         });
             // $.ajax({
