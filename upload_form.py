@@ -139,8 +139,8 @@ def autocomplete_column_names():
 @app.route('/set_columns', methods=['POST', 'GET'])
 def set_columns():
     print "ready to set columns", request.form
-    import IPython
-    IPython.embed()
+    # import IPython
+    # IPython.embed()
     return 'Ok'
 
 
