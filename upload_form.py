@@ -17,6 +17,10 @@ ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated']
 
+from astropy.io import registry
+from astropy.table import Table
+table_formats = registry.get_formats(Table)
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -55,9 +59,13 @@ def upload_file():
                             filename=filename))
 
 @app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    from astropy.table import Table
-    table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+@app.route('/uploads/<filename>/<fileformat>')
+def uploaded_file(filename, fileformat=None):
+    try:
+        table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename),
+                           format=fileformat)
+    except Exception as ex:
+        return handle_ambiguous_table(filename, ex)
 
     best_matches = [difflib.get_close_matches(colname, valid_column_names, n=1,
                                               cutoff=0.05)[0]
@@ -72,6 +80,18 @@ def uploaded_file(filename):
                           )
     #return send_from_directory(app.config['UPLOAD_FOLDER'],
     #                           filename)
+
+def handle_ambiguous_table(filename, exception):
+    extension = os.path.splitext(filename)[-1]
+    best_match = difflib.get_close_matches(extension[1:], table_formats, n=1, cutoff=0.05)
+    if any(best_match):
+        best_match = best_match[0]
+    else:
+        best_match = ""
+
+    return render_template('upload_form_filetype.html', filename=filename,
+                           best_match_extension=best_match,
+                           exception=exception)
 
 @app.route('/autocomplete_units',methods=['GET'])
 def autocomplete_units():
@@ -102,12 +122,9 @@ def validate_units():
 
 @app.route('/autocomplete_filetypes',methods=['GET'])
 def autocomplete_filetypes():
-    from astropy.io import registry
-    from astropy.table import Table
-    formats = registry.get_formats(Table)
     #print formats
     search = request.args.get('term')
-    readable_formats = formats[formats['Read']=='Yes']['Format']
+    readable_formats = table_formats[table_formats['Read']=='Yes']['Format']
     #print readable_formats
     return jsonify(json_list=list(readable_formats))
 
