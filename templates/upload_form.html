@@ -12,7 +12,7 @@ $(document).ready(function(){
     if($('#file_field').val() == ''){
         $('#upload_button').attr('disabled','disabled');
     }
-    
+
     $('#file_field').change(function(){
         var value = $(this).val();
         console.log(value);
@@ -28,6 +28,13 @@ $(document).ready(function(){
 {% endblock %}
 
 {% block body %}
+{% if error %}
+    <div class="alert alert-warning alert-dismissible" role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <strong>Error!</strong> {{ error}}
+    </div>
+{% endif %}
+
 <div class="row">
     <div class="col-md-6 col-md-offset-4" id="upload_form">
         <div id="upload_header">Upload new File</div>

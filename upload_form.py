@@ -56,9 +56,11 @@ def upload_file(fileformat=None):
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
     # print file_data
-    return redirect(url_for('uploaded_file',
-                            filename=filename,
-                            fileformat=fileformat))
+        return redirect(url_for('uploaded_file',
+                                filename=filename,
+                                fileformat=fileformat))
+    else:
+        return render_template("upload_form.html", error="File type not supported")
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename, fileformat=None):
@@ -140,10 +142,8 @@ def autocomplete_column_names():
 def set_columns():
     # This function needs to know about the filename or have access to the
     # table; how do we arrange that?
-    column_data = {field:{'Name':value} for 
-                   field,value in request.form.items()
-                   if '_units' not in field
-                  }
+    column_data = \
+    {field:{'Name':value} for field,value in request.form.items() if '_units' not in field}
     for field,value in request.form.items():
         if '_units' in field:
             column_data[field[:-6]]['unit'] = value
