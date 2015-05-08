@@ -40,8 +40,10 @@
 <script>
         $(".units").on('input',
             function() {
+                var unit_value = $(this).val();
                 $.ajax({
-                    url: '{{ url_for(".validate_units", unit_str=units) }}'
+                    url: '{{ url_for(".validate_units") }}',
+                    data: JSON.stringify(unit_value)
                 }).done(function (data) {
                     if (data.OK) {
                         $('.units').css("background-color","#FFCCFF");

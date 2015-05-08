@@ -68,8 +68,11 @@ def autocomplete_units():
     app.logger.debug(search)
     return jsonify(json_list=list(allunits))
 
-@app.route('/validate_units/<unit_str>')
-def validate_units(unit_str):
+@app.route('/validate_units', methods=['GET', 'POST'])
+#@app.route('/validate_units/<unit_str>', methods=['GET', 'POST'])
+def validate_units(data):
+    print request, dir(request), data
+    unit_str = data
     try:
         u.Unit(unit_str)
         OK = True
