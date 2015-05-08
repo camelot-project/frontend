@@ -9,10 +9,13 @@
 {{ super() }}
 <script>
 $(document).ready(function(){
-    $('#upload_button').attr('disabled','disabled');
+    if($('#file_field').val() == ''){
+        $('#upload_button').attr('disabled','disabled');
+    }
 
     $('#file_field').change(function(){
         var value = $(this).val();
+        console.log(value);
         if(value != ''){
             $('#upload_button').removeAttr('disabled');
         }
@@ -28,7 +31,7 @@ $(document).ready(function(){
 <div class="row">
     <div class="col-md-6 col-md-offset-4" id="upload_form">
         <div id="upload_header">Upload new File</div>
-        <form class="form-inline" action="upload" method="post" enctype="multipart/form-data">
+        <form class="form form-inline" action="upload" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <div class="input-group">
                     <label class="sr-only" for="file">Choose File</label>
