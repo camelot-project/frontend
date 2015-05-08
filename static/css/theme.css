@@ -20,12 +20,12 @@ html, body{
 	margin-top: 300px;
 	padding-top: 24px;
 }
-
+/*
 #column_form{
 	padding-top: 10px;
 	margin-left: auto;
     margin-right: auto;
-}
+}*/
 
 #upload_header{
 	text-align: center;
@@ -33,20 +33,20 @@ html, body{
 	font: helvetica;
 }
 
-.column{
+/*.column{
 	height: 40px;
 	width: 800px;
 	margin-left: auto;
     margin-right: auto;
     padding-top: 12px;
 }
-
-#column_form_header{
+*/
+/*#column_form_header{
 	width: 800px;
 	margin-left: auto;
     margin-right: auto;
 }
-
+*/
 input.error {
     color: red;
 }

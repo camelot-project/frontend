@@ -11,29 +11,29 @@
 
 {% block body %}
 <h1>Parse file {{filename}}</h1>
-<div class="main">
-    <div id="column_form">
+<div class="row">
+    <div class="col-lg-9 col-md-offset-2" id="column_form">
         <form action="{{ url_for('set_columns') }}" method="post">
-           <table border=1>
-               <tr><th>File Column Name</th><th>Real Column Name</th><th>Units</th></tr>
-               
-        {% for column_name in table.colnames %}
-        <tr>
-            <td>{{ column_name }}</td>
-            <td>
-                <select class="real_column_name" name="{{column_name}}">
-                    {% for real_column_name in real_column_names %}
-                    <option value="{{real_column_name}}">{{real_column_name}}</option>
-                    {% endfor %}
-                </select>
-            </td>
-            <td>
-                <input class="units" id="units{{loop.index}}">
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-        <input type="submit" value="Submit">  
+            <table class="table-striped">
+                <tr><th>File Column Name</th><th>Real Column Name</th><th>Units</th></tr>
+                {% for column_name in table.colnames %}
+                <tr>
+                    <td>{{ column_name }}</td>
+                    <td>
+                        <select class="real_column_name" name="{{column_name}}">
+                            {% for real_column_name in real_column_names %}
+                            <option value="{{real_column_name}}">{{real_column_name}}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <input class="units" id="units{{loop.index}}">
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            <!-- <input class="btn btn-success" id="upload_button" type="submit" value="Upload"> -->
+            <input class="btn btn-success" id="submit_button" type="submit" value="Submit">  
         </form>
     </div>
 </div>
@@ -41,8 +41,6 @@
         $(".units").on('input', function(){
             var units = $(this).val();
             var input_id = $(this)[0].id;
-            console.log(input_id);
-            console.log("units: ", units);
             $.getJSON('/validate_units', {
                 unit_str: units
             }, function(data){

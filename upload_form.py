@@ -70,12 +70,8 @@ def autocomplete_units():
 
 @app.route('/validate_units', methods=['GET', 'POST'])
 def validate_units():
-    # if request.method == "POST":
-    # import IPython
-    # IPython.embed()
     try:
         unit_str = request.args.get('unit_str', 'error', type=str)
-        print 'unit_str:', unit_str
         u.Unit(unit_str)
         OK = True
     except:
