@@ -12,16 +12,17 @@
 		<script src="{{ url_for('static', filename='bootstrap/js/bootstrap.min.js') }}"></script>
 		<script>
 
-		$(function() {
-		    $.ajax({
-		        url: '{{ url_for(".autocomplete_column_names") }}'
-		    }).done(function (data) {
-		        $('.real_column_name').autocomplete({
-		            source: data.json_list,
-		            minLength: 2
-		        });
-		    });
-		});
+        // replaced with dropdowns
+		// $(function() {
+		//     $.ajax({
+		//         url: '{{ url_for(".autocomplete_column_names") }}'
+		//     }).done(function (data) {
+		//         $('.real_column_name').autocomplete({
+		//             source: data.json_list,
+		//             minLength: 2
+		//         });
+		//     });
+		// });
 
 		$(function() {
 		    $.ajax({

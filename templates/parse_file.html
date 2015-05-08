@@ -17,13 +17,17 @@
            <table border=1>
                <tr><th>File Column Name</th><th>Real Column Name</th><th>Units</th></tr>
                
-        {% for column_name in table.colnames %}
+        {% for column_name,best_column_name in zip(table.colnames, best_column_names) %}
         <tr>
             <td>{{ column_name }}</td>
             <td>
                 <select class="real_column_name" name="{{column_name}}">
                     {% for real_column_name in real_column_names %}
+                    {% if real_column_name == best_column_name %}
+                    <option value="{{real_column_name}}" selected>{{real_column_name}}</option>
+                    {% else %}
                     <option value="{{real_column_name}}">{{real_column_name}}</option>
+                    {% endif %}
                     {% endfor %}
                 </select>
             </td>
