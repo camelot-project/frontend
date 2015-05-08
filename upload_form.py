@@ -138,6 +138,8 @@ def autocomplete_column_names():
 
 @app.route('/set_columns', methods=['POST', 'GET'])
 def set_columns():
+    # This function needs to know about the filename or have access to the
+    # table; how do we arrange that?
     column_data = {field:{'Name':value} for 
                    field,value in request.form.items()
                    if '_units' not in field
