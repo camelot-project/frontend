@@ -7,6 +7,26 @@
 
 {% block scripts %}
 {{ super() }}
+<script>
+$(document).ready(function(){
+    $(".units").on('input', function(){
+        var units = $(this).val();
+        var input_id = $(this)[0].id;
+        $.getJSON('/validate_units', {
+            unit_str: units
+        }, function(data){
+            console.log(data);
+            if (data.OK) {
+                $("#"+input_id).css("background-color","#66FF66");
+                $("#"+input_id).addClass("background-color","#66FF66");
+            } else {
+                $("#"+input_id).css("background-color","#FFAAAA");
+            };
+        })
+    });
+});
+
+</script>
 {% endblock %}
 
 {% block body %}
@@ -19,9 +39,10 @@
                 <tbody>
                 {% for column_name,best_column_name in zip(table.colnames, best_column_names) %}
                 <tr>
-                    <td>{{ column_name }}</td>
+                    <div class="form-group">
+                    <td><p>{{ column_name }}</p></td>
                     <td>
-                        <select class="real_column_name" name="{{column_name}}">
+                        <select class="form-control real_column_name" name="{{column_name}}">
                             {% for real_column_name in real_column_names %}
                             {% if real_column_name == best_column_name %}
                             <option value="{{real_column_name}}" selected>{{real_column_name}}</option>
@@ -32,33 +53,17 @@
                         </select>
                     </td>
                     <td>
-                        <input class="units" id="{{column_name}}_units" name="{{column_name}}_units">
+                        <input class="units form-control" id="{{column_name}}_units" name="{{column_name}}_units">
                     </td>
+                    </div>
                 </tr>
                 {% endfor %}
                 </tbody>
             </table>
-            <div class="col-md-2 col-md-offset-9">
+            <div class="col-md-2 col-md-offset-10" id="column_submit">
                 <input class="btn btn-success" id="submit_button" type="submit" value="Submit"> 
             </div>
         </form>
     </div>
 </div>
-<script>
-        $(".units").on('input', function(){
-            var units = $(this).val();
-            var input_id = $(this)[0].id;
-            $.getJSON('/validate_units', {
-                unit_str: units
-            }, function(data){
-                console.log(data);
-                if (data.OK) {
-                    $("#"+input_id).css("background-color","#66FF66");
-                } else {
-                    $("#"+input_id).css("background-color","#FFAAAA");
-                };
-            })
-        });
-
-</script>
 {% endblock %}

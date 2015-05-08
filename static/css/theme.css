@@ -5,55 +5,22 @@ h1{
     width: 70%;
 }
 
-html, body{
-	height: 100%;
-	margin: 0px;
-}
-
-.main {
-	width: 80%;
-    margin-left: auto;
-    margin-right: auto;	
-}
-
 #upload_form{
 	margin-top: 300px;
 	padding-top: 24px;
 }
-/*
-#column_form{
-	padding-top: 10px;
-	margin-left: auto;
-    margin-right: auto;
-}*/
 
 #upload_header{
 	font-size: 30px;
 	font: helvetica;
 }
 
-/*.column{
-	height: 40px;
-	width: 800px;
-	margin-left: auto;
-    margin-right: auto;
-    padding-top: 12px;
-}
-*/
-/*#column_form_header{
-	width: 800px;
-	margin-left: auto;
-    margin-right: auto;
-}
-*/
-input.error {
-    color: red;
-}
-
-input.ok {
-	color: green;
-}
-
 #upload_button{
-	float: right
+	float: right;
+	margin-top: 10px;
 }
+
+#column_submit{
+	margin-bottom: 20px;
+}
+
