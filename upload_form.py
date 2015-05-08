@@ -138,9 +138,18 @@ def autocomplete_column_names():
 
 @app.route('/set_columns', methods=['POST', 'GET'])
 def set_columns():
-    print "ready to set columns", request.form
-    import IPython
-    IPython.embed()
+    column_data = {field:{'Name':value} for 
+                   field,value in request.form.items()
+                   if '_units' not in field
+                  }
+    for field,value in request.form.items():
+        if '_units' in field:
+            column_data[field[:-6]]['unit'] = value
+
+    print column_data
+    #print "ready to set columns", request.form
+    #import IPython
+    #IPython.embed()
     return 'Ok'
 
 
