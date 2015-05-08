@@ -68,16 +68,19 @@ def uploaded_file(filename, fileformat=None):
     except Exception as ex:
         return handle_ambiguous_table(filename, ex)
 
-    best_matches = [difflib.get_close_matches(colname, valid_column_names, n=1,
-                                              cutoff=0.05)[0]
-                    if any(difflib.get_close_matches(colname, valid_column_names, n=1, cutoff=0.05))
-                    else 'Ignore'
-                    for colname in table.colnames]
-    print zip(table.colnames, best_matches)
+    best_matches = {difflib.get_close_matches(vcn, table.colnames,  n=1,
+                                              cutoff=0.4)[0]: vcn
+                    for vcn in valid_column_names
+                    if any(difflib.get_close_matches(vcn, table.colnames, n=1, cutoff=0.4))
+                   }
+    print best_matches
+
+    best_column_names = [best_matches[colname] if colname in best_matches else 'Ignore'
+                         for colname in table.colnames]
 
     return render_template("parse_file.html", table=table, filename=filename,
                            real_column_names=valid_column_names,
-                           best_column_names=best_matches,
+                           best_column_names=best_column_names,
                           )
     #return send_from_directory(app.config['UPLOAD_FOLDER'],
     #                           filename)
