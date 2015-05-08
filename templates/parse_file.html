@@ -33,7 +33,7 @@ $(document).ready(function(){
 <h1>Parse file {{filename}}</h1>
 <div class="row">
     <div class="col-lg-8 col-lg-offset-2" id="column_form">
-        <form action="{{ url_for('set_columns') }}" method="post">
+        <form action="{{ url_for('set_columns', filename=filename, fileformat=fileformat) }}" method="post">
             <table class="table table-striped">
                 <thead><tr><th>File Column Name</th><th>Real Column Name</th><th>Units</th></tr></thead>
                 <tbody>
@@ -53,7 +53,7 @@ $(document).ready(function(){
                         </select>
                     </td>
                     <td>
-                        <input class="units form-control" id="{{column_name}}_units" name="{{column_name}}_units">
+                        <input class="units form-control" id="{{column_name|striptags}}_units" name="{{column_name|striptags}}_units">
                     </td>
                     </div>
                 </tr>

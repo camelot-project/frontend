@@ -5,6 +5,7 @@ from astropy.io import fits
 from astropy.io import ascii
 from astropy import table
 from astropy import units as u
+from ingest_datasets_better import rename_columns, set_units
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
 from wtforms.validators import ValidationError
@@ -138,20 +139,30 @@ def autocomplete_filetypes():
 def autocomplete_column_names():
     return jsonify(json_list=valid_column_names)
 
-@app.route('/set_columns', methods=['POST', 'GET'])
-def set_columns():
+@app.route('/set_columns/<path:filename>', methods=['POST', 'GET'])
+def set_columns(filename, fileformat=None):
     # This function needs to know about the filename or have access to the
     # table; how do we arrange that?
+    table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename), format=fileformat)
+    
     column_data = \
-    {field:{'Name':value} for field,value in request.form.items() if '_units' not in field}
+        {field:{'Name':value} for field,value in request.form.items() if '_units' not in field}
     for field,value in request.form.items():
         if '_units' in field:
             column_data[field[:-6]]['unit'] = value
-
     print column_data
-    #print "ready to set columns", request.form
-    #import IPython
-    #IPython.embed()
+    
+    units_data = {}
+    for _, pair in column_data.items():
+        if pair['Name'] != "Ignore":
+            units_data[pair['Name']] = pair['unit']
+
+    print 'units_data:', units_data    
+    print table
+    rename_columns(table, column_data)
+    print 'renamed columns?:', table
+    set_units(table, units_data)
+    print 'units are set?:', table
     return 'Ok'
 
 

@@ -46,7 +46,7 @@ def set_units(tbl, units={'SurfaceDensity':u.M_sun/u.pc**2,
     for k,v in units.items():
         if k not in tbl.colnames:
             raise KeyError("{0} not in table: run `rename_columns` first.".format(k))
-        tbl[k].unit = v
+        tbl[k].unit = tbl[k].unit.to(v)
 
 def add_name_column(tbl, name):
     """
