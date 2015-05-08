@@ -69,11 +69,13 @@ def autocomplete_units():
     return jsonify(json_list=list(allunits))
 
 @app.route('/validate_units', methods=['GET', 'POST'])
-#@app.route('/validate_units/<unit_str>', methods=['GET', 'POST'])
-def validate_units(data):
-    print request, dir(request), data
-    unit_str = data
+def validate_units():
+    # if request.method == "POST":
+    # import IPython
+    # IPython.embed()
     try:
+        unit_str = request.args.get('unit_str', 'error', type=str)
+        print 'unit_str:', unit_str
         u.Unit(unit_str)
         OK = True
     except:

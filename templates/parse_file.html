@@ -23,7 +23,7 @@
             <td>
                 <select class="real_column_name" name="{{column_name}}">
                     {% for real_column_name in real_column_names %}
-                    <option value={{real_column_name}}>{{real_column_name}}</option>
+                    <option value="{{real_column_name}}">{{real_column_name}}</option>
                     {% endfor %}
                 </select>
             </td>
@@ -38,20 +38,41 @@
     </div>
 </div>
 <script>
-        $(".units").on('input',
-            function() {
-                var unit_value = $(this).val();
-                $.ajax({
-                    url: '{{ url_for(".validate_units") }}',
-                    data: JSON.stringify(unit_value)
-                }).done(function (data) {
-                    if (data.OK) {
-                        $('.units').css("background-color","#FFCCFF");
-                    } else {
-                        $('.units').css("background-color","#FFAAAA");
-                    };
-                });
-            });
+        $(".units").on('input', function(){
+            var units = $(this).val();
+            var input_id = $(this)[0].id;
+            console.log(input_id);
+            console.log("units: ", units);
+            $.getJSON('/validate_units', {
+                unit_str: units
+            }, function(data){
+                console.log(data);
+                if (data.OK) {
+                    $("#"+input_id).css("background-color","#66FF66");
+                } else {
+                    $("#"+input_id).css("background-color","#FFAAAA");
+                };
+            })
+        });
+            // $.ajax({
+            //         type: "POST",
+            //         url: '{{ url_for(".validate_units") }}',
+            //         data: {unit_str: JSON.stringify(units)},
+            //         contentType: 'application/json;charset=UTF-8',
+            //         success: function (data) {
+            //             console.log(data);
+            //             if (data.OK) {
+            //                 $(this).css("background-color","#FFCCFF");
+            //             } else {
+            //                 $(this).css("background-color","#FFAAAA");
+            //             };
+            //         }
+            //     });
+        // });
+        // $(".units").on('input',
+        //     function() {
+                
+        //     }
 
 </script>
 {% endblock %}

@@ -47,6 +47,14 @@ html, body{
     margin-right: auto;
 }
 
+input.error {
+    color: red;
+}
+
+input.ok {
+	color: green;
+}
+
 #upload_button{
 	float: right
 }
