@@ -113,7 +113,6 @@ def autocomplete_units():
 def validate_units():
     try:
         unit_str = request.args.get('unit_str', 'error', type=str)
-        print 'unit_str:', unit_str
         u.Unit(unit_str)
         OK = True
     except:
