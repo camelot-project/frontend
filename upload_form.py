@@ -8,6 +8,7 @@ from astropy import units as u
 from ingest_datasets_better import rename_columns, set_units
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
+from simple_plot import plotData
 from wtforms.validators import ValidationError
 import wtforms
 from werkzeug import secure_filename
@@ -80,6 +81,7 @@ def uploaded_file(filename, fileformat=None):
 
     best_column_names = [best_matches[colname] if colname in best_matches else 'Ignore'
                          for colname in table.colnames]
+    print 'best_column_names:', best_column_names
 
     return render_template("parse_file.html", table=table, filename=filename,
                            real_column_names=valid_column_names,
@@ -150,20 +152,22 @@ def set_columns(filename, fileformat=None):
     for field,value in request.form.items():
         if '_units' in field:
             column_data[field[:-6]]['unit'] = value
-    print column_data
+    # print column_data
     
     units_data = {}
     for _, pair in column_data.items():
         if pair['Name'] != "Ignore":
             units_data[pair['Name']] = pair['unit']
 
-    print 'units_data:', units_data    
-    print table
+    # print 'units_data:', units_data    
+    # print table
     rename_columns(table, column_data)
-    print 'renamed columns?:', table
+    # print 'renamed columns?:', table
     set_units(table, units_data)
-    print 'units are set?:', table
+    # print 'units are set?:', table
+    # plotData(table, filename)
     return 'Ok'
+
 
 
 def upload_to_github(filename):
