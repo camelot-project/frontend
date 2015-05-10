@@ -5,10 +5,10 @@ from astropy.io import fits
 from astropy.io import ascii
 from astropy import table
 from astropy import units as u
-from ingest_datasets_better import rename_columns, set_units
+from ingest_datasets_better import rename_columns, set_units, convert_units, add_name_column, add_generic_ids_if_needed
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
-from simple_plot import plotData
+from simple_plot import plotData, timeString
 from wtforms.validators import ValidationError
 import wtforms
 from werkzeug import secure_filename
@@ -161,12 +161,16 @@ def set_columns(filename, fileformat=None):
 
     # print 'units_data:', units_data    
     # print table
-    rename_columns(table, column_data)
+    rename_columns(table, {k: v['Name'] for k,v in column_data.items()})
     # print 'renamed columns?:', table
     set_units(table, units_data)
+    convert_units(table)
     # print 'units are set?:', table
-    # plotData(table, filename)
-    return 'Ok'
+    add_name_column(table, 'TEST - REPLACE')
+    add_generic_ids_if_needed(table)
+    myplot = plotData(timeString(), table, 'figures/'+filename)
+
+    return render_template('show_plot.html', imagename='figures/'+myplot)
 
 
 

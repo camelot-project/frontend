@@ -14,7 +14,10 @@ from astropy import table
 import pdb
 plt.rcParams['figure.figsize'] = (12,8)
 
-def plotData(NQuery,table,FigureStrBase,SurfMin,SurfMax,VDispMin,VDispMax,RadMin,RadMax) :
+def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
+             SurfMax=1e5*u.M_sun/u.pc**2, VDispMin=1e-1*u.km/u.s,
+             VDispMax=3e2*u.km/u.s, RadMin=1e-2*u.pc, RadMax=1e3*u.pc,):
+ 
     """
     This is where documentation needs to be added
 
@@ -96,6 +99,7 @@ def plotData(NQuery,table,FigureStrBase,SurfMin,SurfMax,VDispMin,VDispMax,RadMin
     plt.show()
     plt.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
     plt.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
+    return FigureStrBase+NQuery+'.png'
     
 def clearPlotOutput(FigureStrBase,TooOld) :
     
@@ -109,21 +113,14 @@ def timeString() :
     TimeString=datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
     return TimeString
 
-SurfMin = 1e-1*u.M_sun/u.pc**2
-SurfMax = 1e5*u.M_sun/u.pc**2
-VDispMin = 1e-1*u.km/u.s
-VDispMax = 3e2*u.km/u.s
-RadMin = 1e-2*u.pc
-RadMax = 1e3*u.pc
-
-NQuery=timeString()
-FigureStrBase='Output_Sigma_sigma_r_'
-TooOld=300
-
-clearPlotOutput(FigureStrBase,TooOld)
-
-plotData(NQuery,FigureStrBase,SurfMin,SurfMax,VDispMin,VDispMax,RadMin,RadMax)
-
-#d.show_in_browser(jsviewer=True)
-
-
+# NQuery=timeString()
+# FigureStrBase='Output_Sigma_sigma_r_'
+# TooOld=300
+# 
+# clearPlotOutput(FigureStrBase,TooOld)
+# 
+# plotData(NQuery,FigureStrBase,SurfMin,SurfMax,VDispMin,VDispMax,RadMin,RadMax)
+# 
+# #d.show_in_browser(jsviewer=True)
+# 
+# 

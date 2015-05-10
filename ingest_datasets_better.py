@@ -27,16 +27,32 @@ def reorder_columns(tbl, order):
 def rename_columns(tbl, mapping = {'name':'Names', 'id':'IDs',
                                    'surfdens':'SurfaceDensity',
                                    'vdisp':'VelocityDispersion',
-                                   'radius':'Radius','is_sim':'IsSimulated'}):
+                                   'radius':'Radius','is_sim':'IsSimulated'},
+                   remove_column='Ignore'):
     """
     Rename table columns inplace
     """
 
     for k,v in mapping.items():
         if k in tbl.colnames:
-            tbl.rename_column(k,v)
+            if v == remove_column:
+                tbl.remove_column(k)
+            elif k != v:
+                tbl.rename_column(k,v)
 
 def set_units(tbl, units={'SurfaceDensity':u.M_sun/u.pc**2,
+                          'VelocityDispersion':u.km/u.s,
+                          'Radius':u.pc}):
+    """
+    Set the units of the table to the specified units.
+    WARNING: this *overwrites* existing units, it does not convert them!
+    """
+    for k,v in units.items():
+        if k not in tbl.colnames:
+            raise KeyError("{0} not in table: run `rename_columns` first.".format(k))
+        tbl[k].unit = v
+
+def convert_units(tbl, units={'SurfaceDensity':u.M_sun/u.pc**2,
                           'VelocityDispersion':u.km/u.s,
                           'Radius':u.pc}):
     """
@@ -60,3 +76,10 @@ def append_table(merged_table, table_to_add):
     """
     for row in table_to_add:
         merged_table.add_row(row)
+
+def add_generic_ids_if_needed(tbl):
+    """
+    Add numbered IDs if no IDs column is provided
+    """
+    if 'IDs' not in tbl.colnames:
+        tbl.add_column(table.Column(data=np.arange(len(tbl)), name='IDs'))
