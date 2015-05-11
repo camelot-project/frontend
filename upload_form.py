@@ -52,24 +52,37 @@ def index():
 @app.route('/upload', methods=['POST'])
 @app.route('/upload/<fileformat>', methods=['POST'])
 def upload_file(fileformat=None):
+    """
+    """
+
+    if 'fileformat' in request.form and fileformat is None:
+        fileformat = request.form['fileformat']
+    print "in /upload: fileformat={0}".format(fileformat)
+    print "in /upload: request.form: {0}".format(request.form)
+
     file = request.files['file']
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-    # print file_data
+        print "Before uploaded_file redirect, filename={0}, fileformat={1}".format(filename,fileformat)
         return redirect(url_for('uploaded_file',
                                 filename=filename,
                                 fileformat=fileformat))
     else:
         return render_template("upload_form.html", error="File type not supported")
 
-@app.route('/uploads/<filename>')
+@app.route('/uploads/<filename>/<fileformat>')
 def uploaded_file(filename, fileformat=None):
+    print "In uploaded_file, filename={0}, fileformat={1}".format(filename, fileformat)
+    print request.form
+    print request
     try:
         table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename),
                            format=fileformat)
+        print "Successfully read table with fileformat={0}".format(fileformat)
     except Exception as ex:
+        print "Did not read table with format={0}.  Trying to handle ambiguous version.".format(fileformat)
         return handle_ambiguous_table(filename, ex)
 
     best_matches = {difflib.get_close_matches(vcn, table.colnames,  n=1,
@@ -86,11 +99,15 @@ def uploaded_file(filename, fileformat=None):
     return render_template("parse_file.html", table=table, filename=filename,
                            real_column_names=valid_column_names,
                            best_column_names=best_column_names,
+                           fileformat=fileformat,
                           )
     #return send_from_directory(app.config['UPLOAD_FOLDER'],
     #                           filename)
 
 def handle_ambiguous_table(filename, exception):
+    """
+    Deal with an uploaded file that doesn't autodetect
+    """
     extension = os.path.splitext(filename)[-1]
     best_match = difflib.get_close_matches(extension[1:], table_formats, n=1, cutoff=0.05)
     if any(best_match):
@@ -143,6 +160,14 @@ def autocomplete_column_names():
 
 @app.route('/set_columns/<path:filename>', methods=['POST', 'GET'])
 def set_columns(filename, fileformat=None):
+    """
+    """
+
+    if fileformat is None and 'fileformat' in request.args:
+        fileformat = request.args['fileformat']
+
+    print "set_columns filename:{0}  fileformat:{1}".format(filename, fileformat)
+
     # This function needs to know about the filename or have access to the
     # table; how do we arrange that?
     table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename), format=fileformat)
