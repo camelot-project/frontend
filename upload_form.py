@@ -5,12 +5,10 @@ from astropy.io import fits
 from astropy.io import ascii
 from astropy import table
 from astropy import units as u
-from ingest_datasets_better import rename_columns, set_units, convert_units, add_name_column, add_generic_ids_if_needed, add_is_sim_if_needed
+from ingest_datasets_better import rename_columns, set_units, convert_units, add_name_column, add_generic_ids_if_needed, add_is_sim_if_needed, fix_bad_types
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
 from simple_plot import plotData, timeString
-from wtforms.validators import ValidationError
-import wtforms
 from werkzeug import secure_filename
 import difflib
 
@@ -72,6 +70,7 @@ def upload_file(fileformat=None):
     else:
         return render_template("upload_form.html", error="File type not supported")
 
+@app.route('/uploads/<filename>')
 @app.route('/uploads/<filename>/<fileformat>')
 def uploaded_file(filename, fileformat=None):
     print "In uploaded_file, filename={0}, fileformat={1}".format(filename, fileformat)
@@ -189,6 +188,7 @@ def set_columns(filename, fileformat=None):
     rename_columns(table, {k: v['Name'] for k,v in column_data.items()})
     # print 'renamed columns?:', table
     set_units(table, units_data)
+    table = fix_bad_types(table)
     print(table)
     convert_units(table)
     print(table)

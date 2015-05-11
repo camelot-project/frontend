@@ -40,6 +40,16 @@ def rename_columns(tbl, mapping = {'name':'Names', 'id':'IDs',
             elif k != v:
                 tbl.rename_column(k,v)
 
+def fix_bad_types(tbl):
+    columns = []
+    for columnname, column in tbl.columns.items():
+        try:
+            col = Column(data=column.astype('float'), name=column.name)
+            columns.append(col)
+        except:
+            columns.append(column)
+    return Table(columns)
+
 def set_units(tbl, units={'SurfaceDensity':u.M_sun/u.pc**2,
                           'VelocityDispersion':u.km/u.s,
                           'Radius':u.pc}):
@@ -51,7 +61,9 @@ def set_units(tbl, units={'SurfaceDensity':u.M_sun/u.pc**2,
         if k not in tbl.colnames:
             raise KeyError("{0} not in table: run `rename_columns` first.".format(k))
         #DEBUG print 'BEFORE unit for',k,":",tbl[k].unit
-        tbl[k].unit = v
+        if v:
+            # only set units if there is a unit to be specified
+            tbl[k].unit = v
         #DEBUG print 'AFTER  unit for',k,":",tbl[k].unit
 
 def convert_units(tbl, units={'SurfaceDensity':u.M_sun/u.pc**2,
