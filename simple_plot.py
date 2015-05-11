@@ -44,7 +44,7 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     SurfDens = d['SurfaceDensity']
     VDisp = d['VelocityDispersion']
     Rad = d['Radius']
-    IsSim = (d['IsSimulated'] == 'True')
+    IsSim = d['IsSimulated']
     
     UseSurf = (SurfDens > SurfMin) & (SurfDens < SurfMax)
     UseVDisp = (VDisp > VDispMin) & (VDisp < VDispMax)
@@ -55,6 +55,13 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     
     UniqueAuthor = set(Author[Use])
     NUniqueAuthor = len(UniqueAuthor)
+    
+    print d
+    print d[Use]
+    print UniqueAuthor
+    print IsSim
+    print IsSim & Use
+    print d['IsSimulated']
     
     #colors = random.sample(matplotlib.colors.cnames, NUniqueAuthor)
     colors = list(plt.cm.jet(np.linspace(0,1,NUniqueAuthor)))

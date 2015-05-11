@@ -50,7 +50,9 @@ def set_units(tbl, units={'SurfaceDensity':u.M_sun/u.pc**2,
     for k,v in units.items():
         if k not in tbl.colnames:
             raise KeyError("{0} not in table: run `rename_columns` first.".format(k))
+        #DEBUG print 'BEFORE unit for',k,":",tbl[k].unit
         tbl[k].unit = v
+        #DEBUG print 'AFTER  unit for',k,":",tbl[k].unit
 
 def convert_units(tbl, units={'SurfaceDensity':u.M_sun/u.pc**2,
                           'VelocityDispersion':u.km/u.s,
@@ -62,7 +64,7 @@ def convert_units(tbl, units={'SurfaceDensity':u.M_sun/u.pc**2,
     for k,v in units.items():
         if k not in tbl.colnames:
             raise KeyError("{0} not in table: run `rename_columns` first.".format(k))
-        tbl[k].unit = tbl[k].unit.to(v)
+        tbl[k] = tbl[k].to(v)
 
 def add_name_column(tbl, name):
     """
@@ -83,3 +85,10 @@ def add_generic_ids_if_needed(tbl):
     """
     if 'IDs' not in tbl.colnames:
         tbl.add_column(table.Column(data=np.arange(len(tbl)), name='IDs'))
+
+def add_is_sim_if_needed(tbl, is_sim=True):
+    """
+    Add is_sim if no is_sim column is provided
+    """
+    if 'IsSimulated' not in tbl.colnames:
+        tbl.add_column(table.Column(data=[is_sim]*(len(tbl)), name='IsSimulated'))

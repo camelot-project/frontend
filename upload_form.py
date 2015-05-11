@@ -5,7 +5,7 @@ from astropy.io import fits
 from astropy.io import ascii
 from astropy import table
 from astropy import units as u
-from ingest_datasets_better import rename_columns, set_units, convert_units, add_name_column, add_generic_ids_if_needed
+from ingest_datasets_better import rename_columns, set_units, convert_units, add_name_column, add_generic_ids_if_needed, add_is_sim_if_needed
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
 from simple_plot import plotData, timeString
@@ -152,25 +152,28 @@ def set_columns(filename, fileformat=None):
     for field,value in request.form.items():
         if '_units' in field:
             column_data[field[:-6]]['unit'] = value
-    # print column_data
+    print "column_data: ",column_data
     
     units_data = {}
     for _, pair in column_data.items():
         if pair['Name'] != "Ignore":
             units_data[pair['Name']] = pair['unit']
 
-    # print 'units_data:', units_data    
+    print 'units_data:', units_data    
     # print table
     rename_columns(table, {k: v['Name'] for k,v in column_data.items()})
     # print 'renamed columns?:', table
     set_units(table, units_data)
+    print(table)
     convert_units(table)
+    print(table)
     # print 'units are set?:', table
     add_name_column(table, 'TEST - REPLACE')
     add_generic_ids_if_needed(table)
-    myplot = plotData(timeString(), table, 'figures/'+filename)
+    add_is_sim_if_needed(table)
+    myplot = plotData(timeString(), table, 'static/figures/'+filename)
 
-    return render_template('show_plot.html', imagename='figures/'+myplot)
+    return render_template('show_plot.html', imagename='/'+myplot)#url_for('static',filename='figures/'+myplot))
 
 
 
