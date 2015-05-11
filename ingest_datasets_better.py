@@ -41,6 +41,9 @@ def rename_columns(tbl, mapping = {'name':'Names', 'id':'IDs',
                 tbl.rename_column(k,v)
 
 def fix_bad_types(tbl):
+    """
+    For all columns that *can* be converted to float, convert them to float
+    """
     columns = []
     for columnname, column in tbl.columns.items():
         try:
