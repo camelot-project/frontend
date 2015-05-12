@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{{ super() }}    
+<title>PLOT </title>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+{% block body %}
+
+This is a page with a figure
+<br>
+imagename = {{imagename}}
+<img src="{{imagename}}" width=800>
+
+
+{% endblock %}
