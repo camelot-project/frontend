@@ -203,7 +203,8 @@ def set_columns(filename, fileformat=None):
 
     # This function needs to know about the filename or have access to the
     # table; how do we arrange that?
-    table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename), format=fileformat)
+    table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename),
+                       format=fileformat)
     
     column_data = \
         {field:{'Name':value} for field,value in request.form.items() if '_units' not in field}
@@ -225,6 +226,8 @@ def set_columns(filename, fileformat=None):
     add_name_column(table, 'TEST - REPLACE')
     add_generic_ids_if_needed(table)
     add_is_sim_if_needed(table)
+    if not os.path.isdir('static/figures/'):
+        os.mkdir('static/figures')
     myplot = plotData(timeString(), table, 'static/figures/'+filename)
 
     return render_template('show_plot.html', imagename='/'+myplot)#url_for('static',filename='figures/'+myplot))
