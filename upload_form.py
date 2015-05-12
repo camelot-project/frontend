@@ -22,7 +22,8 @@ from astropy import table
 from astropy import units as u
 from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     add_name_column, add_generic_ids_if_needed,
-                                    add_is_sim_if_needed, fix_bad_types)
+                                    add_is_sim_if_needed, fix_bad_types,
+                                    reorder_columns, append_table)
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
 from simple_plot import plotData, timeString
@@ -193,8 +194,6 @@ def set_columns(filename, fileformat=None):
     Then, assigns units and column information and does all the proper file
     ingestion work.
 
-    As of this commit, does not merge with a main table - that's the most
-    important next step (Simon)
     """
 
     if fileformat is None and 'fileformat' in request.args:
@@ -223,12 +222,26 @@ def set_columns(filename, fileformat=None):
     print(table)
     convert_units(table)
     add_name_column(table, column_data.get('Username')['Name'])
-    print(table)
     add_generic_ids_if_needed(table)
     add_is_sim_if_needed(table)
+
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
     myplot = plotData(timeString(), table, 'static/figures/'+filename)
+
+# If merged table already exists, then append the new entries.
+# Otherwise, create the table
+
+    merged_table_name = os.path.join(app.config['UPLOAD_FOLDER'], 'merged_table.ipac')
+    if os.path.isfile(merged_table_name):
+        merged_table = Table.read(merged_table_name, format='ascii.ipac')
+    else:
+        raise Exception("Can't find merged_table.ipac!")
+#        merged_table = Table(data=None,
+#                       names=['Names','IDs','SurfaceDensity','VelocityDispersion','Radius','IsSimulated'])
+    reorder_columns(table, merged_table.colnames)
+    append_table(merged_table, table)
+    Table.write(merged_table, merged_table_name, format='ascii.ipac')
 
     return render_template('show_plot.html', imagename='/'+myplot)#url_for('static',filename='figures/'+myplot))
 
