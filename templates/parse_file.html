@@ -38,6 +38,7 @@ $(document).ready(function(){
                 <thead><tr><th>File Column Name</th><th>Real Column Name</th><th>Units</th></tr></thead>
                 <tbody>
                 <tr><td>  <input type="checkbox" name="issimulated" value="IsSimulated">Is simulated? </td></tr>
+                <tr><td>  <input type="" name="Username" value="Username"></td> <td>Username? </td></tr>
                 
                 {% for column_name,best_column_name in zip(table.colnames, best_column_names) %}
                 <tr>

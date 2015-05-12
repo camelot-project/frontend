@@ -32,7 +32,7 @@ import difflib
 UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
-                      'Radius', 'IsSimulated']
+                      'Radius', 'IsSimulated', 'Username']
 
 from astropy.io import registry
 from astropy.table import Table
@@ -213,7 +213,7 @@ def set_columns(filename, fileformat=None):
     
     units_data = {}
     for _, pair in column_data.items():
-        if pair['Name'] != "Ignore" and pair['Name'] != "IsSimulated":
+        if pair['Name'] != "Ignore" and pair['Name'] != "IsSimulated" and pair['Name'] != "Username":
             units_data[pair['Name']] = pair['unit']
 
     rename_columns(table, {k: v['Name'] for k,v in column_data.items()})
