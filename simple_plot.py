@@ -17,7 +17,7 @@ plt.rcParams['figure.figsize'] = (12,8)
 
 def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
              SurfMax=1e5*u.M_sun/u.pc**2, VDispMin=1e-1*u.km/u.s,
-             VDispMax=3e2*u.km/u.s, RadMin=1e-2*u.pc, RadMax=1e3*u.pc,):
+             VDispMax=3e2*u.km/u.s, RadMin=1e-2*u.pc, RadMax=1e3*u.pc):
 
     """
     This is where documentation needs to be added
@@ -61,6 +61,7 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     UniqueAuthor = set(Author[Use])
     NUniqueAuthor = len(UniqueAuthor)
 
+
     #print d
     #print d[Use]
     #print 'Authors:', UniqueAuthor
@@ -78,21 +79,25 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
         ObsPlot = ((Author == iAu) & (~IsSim)) & Use
         SimPlot = ((Author == iAu) & (IsSim)) & Use
         if any(ObsPlot):
-            ax.scatter(SurfDens[ObsPlot], VDisp[ObsPlot], marker=markers[0],
-                        s=(np.log(np.array(Rad[ObsPlot]))-np.log(np.array(RadMin))+0.5)**3.,
+            ax.scatter(np.log10(SurfDens[ObsPlot]), np.log10(VDisp[ObsPlot]),
+                        marker=markers[0],
+                        s=(np.log10(np.array(Rad[ObsPlot]))-np.log10(RadMin.value)+0.5)**3.,
                         color=color, alpha=0.5)
         if any(SimPlot):
-            ax.scatter(SurfDens[SimPlot], VDisp[SimPlot], marker=markers[1],
-                        s=(np.log(np.array(Rad[SimPlot]))-np.log(np.array(RadMin))+0.5)**3.,
+            ax.scatter(np.log10(SurfDens[SimPlot]), np.log10(VDisp[SimPlot]),
+                        marker=markers[1],
+                        s=(np.log10(np.array(Rad[SimPlot]))-np.log10(RadMin.value)+0.5)**3.,
                         color=color, alpha=0.5)
     if any(Obs):
-        ax.scatter(SurfDens[Obs], VDisp[Obs], marker=markers[0],
-                    s=(np.log(np.array(Rad[Obs]))-np.log(np.array(RadMin))+0.5)**3.,
+        ax.scatter(np.log10(SurfDens[Obs]), np.log10(VDisp[Obs]),
+                    marker=markers[0],
+                    s=(np.log10(np.array(Rad[Obs]))-np.log10(RadMin.value)+0.5)**3.,
                     facecolors='none', edgecolors='black',
                     alpha=0.5)
     if any(Sim):
-        ax.scatter(SurfDens[Sim], VDisp[Sim], marker=markers[1],
-                    s=(np.log(np.array(Rad[Sim]))-np.log(np.array(RadMin))+0.5)**3.,
+        ax.scatter(np.log10(SurfDens[Sim]), np.log10(VDisp[Sim]),
+                    marker=markers[1],
+                    s=(np.log10(np.array(Rad[Sim]))-np.log10(RadMin.value)+0.5)**3.,
                     facecolors='none', edgecolors='black',
                     alpha=0.5)
     ax.set_xlabel('$\Sigma$ [M$_{\odot}$ pc$^{-2}$]', fontsize=16)
@@ -101,16 +106,18 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
 
-    ax.set_xlim((SurfMin.to(u.M_sun/u.pc**2).value,SurfMax.to(u.M_sun/u.pc**2).value))
-    ax.set_ylim((VDispMin.to(u.km/u.s).value,VDispMax.to(u.km/u.s).value))
+    ax.set_xlim((np.log10(SurfMin.to(u.M_sun/u.pc**2).value),
+                 np.log10(SurfMax.to(u.M_sun/u.pc**2).value)))
+    ax.set_ylim((np.log10(VDispMin.to(u.km/u.s).value),
+                 np.log10(VDispMax.to(u.km/u.s).value)))
 
     # Put a legend to the right of the current axis
     ax.legend(UniqueAuthor, loc='center left', bbox_to_anchor=(1.0, 0.5),
               prop={'size':12}, markerscale = .7, scatterpoints = 1)
 
     html = mpld3.fig_to_html(figure)
-    with open(FigureStrBase+NQuery+'.html','w') as f:
-       f.write(html)
+    # with open(FigureStrBase+NQuery+'.html','w') as f:
+    #    f.write(html)
 
     # plt.show()
     # figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
