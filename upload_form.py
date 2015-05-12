@@ -222,8 +222,8 @@ def set_columns(filename, fileformat=None):
     table = fix_bad_types(table)
     print(table)
     convert_units(table)
+    add_name_column(table, column_data.get('Username')['Name'])
     print(table)
-    add_name_column(table, 'TEST - REPLACE')
     add_generic_ids_if_needed(table)
     add_is_sim_if_needed(table)
     if not os.path.isdir('static/figures/'):
