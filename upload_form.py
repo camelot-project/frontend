@@ -180,7 +180,8 @@ def set_columns(filename, fileformat=None):
     
     units_data = {}
     for _, pair in column_data.items():
-        if pair['Name'] != "Ignore":
+        print "Pair Name", pair['Name']
+        if pair['Name'] != "Ignore" and pair['Name'] != "IsSimulated":
             units_data[pair['Name']] = pair['unit']
 
     print 'units_data:', units_data    
