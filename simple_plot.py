@@ -11,15 +11,14 @@ import astropy
 from astropy.io import fits
 from astropy import units as u
 from astropy import table
-#import bokeh.mpl
-#import mpld3
+import mpld3
 import pdb
 plt.rcParams['figure.figsize'] = (12,8)
 
 def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
              SurfMax=1e5*u.M_sun/u.pc**2, VDispMin=1e-1*u.km/u.s,
              VDispMax=3e2*u.km/u.s, RadMin=1e-2*u.pc, RadMax=1e3*u.pc,):
- 
+
     """
     This is where documentation needs to be added
 
@@ -36,12 +35,11 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     RadMin
     RadMax
     """
-    
+
     figure = plt.figure(1)
     figure.clf()
     ax = figure.gca()
 
-    # d = table.Table.read("merged_table.ipac", format='ascii.ipac')
     d = table
     Author = d['Names']
     Run = d['IDs']
@@ -52,30 +50,32 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
         IsSim = d['IsSimulated']
     else:
         IsSim = d['IsSimulated'] == 'True'
-    
+
     UseSurf = (SurfDens > SurfMin) & (SurfDens < SurfMax)
     UseVDisp = (VDisp > VDispMin) & (VDisp < VDispMax)
     UseRad = (Rad > RadMin) & (Rad < RadMax)
     Use = UseSurf & UseVDisp & UseRad
     Obs = (~IsSim) & Use
     Sim = IsSim & Use
-    
+
     UniqueAuthor = set(Author[Use])
     NUniqueAuthor = len(UniqueAuthor)
-    
+
     #print d
     #print d[Use]
     #print 'Authors:', UniqueAuthor
-    
+
     #colors = random.sample(matplotlib.colors.cnames, NUniqueAuthor)
     colors = list(plt.cm.jet(np.linspace(0,1,NUniqueAuthor)))
     random.shuffle(colors)
-    
-    ax.loglog()
+
+    # NOTE this does NOT work with mpld3
+    # ax.loglog()
+
     markers = ['o','s']
     for iAu,color in zip(UniqueAuthor,colors) :
         UsePlot = (Author == iAu) & Use
-        ObsPlot = ((Author == iAu) & (~IsSim)) & Use 
+        ObsPlot = ((Author == iAu) & (~IsSim)) & Use
         SimPlot = ((Author == iAu) & (IsSim)) & Use
         if any(ObsPlot):
             ax.scatter(SurfDens[ObsPlot], VDisp[ObsPlot], marker=markers[0],
@@ -101,42 +101,51 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
 
-    #html = bokeh.mpl.to_bokeh(fig=figure, name=FigureStrBase+NQuery)
-    #html = mpld3.fig_to_html(figure)
-    #with open(FigureStrBase+NQuery+'.html','w') as f:
-    #    f.write(html)
-
     ax.set_xlim((SurfMin.to(u.M_sun/u.pc**2).value,SurfMax.to(u.M_sun/u.pc**2).value))
     ax.set_ylim((VDispMin.to(u.km/u.s).value,VDispMax.to(u.km/u.s).value))
 
     # Put a legend to the right of the current axis
-    ax.legend(UniqueAuthor, loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size':12}, markerscale = .7, scatterpoints = 1)
+    ax.legend(UniqueAuthor, loc='center left', bbox_to_anchor=(1.0, 0.5),
+              prop={'size':12}, markerscale = .7, scatterpoints = 1)
 
-    plt.show()
-    figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
-    figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
+    html = mpld3.fig_to_html(figure)
+    with open(FigureStrBase+NQuery+'.html','w') as f:
+       f.write(html)
+
+    # plt.show()
+    # figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
+    # figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
     return FigureStrBase+NQuery+'.png', html
-    
+
 def clearPlotOutput(FigureStrBase,TooOld) :
-    
+
     for fl in glob.glob(FigureStrBase+"*.png") + glob.glob(FigureStrBase+"*.pdf"):
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
-    
+
 def timeString() :
-    
+
     TimeString=datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
     return TimeString
 
-# NQuery=timeString()
-# FigureStrBase='Output_Sigma_sigma_r_'
-# TooOld=300
-# 
-# clearPlotOutput(FigureStrBase,TooOld)
-# 
-# plotData(NQuery,FigureStrBase,SurfMin,SurfMax,VDispMin,VDispMax,RadMin,RadMax)
-# 
-# #d.show_in_browser(jsviewer=True)
-# 
-# 
+if __name__ == "__main__":
+
+    SurfMin = 1e-1*u.M_sun/u.pc**2
+    SurfMax = 1e5*u.M_sun/u.pc**2
+    VDispMin = 1e-1*u.km/u.s
+    VDispMax = 3e2*u.km/u.s
+    RadMin = 1e-2*u.pc
+    RadMax = 1e3*u.pc
+
+    NQuery=timeString()
+    FigureStrBase='Output_Sigma_sigma_r_'
+    TooOld=300
+
+    clearPlotOutput(FigureStrBase,TooOld)
+
+    d = table.Table.read("/Users/eric/Dropbox/Florence-Workshop/hands_on_before_Florence_yay/merged_table.ipac", format='ascii.ipac')
+
+    html = plotData(NQuery,d, FigureStrBase,SurfMin,SurfMax,VDispMin,VDispMax,RadMin,RadMax)
+
+    # d.show_in_browser(jsviewer=True)
