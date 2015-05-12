@@ -206,7 +206,6 @@ def set_columns(filename, fileformat=None):
     table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename),
                        format=fileformat)
     
-    print "In set_columns, request.form: ", request.form
     column_data = \
         {field:{'Name':value} for field,value in request.form.items() if '_units' not in field}
     for field,value in request.form.items():
