@@ -241,7 +241,7 @@ def set_columns(filename, fileformat=None):
                        'VelocityDispersion','Radius','IsSimulated'], dtype=[('str', 64),('str', 64),'float','float','float','bool'])
         set_units(merged_table, units_data)
 
-    reorder_columns(table, merged_table.colnames)
+    table = reorder_columns(table, merged_table.colnames)
     append_table(merged_table, table)
     Table.write(merged_table, merged_table_name, format='ascii.ipac')
 
