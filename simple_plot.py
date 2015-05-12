@@ -112,7 +112,7 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
                         s=(np.log10(np.array(Rad[ObsPlot]))-np.log10(RadMin.value)+0.5)**3.,
                         color=color, alpha=0.5))
 
-            for row in table[ObsPlot]:
+            for row in d[ObsPlot]:
                 labels.append(" ".join(table[ObsPlot].pformat(html=True)))
 
         if any(SimPlot):
