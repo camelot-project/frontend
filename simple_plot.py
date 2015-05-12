@@ -129,18 +129,18 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
                 labels.append("\n ".join(row_html))
 
     if any(Obs):
-        scatters.append(ax.scatter(np.log10(SurfDens[Obs]), np.log10(VDisp[Obs]),
+        ax.scatter(np.log10(SurfDens[Obs]), np.log10(VDisp[Obs]),
                     marker=markers[0],
                     s=(np.log10(np.array(Rad[Obs]))-np.log10(RadMin.value)+0.5)**3.,
                     facecolors='none', edgecolors='black',
-                    alpha=0.5))
+                    alpha=0.5)
 
     if any(Sim):
-        scatters.append(ax.scatter(np.log10(SurfDens[Sim]), np.log10(VDisp[Sim]),
+        ax.scatter(np.log10(SurfDens[Sim]), np.log10(VDisp[Sim]),
                     marker=markers[1],
                     s=(np.log10(np.array(Rad[Sim]))-np.log10(RadMin.value)+0.5)**3.,
                     facecolors='none', edgecolors='black',
-                    alpha=0.5))
+                    alpha=0.5)
 
     ax.set_xlabel('$\Sigma$ [M$_{\odot}$ pc$^{-2}$]', fontsize=16)
     ax.set_ylabel('$\sigma$ [km s$^{-1}$]', fontsize=16)
