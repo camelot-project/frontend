@@ -19,6 +19,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.io import ascii
 from astropy import table
+from astropy.table.jsviewer import write_table_jsviewer
 from astropy import units as u
 from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     add_name_column, add_generic_ids_if_needed,
@@ -238,9 +239,11 @@ def set_columns(filename, fileformat=None):
     myplot = plotData(timeString(), table, 'static/figures/'+outfilename)
 
     tablecss = "table,th,td,tr,tbody {border: 1px solid black; border-collapse: collapse;}"
-    table.write('static/jstables/{fn}.html'.format(fn=outfilename),
-                format='jsviewer', css=tablecss,
-                jskwargs={'use_local_files':False}, table_id=outfilename)
+    write_table_jsviewer(table,
+                         'static/jstables/{fn}.html'.format(fn=outfilename),
+                         css=tablecss,
+                         jskwargs={'use_local_files':False},
+                         table_id=outfilename)
 
     return render_template('show_plot.html', imagename='/'+myplot,
                            tablefile='{fn}.html'.format(fn=outfilename))
