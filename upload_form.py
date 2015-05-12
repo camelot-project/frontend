@@ -213,8 +213,8 @@ def set_columns(filename, fileformat=None):
             column_data[field[:-6]]['unit'] = value
     
     units_data = {}
-    for _, pair in column_data.items():
-        if pair['Name'] != "Ignore" and pair['Name'] != "IsSimulated" and pair['Name'] != "Username":
+    for key, pair in column_data.items():
+        if pair['Name'] != "Ignore" and pair['Name'] != "IsSimulated" and key != "Username":
             units_data[pair['Name']] = pair['unit']
 
     rename_columns(table, {k: v['Name'] for k,v in column_data.items()})
