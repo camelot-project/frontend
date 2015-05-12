@@ -33,6 +33,8 @@ UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated', 'Username']
+use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
+use_units = ['Msun/pc^2','km/s','pc']
 
 from astropy.io import registry
 from astropy.table import Table
@@ -252,6 +254,29 @@ def upload_to_github(filename):
 
     requests.post
     pass
+
+
+@app.route('/query_form')
+def query_form():
+    
+    filename = "merged_table.ipac"
+    table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename), format='ascii.ipac')
+    
+    usetable = table[use_column_names]
+    
+    best_matches = {difflib.get_close_matches(vcn, usetable.colnames,  n=1,
+                                              cutoff=0.4)[0]: vcn
+                    for vcn in use_column_names
+                    if any(difflib.get_close_matches(vcn, usetable.colnames, n=1, cutoff=0.4))
+                   }
+
+    best_column_names = [best_matches[colname] if colname in best_matches else 'Ignore'
+                         for colname in usetable.colnames]
+
+    return render_template("query_form.html", table=table, usetable=usetable, use_units=use_units, filename=filename,
+                           use_column_names=use_column_names,
+                           best_column_names=best_column_names,
+                          )
 
 if __name__ == '__main__':
     app.run(debug=True)
