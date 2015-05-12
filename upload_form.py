@@ -77,15 +77,12 @@ def upload_file(fileformat=None):
 
     if 'fileformat' in request.form and fileformat is None:
         fileformat = request.form['fileformat']
-    print "in /upload: fileformat={0}".format(fileformat)
-    print "in /upload: request.form: {0}".format(request.form)
 
     file = request.files['file']
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-        print "Before uploaded_file redirect, filename={0}, fileformat={1}".format(filename,fileformat)
         return redirect(url_for('uploaded_file',
                                 filename=filename,
                                 fileformat=fileformat))
@@ -177,10 +174,8 @@ def autocomplete_filetypes():
     """
     Autocompletion for filetypes.  Used, but presently not working.  =(
     """
-    #print formats
     search = request.args.get('term')
     readable_formats = table_formats[table_formats['Read']=='Yes']['Format']
-    #print readable_formats
     return jsonify(json_list=list(readable_formats))
 
 @app.route('/autocomplete_column_names',methods=['GET'])
@@ -205,7 +200,6 @@ def set_columns(filename, fileformat=None):
     if fileformat is None and 'fileformat' in request.args:
         fileformat = request.args['fileformat']
 
-    print "set_columns filename:{0}  fileformat:{1}".format(filename, fileformat)
 
     # This function needs to know about the filename or have access to the
     # table; how do we arrange that?
@@ -216,23 +210,18 @@ def set_columns(filename, fileformat=None):
     for field,value in request.form.items():
         if '_units' in field:
             column_data[field[:-6]]['unit'] = value
-    print "column_data: ",column_data
     
     units_data = {}
     for _, pair in column_data.items():
         if pair['Name'] != "Ignore":
             units_data[pair['Name']] = pair['unit']
 
-    print 'units_data:', units_data    
-    # print table
     rename_columns(table, {k: v['Name'] for k,v in column_data.items()})
-    # print 'renamed columns?:', table
     set_units(table, units_data)
     table = fix_bad_types(table)
     print(table)
     convert_units(table)
     print(table)
-    # print 'units are set?:', table
     add_name_column(table, 'TEST - REPLACE')
     add_generic_ids_if_needed(table)
     add_is_sim_if_needed(table)
