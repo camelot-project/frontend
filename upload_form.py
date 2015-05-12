@@ -233,16 +233,16 @@ def set_columns(filename, fileformat=None):
     else:
         add_is_sim_if_needed(table, True)
 
-# If merged table already exists, then append the new entries.
-# Otherwise, create the table
+    # If merged table already exists, then append the new entries.
+    # Otherwise, create the table
 
     merged_table_name = os.path.join(app.config['UPLOAD_FOLDER'], 'merged_table.ipac')
     if os.path.isfile(merged_table_name):
-        merged_table = Table.read(merged_table_name, format='ascii.ipac')
+        merged_table = Table.read(merged_table_name, converters={'Names': [ascii.convert_numpy('S64')], 'IDs': [ascii.convert_numpy('S64')]}, format='ascii.ipac')
     else:
-# Maximum strength length of 64 for username, ID -- larger strings are silently truncated
-# TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
-#       and verify that submitted data obeys these limits
+    # Maximum string length of 64 for username, ID -- larger strings are silently truncated
+    # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
+    #       and verify that submitted data obeys these limits
         merged_table = Table(data=None, names=['Names','IDs','SurfaceDensity',
                        'VelocityDispersion','Radius','IsSimulated'], dtype=[('str', 64),('str', 64),'float','float','float','bool'])
         set_units(merged_table)
