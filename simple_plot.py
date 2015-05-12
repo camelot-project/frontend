@@ -66,11 +66,8 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
         from matplotlib import pyplot
         from matplotlib import _pylab_helpers
         backend = getattr(matplotlib.backends, 'backend_{0}'.format(matplotlib.rcParams['backend']).lower())
-        # backend = getattr(matplotlib.backends, 'backend')
         canvas = backend.FigureCanvas(figure)
         figmanager = backend.FigureManager(canvas, 1)
-        # canvas = matplotlib.backend_bases.FigureCanvas(figure)
-        # figmanager = matplotlib.backend_bases.FigureManagerBase(canvas, 1)
         figmanager.canvas.figure.number = 1
         _pylab_helpers.Gcf.set_active(figmanager)
     else:
