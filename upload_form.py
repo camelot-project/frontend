@@ -1,3 +1,18 @@
+"""
+This is the main python tool (the "backend") for uploading, processing, and
+ingesting data files.  It will call the plotter to make plots too.
+
+You can start up the web server with:
+
+    python upload_form.py
+
+Please try to keep lines to 80 characters where possible
+
+Print statements will show up in the terminal.  Feel free to use them for
+debugging, but try to remove them when you're done.
+
+"""
+from __future__ import print_function
 import os
 import inspect
 import numpy as np
@@ -5,7 +20,9 @@ from astropy.io import fits
 from astropy.io import ascii
 from astropy import table
 from astropy import units as u
-from ingest_datasets_better import rename_columns, set_units, convert_units, add_name_column, add_generic_ids_if_needed, add_is_sim_if_needed, fix_bad_types
+from ingest_datasets_better import (rename_columns, set_units, convert_units,
+                                    add_name_column, add_generic_ids_if_needed,
+                                    add_is_sim_if_needed, fix_bad_types)
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
 from simple_plot import plotData, timeString
@@ -33,14 +50,17 @@ env.globals.update(zip=zip)
 # http://stackoverflow.com/questions/21306134/iterating-over-multiple-lists-in-python-flask-jinja2-templates
 @app.template_global(name='zip')
 def _zip(*args, **kwargs): #to not overwrite builtin zip in globals
+    """ This function allows the use of "zip" in jinja2 templates """
     return __builtins__.zip(*args, **kwargs)
 
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+    """
+    For a given filename, check if it is in the allowed set of file types
+    """
+    return ('.' in filename and filename.rsplit('.', 1)[1] in
+            ALLOWED_EXTENSIONS)
 
 def get_file_extension(filename):
-    print 'filename:', filename
     return filename.rsplit('.', 1)[1]
 
 @app.route('/')
@@ -51,6 +71,8 @@ def index():
 @app.route('/upload/<fileformat>', methods=['POST'])
 def upload_file(fileformat=None):
     """
+    Main upload form.  Accepts a posted file object (which is accessed via
+    request.files) and an optional file format.
     """
 
     if 'fileformat' in request.form and fileformat is None:
@@ -73,15 +95,17 @@ def upload_file(fileformat=None):
 @app.route('/uploads/<filename>')
 @app.route('/uploads/<filename>/<fileformat>')
 def uploaded_file(filename, fileformat=None):
-    print "In uploaded_file, filename={0}, fileformat={1}".format(filename, fileformat)
-    print request.form
-    print request
+    """
+    Handle an uploaded file.  Takes a filename, which points to a file on disk
+    in the UPLOAD_FOLDER directory, and an optional file format.
+
+    If this fails, it will load the ambiguous file format loader
+    """
     try:
         table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename),
                            format=fileformat)
-        print "Successfully read table with fileformat={0}".format(fileformat)
     except Exception as ex:
-        print "Did not read table with format={0}.  Trying to handle ambiguous version.".format(fileformat)
+        print("Did not read table with format={0}.  Trying to handle ambiguous version.".format(fileformat))
         return handle_ambiguous_table(filename, ex)
 
     best_matches = {difflib.get_close_matches(vcn, table.colnames,  n=1,
@@ -89,11 +113,9 @@ def uploaded_file(filename, fileformat=None):
                     for vcn in valid_column_names
                     if any(difflib.get_close_matches(vcn, table.colnames, n=1, cutoff=0.4))
                    }
-    print best_matches
 
     best_column_names = [best_matches[colname] if colname in best_matches else 'Ignore'
                          for colname in table.colnames]
-    print 'best_column_names:', best_column_names
 
     return render_template("parse_file.html", table=table, filename=filename,
                            real_column_names=valid_column_names,
@@ -121,9 +143,11 @@ def handle_ambiguous_table(filename, exception):
 
 @app.route('/autocomplete_units',methods=['GET'])
 def autocomplete_units():
+    """
+    Autocompletion for units.  NOT USED ANY MORE.
+    """
     search = request.args.get('term')
-    print "search: ",search
-    # print os.getcwd()
+
     allunits = set()
     for unitname,unit in inspect.getmembers(u):
         if isinstance(unit, u.UnitBase):
@@ -137,6 +161,9 @@ def autocomplete_units():
 
 @app.route('/validate_units', methods=['GET', 'POST'])
 def validate_units():
+    """
+    Validate the units: try to interpret the passed string as an astropy unit. 
+    """
     try:
         unit_str = request.args.get('unit_str', 'error', type=str)
         u.Unit(unit_str)
@@ -147,6 +174,9 @@ def validate_units():
 
 @app.route('/autocomplete_filetypes',methods=['GET'])
 def autocomplete_filetypes():
+    """
+    Autocompletion for filetypes.  Used, but presently not working.  =(
+    """
     #print formats
     search = request.args.get('term')
     readable_formats = table_formats[table_formats['Read']=='Yes']['Format']
@@ -155,11 +185,21 @@ def autocomplete_filetypes():
 
 @app.route('/autocomplete_column_names',methods=['GET'])
 def autocomplete_column_names():
+    """
+    NOT USED
+    """
     return jsonify(json_list=valid_column_names)
 
 @app.route('/set_columns/<path:filename>', methods=['POST', 'GET'])
 def set_columns(filename, fileformat=None):
     """
+    Meat of the program: takes the columns from the input table and matches
+    them to the columns provided by the user in the column form.
+    Then, assigns units and column information and does all the proper file
+    ingestion work.
+
+    As of this commit, does not merge with a main table - that's the most
+    important next step (Simon)
     """
 
     if fileformat is None and 'fileformat' in request.args:
