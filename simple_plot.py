@@ -4,7 +4,6 @@ import numpy as np
 import scipy
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pylab as plt
 import datetime
 import time
 import random
@@ -14,11 +13,12 @@ from astropy import units as u
 from astropy import table
 #import bokeh.mpl
 #import mpld3
-plt.rcParams['figure.figsize'] = (12,8)
+matplotlib.rcParams['figure.figsize'] = (12,8)
 
 def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
              SurfMax=1e5*u.M_sun/u.pc**2, VDispMin=1e-1*u.km/u.s,
-             VDispMax=3e2*u.km/u.s, RadMin=1e-2*u.pc, RadMax=1e3*u.pc,):
+             VDispMax=3e2*u.km/u.s, RadMin=1e-2*u.pc, RadMax=1e3*u.pc,
+             interactive=True):
  
     """
     This is where documentation needs to be added
@@ -37,7 +37,7 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     RadMax
     """
     
-    figure = plt.figure(1)
+    figure = matplotlib.figure.Figure(1)
     figure.clf()
     ax = figure.gca()
 
@@ -68,7 +68,7 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     #print 'Authors:', UniqueAuthor
     
     #colors = random.sample(matplotlib.colors.cnames, NUniqueAuthor)
-    colors = list(plt.cm.jet(np.linspace(0,1,NUniqueAuthor)))
+    colors = list(matplotlib.cm.jet(np.linspace(0,1,NUniqueAuthor)))
     random.shuffle(colors)
     
     ax.loglog()
@@ -112,10 +112,15 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     # Put a legend to the right of the current axis
     ax.legend(UniqueAuthor, loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size':12}, markerscale = .7, scatterpoints = 1)
 
-    plt.show()
     figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
     figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
-    return FigureStrBase+NQuery+'.png'#, html, html_bokeh
+
+    if interactive:
+        from matplotlib import pyplot as plt
+        plt.ion()
+        plt.show()
+
+    return FigureStrBase+NQuery+'.png'
     
 def clearPlotOutput(FigureStrBase,TooOld) :
     
