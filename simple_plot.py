@@ -95,12 +95,12 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     Obs = (~IsSim) & Use
     Sim = IsSim & Use
 
-    UniqueAuthor = list(set(Author[Use]))
+    UniqueAuthor = list(set(Author[Use]))[4]
     NUniqueAuthor = len(UniqueAuthor)
 
     #print d
     #print d[Use]
-    #print 'Authors:', UniqueAuthor
+    # print 'Authors:', UniqueAuthor
 
     #colors = random.sample(matplotlib.colors.cnames, NUniqueAuthor)
     colors = list(matplotlib.cm.jet(np.linspace(0,1,NUniqueAuthor)))
@@ -117,16 +117,18 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
         UsePlot = (Author == iAu) & Use
         ObsPlot = ((Author == iAu) & (~IsSim)) & Use
         SimPlot = ((Author == iAu) & (IsSim)) & Use
+
         if any(ObsPlot):
+            print iAu
             scatters.append(ax.scatter(np.log10(SurfDens[ObsPlot]), np.log10(VDisp[ObsPlot]),
                         marker=markers[0],
                         s=(np.log10(np.array(Rad[ObsPlot]))-np.log10(RadMin.value)+0.5)**3.,
                         color=color, alpha=0.5))
 
-            for row in d[ObsPlot]:
-                row_html = [str(j) for j in d[ObsPlot].pformat(html=True)]
-
-                labels.append("\n ".join(row_html))
+            # for row in d[ObsPlot]:
+            #     row_html = [str(j) for j in d[ObsPlot].pformat(html=True)]
+            #     labels.append("\n ".join(row_html))
+            labels = ['<h1>{title}</h1>'.format(title=i) for i in range(len(d[ObsPlot]))]
 
         if any(SimPlot):
             scatters.append(ax.scatter(np.log10(SurfDens[SimPlot]), np.log10(VDisp[SimPlot]),
@@ -134,10 +136,10 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
                         s=(np.log10(np.array(Rad[SimPlot]))-np.log10(RadMin.value)+0.5)**3.,
                         color=color, alpha=0.5))
 
-            for row in d[SimPlot]:
-                row_html = [str(j) for j in d[SimPlot].pformat(html=True)]
+            # for row in d[SimPlot]:
+            #     row_html = [str(j) for j in d[SimPlot].pformat(html=True)]
 
-                labels.append("\n ".join(row_html))
+            #     labels.append("\n ".join(row_html))
 
     if any(Obs):
         ax.scatter(np.log10(SurfDens[Obs]), np.log10(VDisp[Obs]),
@@ -167,19 +169,21 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     # ax.legend(UniqueAuthor, loc='center left', bbox_to_anchor=(1.0, 0.5),
     #           prop={'size':12}, markerscale = .7, scatterpoints = 1)
 
-    # tooltip = plugins.PointHTMLTooltip(scatters[0], labels,
-    #                                voffset=10, hoffset=10)
-    # plugins.connect(figure, tooltip)
+    labels = ['<h1>{title}</h1>'.format(title=i) for i in range(len(d))]
+
+    tooltip = plugins.PointHTMLTooltip(scatters[0], labels,
+                                   voffset=10, hoffset=10)
+    plugins.connect(figure, tooltip)
 
     # figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
     # figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
 
     if interactive:
-        from matplotlib import pyplot as plt
-        plt.ion()
-        plt.show()
+        # from matplotlib import pyplot as plt
+        # plt.ion()
+        # plt.show()
 
-        # mpld3.show()
+        mpld3.show()
 
     return FigureStrBase+NQuery+'.png'
 
