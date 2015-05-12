@@ -63,6 +63,7 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     """
     figure = matplotlib.figure.Figure()
     if interactive:
+        from matplotlib import pyplot
         from matplotlib import _pylab_helpers
         backend = getattr(matplotlib.backends, 'backend_{0}'.format(matplotlib.rcParams['backend']).lower())
         # backend = getattr(matplotlib.backends, 'backend')
@@ -166,9 +167,9 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     # ax.legend(UniqueAuthor, loc='center left', bbox_to_anchor=(1.0, 0.5),
     #           prop={'size':12}, markerscale = .7, scatterpoints = 1)
 
-    tooltip = plugins.PointHTMLTooltip(scatters[0], labels,
-                                   voffset=10, hoffset=10)
-    plugins.connect(figure, tooltip)
+    # tooltip = plugins.PointHTMLTooltip(scatters[0], labels,
+    #                                voffset=10, hoffset=10)
+    # plugins.connect(figure, tooltip)
 
     # figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
     # figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
