@@ -31,8 +31,8 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
     """
     return plotData(NQuery, table, FigureStrBase,
                     variables=('SurfaceDensity', 'VelocityDispersion', 'Radius'),
-                    xMin=surfMin,
-                    xMax=surfMax,
+                    xMin=SurfMin,
+                    xMax=SurfMax,
                     yMin=VDispMin,
                     yMax=VDispMax,
                     zMin=RadMin,
@@ -65,6 +65,7 @@ def plotData(NQuery, table, FigureStrBase, variables, xMin, xMax, yMin, yMax,
         figure = plt.figure(1)
         canvas = figure.canvas
     else:
+        figure = matplotlib.figure.Figure()
         canvas = FigureCanvasAgg(figure)
     ax = figure.gca()
 

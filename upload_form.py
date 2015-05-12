@@ -28,7 +28,7 @@ from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     reorder_columns, append_table)
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
-from simple_plot import plotData, timeString
+from simple_plot import plotData, plotData_Sigma_sigma, timeString
 from werkzeug import secure_filename
 import difflib
 
@@ -257,7 +257,7 @@ def set_columns(filename, fileformat=None):
         os.mkdir('static/jstables')
 
     outfilename = os.path.splitext(filename)[0]
-    myplot = plotData(timeString(), table, 'static/figures/'+outfilename)
+    myplot = plotData_Sigma_sigma(timeString(), table, 'static/figures/'+outfilename)
 
     tablecss = "table,th,td,tr,tbody {border: 1px solid black; border-collapse: collapse;}"
     write_table_jsviewer(table,
