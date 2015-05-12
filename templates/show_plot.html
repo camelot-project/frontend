@@ -16,5 +16,15 @@ This is a page with a figure
 imagename = {{imagename}}
 <img src="{{imagename}}" width=800>
 
+<br>
+<hr>
+ <div id="includedContent"></div>
+
+<script src="jquery.js"></script> 
+<script> 
+$(function(){
+        $("#includedContent").load("/static/jstables/{{tablefile}}"); 
+});
+</script> 
 
 {% endblock %}

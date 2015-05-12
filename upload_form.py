@@ -231,10 +231,19 @@ def set_columns(filename, fileformat=None):
 
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
+    if not os.path.isdir('static/jstables/'):
+        os.mkdir('static/jstables')
 
-    myplot = plotData(timeString(), table, 'static/figures/'+filename)
+    outfilename = os.path.splitext(filename)[0]
+    myplot = plotData(timeString(), table, 'static/figures/'+outfilename)
 
-    return render_template('show_plot.html', imagename='/'+myplot)#url_for('static',filename='figures/'+myplot))
+    tablecss = "table,th,td,tr,tbody {border: 1px solid black; border-collapse: collapse;}"
+    table.write('static/jstables/{fn}.html'.format(fn=outfilename),
+                format='jsviewer', css=tablecss, 
+                jskwargs={'use_local_files':True}, table_id=outfilename)
+
+    return render_template('show_plot.html', imagename='/'+myplot,
+                           tablefile='{fn}.html'.format(fn=outfilename))
 
 
 
