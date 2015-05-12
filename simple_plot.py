@@ -3,6 +3,8 @@ import glob
 import numpy as np
 import scipy
 import matplotlib
+import matplotlib.figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 matplotlib.use('Agg')
 import datetime
 import time
@@ -37,8 +39,8 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     RadMax
     """
     
-    figure = matplotlib.figure.Figure(1)
-    figure.clf()
+    figure = matplotlib.figure.Figure()
+    canvas = FigureCanvasAgg(figure)
     ax = figure.gca()
 
     # d = table.Table.read("merged_table.ipac", format='ascii.ipac')
