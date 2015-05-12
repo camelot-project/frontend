@@ -234,9 +234,12 @@ def set_columns(filename, fileformat=None):
     if os.path.isfile(merged_table_name):
         merged_table = Table.read(merged_table_name, format='ascii.ipac')
     else:
-        raise Exception("Can't find merged_table.ipac!")
-#        merged_table = Table(data=None,
-#                       names=['Names','IDs','SurfaceDensity','VelocityDispersion','Radius','IsSimulated'])
+# Maximum strength length of 64 for username, ID -- larger strings are silently truncated
+# TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
+#       and verify that submitted data obeys these limits
+        merged_table = Table(data=None, names=['Names','IDs','SurfaceDensity',
+                       'VelocityDispersion','Radius','IsSimulated'], dtype=[('str', 64),('str', 64),'float','float','float','bool'])
+
     reorder_columns(table, merged_table.colnames)
     append_table(merged_table, table)
     Table.write(merged_table, merged_table_name, format='ascii.ipac')
