@@ -13,7 +13,6 @@ from astropy import units as u
 from astropy import table
 #import bokeh.mpl
 #import mpld3
-import pdb
 plt.rcParams['figure.figsize'] = (12,8)
 
 def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
@@ -101,9 +100,9 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
 
-    #html = bokeh.mpl.to_bokeh(fig=figure, name=FigureStrBase+NQuery)
+    #html_bokeh = bokeh.mpl.to_bokeh(fig=figure, name="bokeh_"+FigureStrBase+NQuery)
     #html = mpld3.fig_to_html(figure)
-    #with open(FigureStrBase+NQuery+'.html','w') as f:
+    #with open("mpld3_"+FigureStrBase+NQuery+'.html','w') as f:
     #    f.write(html)
 
     ax.set_xlim((SurfMin.to(u.M_sun/u.pc**2).value,SurfMax.to(u.M_sun/u.pc**2).value))
@@ -115,7 +114,7 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     plt.show()
     figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
     figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
-    return FigureStrBase+NQuery+'.png', html
+    return FigureStrBase+NQuery+'.png'#, html, html_bokeh
     
 def clearPlotOutput(FigureStrBase,TooOld) :
     
