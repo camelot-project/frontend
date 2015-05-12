@@ -63,7 +63,15 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     RadMax
     """
     figure = matplotlib.figure.Figure()
-    canvas = FigureCanvasAgg(figure)
+    if interactive:
+        from matplotlib import _pylab_helpers
+        backend = getattr(matplotlib.backends, 'backend_{0}'.format(matplotlib.rcParams['backend']).lower())
+        canvas = backend.FigureCanvas(figure)
+        figmanager = backend.FigureManager(canvas, 1)
+        figmanager.canvas.figure.number = 1
+        _pylab_helpers.Gcf.set_active(figmanager)
+    else:
+        canvas = FigureCanvasAgg(figure)
     ax = figure.gca()
 
     d = input_table
