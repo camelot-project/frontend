@@ -63,6 +63,7 @@ def plotData(NQuery, table, FigureStrBase, variables, xMin, xMax, yMin, yMax,
     figure = matplotlib.figure.Figure()
     if interactive:
         from matplotlib import _pylab_helpers
+        from matplotlib import pyplot
         backend = getattr(matplotlib.backends,
                           'backend_{0}'.format(matplotlib.rcParams['backend']).lower())
         canvas = backend.FigureCanvas(figure)
