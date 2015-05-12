@@ -12,10 +12,35 @@ from astropy.io import fits
 from astropy import units as u
 from astropy import table
 import mpld3
+from mpld3 import plugins
 import pdb
 plt.rcParams['figure.figsize'] = (12,8)
 
-def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
+
+css = """
+table
+{
+  border-collapse: collapse;
+}
+th
+{
+  color: #ffffff;
+  background-color: #000000;
+}
+td
+{
+  background-color: #cccccc;
+}
+table, th, td
+{
+  font-family:Arial, Helvetica, sans-serif;
+  border: 1px solid black;
+  text-align: right;
+}
+"""
+
+
+def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
              SurfMax=1e5*u.M_sun/u.pc**2, VDispMin=1e-1*u.km/u.s,
              VDispMax=3e2*u.km/u.s, RadMin=1e-2*u.pc, RadMax=1e3*u.pc):
 
@@ -40,7 +65,7 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     figure.clf()
     ax = figure.gca()
 
-    d = table
+    d = input_table
     Author = d['Names']
     Run = d['IDs']
     SurfDens = d['SurfaceDensity']
@@ -73,33 +98,50 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     # NOTE this does NOT work with mpld3
     # ax.loglog()
 
-    markers = ['o','s']
-    for iAu,color in zip(UniqueAuthor,colors) :
+    scatters = []
+    labels = []
+
+    markers = ['o', 's']
+    for iAu,color in zip(UniqueAuthor, colors) :
         UsePlot = (Author == iAu) & Use
         ObsPlot = ((Author == iAu) & (~IsSim)) & Use
         SimPlot = ((Author == iAu) & (IsSim)) & Use
         if any(ObsPlot):
-            ax.scatter(np.log10(SurfDens[ObsPlot]), np.log10(VDisp[ObsPlot]),
+            scatters.append(ax.scatter(np.log10(SurfDens[ObsPlot]), np.log10(VDisp[ObsPlot]),
                         marker=markers[0],
                         s=(np.log10(np.array(Rad[ObsPlot]))-np.log10(RadMin.value)+0.5)**3.,
-                        color=color, alpha=0.5)
+                        color=color, alpha=0.5))
+
+            for row in table[ObsPlot]:
+                labels.append(" ".join(table[ObsPlot].pformat(html=True)))
+
         if any(SimPlot):
-            ax.scatter(np.log10(SurfDens[SimPlot]), np.log10(VDisp[SimPlot]),
+            scatters.append(ax.scatter(np.log10(SurfDens[SimPlot]), np.log10(VDisp[SimPlot]),
                         marker=markers[1],
                         s=(np.log10(np.array(Rad[SimPlot]))-np.log10(RadMin.value)+0.5)**3.,
-                        color=color, alpha=0.5)
+                        color=color, alpha=0.5))
+
+            # labels.append(table[SimPlot].pformat(html=True))
+
     if any(Obs):
-        ax.scatter(np.log10(SurfDens[Obs]), np.log10(VDisp[Obs]),
+        scatters.append(ax.scatter(np.log10(SurfDens[Obs]), np.log10(VDisp[Obs]),
                     marker=markers[0],
                     s=(np.log10(np.array(Rad[Obs]))-np.log10(RadMin.value)+0.5)**3.,
                     facecolors='none', edgecolors='black',
-                    alpha=0.5)
+                    alpha=0.5))
+
+        for row in table[Obs]:
+            labels.append(table.Table(row).pformat(html=True))
+
     if any(Sim):
-        ax.scatter(np.log10(SurfDens[Sim]), np.log10(VDisp[Sim]),
+        scatters.append(ax.scatter(np.log10(SurfDens[Sim]), np.log10(VDisp[Sim]),
                     marker=markers[1],
                     s=(np.log10(np.array(Rad[Sim]))-np.log10(RadMin.value)+0.5)**3.,
                     facecolors='none', edgecolors='black',
-                    alpha=0.5)
+                    alpha=0.5))
+
+        # labels.append(table[Sim].pformat(html=True))
+
     ax.set_xlabel('$\Sigma$ [M$_{\odot}$ pc$^{-2}$]', fontsize=16)
     ax.set_ylabel('$\sigma$ [km s$^{-1}$]', fontsize=16)
 
@@ -111,11 +153,18 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     ax.set_ylim((np.log10(VDispMin.to(u.km/u.s).value),
                  np.log10(VDispMax.to(u.km/u.s).value)))
 
-    # Put a legend to the right of the current axis
-    ax.legend(UniqueAuthor, loc='center left', bbox_to_anchor=(1.0, 0.5),
-              prop={'size':12}, markerscale = .7, scatterpoints = 1)
+    # ax.legend(UniqueAuthor, loc='center left', bbox_to_anchor=(1.0, 0.5),
+    #           prop={'size':12}, markerscale = .7, scatterpoints = 1)
 
-    html = mpld3.fig_to_html(figure)
+    tooltip = plugins.PointHTMLTooltip(scatters[0], labels,
+                                   voffset=10, hoffset=10)
+    plugins.connect(figure, tooltip)
+
+    # blah3
+
+    mpld3.show()
+
+    # html = mpld3.fig_to_html(figure)
     # with open(FigureStrBase+NQuery+'.html','w') as f:
     #    f.write(html)
 
