@@ -225,7 +225,10 @@ def set_columns(filename, fileformat=None):
     convert_units(table)
     add_name_column(table, column_data.get('Username')['Name'])
     add_generic_ids_if_needed(table)
-    add_is_sim_if_needed(table)
+    if column_data.get('issimulated') is None:
+        add_is_sim_if_needed(table, False)
+    else:
+        add_is_sim_if_needed(table, True)
 
 # If merged table already exists, then append the new entries.
 # Otherwise, create the table
