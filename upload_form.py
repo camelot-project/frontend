@@ -245,7 +245,7 @@ def set_columns(filename, fileformat=None):
 #       and verify that submitted data obeys these limits
         merged_table = Table(data=None, names=['Names','IDs','SurfaceDensity',
                        'VelocityDispersion','Radius','IsSimulated'], dtype=[('str', 64),('str', 64),'float','float','float','bool'])
-        set_units(merged_table, units_data)
+        set_units(merged_table)
 
     table = reorder_columns(table, merged_table.colnames)
     append_table(merged_table, table)
