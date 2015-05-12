@@ -22,7 +22,9 @@ from astropy import table
 from astropy import units as u
 from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     add_name_column, add_generic_ids_if_needed,
-                                    add_is_sim_if_needed, fix_bad_types)
+                                    add_is_sim_if_needed, fix_bad_types,
+                                    add_filename_column,
+                                   )
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
 from simple_plot import plotData, timeString
@@ -217,17 +219,19 @@ def set_columns(filename, fileformat=None):
         if pair['Name'] != "Ignore" and pair['Name'] != "IsSimulated" and key != "Username":
             units_data[pair['Name']] = pair['unit']
 
+    # Parse the table file, step-by-step
     rename_columns(table, {k: v['Name'] for k,v in column_data.items()})
     set_units(table, units_data)
     table = fix_bad_types(table)
-    print(table)
     convert_units(table)
     add_name_column(table, column_data.get('Username')['Name'])
-    print(table)
+    add_filename_column(table, filename)
     add_generic_ids_if_needed(table)
     add_is_sim_if_needed(table)
+
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
+
     myplot = plotData(timeString(), table, 'static/figures/'+filename)
 
     return render_template('show_plot.html', imagename='/'+myplot)#url_for('static',filename='figures/'+myplot))
