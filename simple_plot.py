@@ -60,16 +60,10 @@ def plotData(NQuery, table, FigureStrBase, variables, xMin, xMax, yMin, yMax,
     zMax
     """
     
-    figure = matplotlib.figure.Figure()
     if interactive:
-        from matplotlib import _pylab_helpers
-        from matplotlib import pyplot
-        backend = getattr(matplotlib.backends,
-                          'backend_{0}'.format(matplotlib.rcParams['backend']).lower())
-        canvas = backend.FigureCanvas(figure)
-        figmanager = backend.FigureManager(canvas, 1)
-        figmanager.canvas.figure.number = 1
-        _pylab_helpers.Gcf.set_active(figmanager)
+        from matplotlib import pyplot as plt
+        figure = plt.figure(1)
+        canvas = figure.canvas
     else:
         canvas = FigureCanvasAgg(figure)
     ax = figure.gca()
@@ -173,7 +167,6 @@ def plotData(NQuery, table, FigureStrBase, variables, xMin, xMax, yMin, yMax,
     figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
 
     if interactive:
-        from matplotlib import pyplot as plt
         plt.ion()
         plt.show()
 
