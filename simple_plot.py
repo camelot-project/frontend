@@ -86,7 +86,6 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     UniqueAuthor = set(Author[Use])
     NUniqueAuthor = len(UniqueAuthor)
 
-
     #print d
     #print d[Use]
     #print 'Authors:', UniqueAuthor
@@ -113,7 +112,9 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
                         color=color, alpha=0.5))
 
             for row in d[ObsPlot]:
-                labels.append(" ".join(d[ObsPlot].pformat(html=True)))
+                row_html = [str(j) for j in d[ObsPlot].pformat(html=True)]
+
+                labels.append("\n ".join(row_html))
 
         if any(SimPlot):
             scatters.append(ax.scatter(np.log10(SurfDens[SimPlot]), np.log10(VDisp[SimPlot]),
@@ -121,7 +122,10 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
                         s=(np.log10(np.array(Rad[SimPlot]))-np.log10(RadMin.value)+0.5)**3.,
                         color=color, alpha=0.5))
 
-            # labels.append(table[SimPlot].pformat(html=True))
+            for row in d[SimPlot]:
+                row_html = [str(j) for j in d[SimPlot].pformat(html=True)]
+
+                labels.append("\n ".join(row_html))
 
     if any(Obs):
         scatters.append(ax.scatter(np.log10(SurfDens[Obs]), np.log10(VDisp[Obs]),
@@ -130,17 +134,12 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
                     facecolors='none', edgecolors='black',
                     alpha=0.5))
 
-        for row in table[Obs]:
-            labels.append(table.Table(row).pformat(html=True))
-
     if any(Sim):
         scatters.append(ax.scatter(np.log10(SurfDens[Sim]), np.log10(VDisp[Sim]),
                     marker=markers[1],
                     s=(np.log10(np.array(Rad[Sim]))-np.log10(RadMin.value)+0.5)**3.,
                     facecolors='none', edgecolors='black',
                     alpha=0.5))
-
-        # labels.append(table[Sim].pformat(html=True))
 
     ax.set_xlabel('$\Sigma$ [M$_{\odot}$ pc$^{-2}$]', fontsize=16)
     ax.set_ylabel('$\sigma$ [km s$^{-1}$]', fontsize=16)
@@ -159,8 +158,6 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     tooltip = plugins.PointHTMLTooltip(scatters[0], labels,
                                    voffset=10, hoffset=10)
     plugins.connect(figure, tooltip)
-
-    # blah3
 
     mpld3.show()
 
