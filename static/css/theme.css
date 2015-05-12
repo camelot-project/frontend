@@ -24,3 +24,13 @@ h1{
 	margin-bottom: 20px;
 }
 
+.ui-autocomplete,
+.ui-autocomplete ui-front ui-menu ui-widget ui-widget-content,
+.ui-menu .ui-menu-item {
+    background: #DDDDDD;
+    width: 400px;
+}
+
+.ui-menu-item:hover {
+    color: #AAAAFF;
+}
