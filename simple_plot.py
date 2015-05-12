@@ -5,7 +5,6 @@ import scipy
 import matplotlib
 import matplotlib.figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
-matplotlib.use('Agg')
 import datetime
 import time
 import random
@@ -40,7 +39,11 @@ def plotData(NQuery, table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     """
     
     figure = matplotlib.figure.Figure()
-    canvas = FigureCanvasAgg(figure)
+    if interactive:
+        backend = getattr(matplotlib.backends, 'backend_{0}'.format(matplotlib.rcParams['backend']).lower())
+        canvas = backend.FigureCanvas(figure)
+    else:
+        canvas = FigureCanvasAgg(figure)
     ax = figure.gca()
 
     # d = table.Table.read("merged_table.ipac", format='ascii.ipac')
