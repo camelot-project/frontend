@@ -41,7 +41,8 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
                    )
 
  
-def plotData(NQuery, table, FigureStrBase,variables,xMin,xMax,yMin,yMax,zMin,zMax, interactive=False):
+def plotData(NQuery, table, FigureStrBase, variables, xMin, xMax, yMin, yMax,
+             zMin, zMax, interactive=False):
     """
     This is where documentation needs to be added
 
@@ -210,4 +211,5 @@ if __name__ == "__main__":
   clearPlotOutput(FigureStrBase,TooOld)
 
   #FigureStrBase='Output_Sigma_sigma_r_'
-  plotData(NQuery,FigureStrBase,variables,xMin,xMax,yMin,yMax,zMin,zMax)
+  tbl = table.Table.read('uploads/merged_table.ipac', format='ascii.ipac')
+  plotData(NQuery,tbl,FigureStrBase,variables,xMin,xMax,yMin,yMax,zMin,zMax, interactive=True)
