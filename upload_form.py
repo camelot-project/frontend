@@ -227,10 +227,6 @@ def set_columns(filename, fileformat=None):
     add_generic_ids_if_needed(table)
     add_is_sim_if_needed(table)
 
-    if not os.path.isdir('static/figures/'):
-        os.mkdir('static/figures')
-    myplot = plotData(timeString(), table, 'static/figures/'+filename)
-
 # If merged table already exists, then append the new entries.
 # Otherwise, create the table
 
@@ -244,6 +240,10 @@ def set_columns(filename, fileformat=None):
     reorder_columns(table, merged_table.colnames)
     append_table(merged_table, table)
     Table.write(merged_table, merged_table_name, format='ascii.ipac')
+
+    if not os.path.isdir('static/figures/'):
+        os.mkdir('static/figures')
+    myplot = plotData(timeString(), table, 'static/figures/'+filename)
 
     return render_template('show_plot.html', imagename='/'+myplot)#url_for('static',filename='figures/'+myplot))
 
