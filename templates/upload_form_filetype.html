@@ -7,19 +7,49 @@
 
 {% block scripts %}
 {{ super() }}
+<script>
+$(document).ready(function(){
+    if($('#file_field').val() == '' || $('#file_format').val() == ''){
+        $('#upload_button').attr('disabled','disabled');
+    }
+
+    $('#file_field').change(function(){
+        var value = $(this).val();
+        var value2 = $('#file_format').val();
+        console.log(value);
+        if(value != '' && value2 != ''){
+            $('#upload_button').removeAttr('disabled');
+        }
+        else{
+            $('#upload_button').attr('disabled','disabled');
+        }
+    })
+
+    $('#file_format').change(function(){
+        var value = $(this).val();
+        var value2 = $('#file_field').val();
+        if(value != '' && value2 != ''){
+            $('#upload_button').removeAttr('disabled');
+        }
+        else{
+            $('#upload_button').attr('disabled','disabled');
+        }
+    })
+});
+</script>
 {% endblock %}
 
 {% block body %}
 <div class="row">
     <div class="col-md-6 col-md-offset-3" id="upload_form">
-        <div id="upload_header">Upload File with specific extension</div>
+        <div id="upload_header">Upload file with specific extension</div>
         <form class="form-inline" action="/upload" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <div class="input-group">
-                    <label class="sr-only" for="file">Choose File and specify file type</label>
+                    <label class="sr-only" for="file">Choose file and specify file type</label>
                     <!-- TODO: add a callback that finds the best-match format when a filename is set -->
-                    <input class="form-control" type="file" name="file" value={{filename}}>
-                    <input class="fileformat" name="fileformat" value={{best_match_extension}}>
+                    <input class="form-control" id="file_field" type="file" name="file" value={{filename}}>
+                    <input class="fileformat" id="file_format" name="fileformat" value={{best_match_extension}}>
                     <input class="btn btn-success" id="upload_button" type="submit" value="Upload">
                 </div>    
             </div>

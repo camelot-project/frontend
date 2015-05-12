@@ -2,7 +2,7 @@
 
 {% block head %}
 {{ super() }}
-<title>Parse file {{filename}}</title>
+<title>Query form</title>
 {% endblock %}
 
 {% block scripts %}
@@ -30,38 +30,44 @@ $(document).ready(function(){
 {% endblock %}
 
 {% block body %}
-<h1>Parse file {{filename}}</h1>
+<h1>Query form</h1>
 <div class="row">
     <div class="col-lg-8 col-lg-offset-2" id="column_form">
         <form action="{{ url_for('set_columns', filename=filename, fileformat=fileformat) }}" method="post">
             <table class="table table-striped">
-                <thead><tr><th>File Column Name</th><th>Real Column Name</th><th>Units</th></tr></thead>
-                <tbody>
-                <tr><td>  <input type="checkbox" name="issimulated" value="IsSimulated">Is simulated? </td></tr>
-                <tr><td>  <input type="" name="Username" value="Username"></td> <td>Username? </td></tr>
-
-                
-                {% for column_name,best_column_name in zip(table.colnames, best_column_names) %}
+                <thead><tr><th>Quantity</th><th>Minimum</th><th>Maximum</th><th>Units</th></tr></thead>
+                <tbody>                
+                {% for column_name,best_column_name in zip(usetable.colnames,use_column_names) %}
                 <tr>
                     <div class="form-group">
                     <td><p>{{ column_name }}</p></td>
                     <td>
+                        <input class="units form-control" id="{{column_name|striptags}}_min" name="{{column_name|striptags}}_min">
+                    </td>
+                    <td>
+                        <input class="units form-control" id="{{column_name|striptags}}_max" name="{{column_name|striptags}}_max">
+                    </td>
+                    <td>
                         <select class="form-control real_column_name" name="{{column_name}}">
-                            {% for real_column_name in real_column_names %}
-                            {% if real_column_name == best_column_name %}
-                            <option value="{{real_column_name}}" selected>{{real_column_name}}</option>
+                            {% for use_unit,use_column_name in zip(use_units,use_column_names) %}
+                            {% if use_column_name == best_column_name %}
+                            <option value="{{use_unit}}" selected>{{use_unit}}</option>
                             {% else %}
-                            <option value="{{real_column_name}}">{{real_column_name}}</option>
+                            <option value="{{use_unit}}">{{use_unit}}</option>
                             {% endif %}
                             {% endfor %}
                         </select>
                     </td>
-                    <td>
-                        <input class="units form-control" id="{{column_name|striptags}}_units" name="{{column_name|striptags}}_units">
-                    </td>
                     </div>
                 </tr>
                 {% endfor %}
+                </tbody>
+                <thead><tr><th>Show:</th></tr></thead>
+                <tbody>
+                <tr><td>  <input type="checkbox" name="IsNotSimulated" value="IsNotSimulated" checked> Observations </td>
+                    <td>  <input type="checkbox" name="IsSimulated" value="IsSimulated" checked> Simulations </td></tr>
+                <tr><td>  <input type="checkbox" name="IsGalactic" value="IsGalactic" checked> Galactic </td>
+                    <td>  <input type="checkbox" name="IsNotGalactic" value="IsNotGalactic" checked> Extragalactic </td></tr>
                 </tbody>
             </table>
             <div class="col-md-2 col-md-offset-10" id="column_submit">

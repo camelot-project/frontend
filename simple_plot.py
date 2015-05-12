@@ -3,7 +3,9 @@ import glob
 import numpy as np
 import scipy
 import matplotlib
-import matplotlib.pylab as plt
+matplotlib.use('Agg')
+import matplotlib.figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 import datetime
 import time
 import random
@@ -14,8 +16,7 @@ from astropy import table
 import mpld3
 from mpld3 import plugins
 import pdb
-plt.rcParams['figure.figsize'] = (12,8)
-
+matplotlib.rcParams['figure.figsize'] = (12,8)
 
 css = """
 table
@@ -42,7 +43,8 @@ table, th, td
 
 def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
              SurfMax=1e5*u.M_sun/u.pc**2, VDispMin=1e-1*u.km/u.s,
-             VDispMax=3e2*u.km/u.s, RadMin=1e-2*u.pc, RadMax=1e3*u.pc):
+             VDispMax=3e2*u.km/u.s, RadMin=1e-2*u.pc, RadMax=1e3*u.pc,
+             interactive=True):
 
     """
     This is where documentation needs to be added
@@ -60,9 +62,8 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     RadMin
     RadMax
     """
-
-    figure = plt.figure(1)
-    figure.clf()
+    figure = matplotlib.figure.Figure()
+    canvas = FigureCanvasAgg(figure)
     ax = figure.gca()
 
     d = input_table
@@ -83,7 +84,7 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     Obs = (~IsSim) & Use
     Sim = IsSim & Use
 
-    UniqueAuthor = set(Author[Use])
+    UniqueAuthor = list(set(Author[Use]))
     NUniqueAuthor = len(UniqueAuthor)
 
     #print d
@@ -91,7 +92,7 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
     #print 'Authors:', UniqueAuthor
 
     #colors = random.sample(matplotlib.colors.cnames, NUniqueAuthor)
-    colors = list(plt.cm.jet(np.linspace(0,1,NUniqueAuthor)))
+    colors = list(matplotlib.cm.jet(np.linspace(0,1,NUniqueAuthor)))
     random.shuffle(colors)
 
     # NOTE this does NOT work with mpld3
@@ -159,16 +160,17 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
                                    voffset=10, hoffset=10)
     plugins.connect(figure, tooltip)
 
-    mpld3.show()
-
-    # html = mpld3.fig_to_html(figure)
-    # with open(FigureStrBase+NQuery+'.html','w') as f:
-    #    f.write(html)
-
-    # plt.show()
     # figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
     # figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
-    return FigureStrBase+NQuery+'.png', html
+
+    if interactive:
+        from matplotlib import pyplot as plt
+        plt.ion()
+        plt.show()
+
+        # mpld3.show()
+
+    return FigureStrBase+NQuery+'.png'
 
 def clearPlotOutput(FigureStrBase,TooOld) :
 
