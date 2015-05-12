@@ -37,7 +37,7 @@ $(document).ready(function(){
             <table class="table table-striped">
                 <thead><tr><th>File Column Name</th><th>Real Column Name</th><th>Units</th></tr></thead>
                 <tbody>
-                <tr><td>  <input type="checkbox" name="issimulated" value="issimulated">Is simulated? </td></tr>
+                <tr><td>  <input type="checkbox" name="issimulated" value="IsSimulated">Is simulated? </td></tr>
                 
                 {% for column_name,best_column_name in zip(table.colnames, best_column_names) %}
                 <tr>
