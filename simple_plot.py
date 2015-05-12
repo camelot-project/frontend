@@ -113,7 +113,7 @@ def plotData(NQuery, input_table, FigureStrBase, SurfMin=1e-1*u.M_sun/u.pc**2,
                         color=color, alpha=0.5))
 
             for row in d[ObsPlot]:
-                labels.append(" ".join(table[ObsPlot].pformat(html=True)))
+                labels.append(" ".join(d[ObsPlot].pformat(html=True)))
 
         if any(SimPlot):
             scatters.append(ax.scatter(np.log10(SurfDens[SimPlot]), np.log10(VDisp[SimPlot]),
