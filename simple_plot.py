@@ -20,7 +20,7 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
                          SurfMin=1e-1*u.M_sun/u.pc**2, SurfMax=1e5*u.M_sun/u.pc**2,
                          VDispMin=1e-1*u.km/u.s,
                          VDispMax=3e2*u.km/u.s, RadMin=1e-2*u.pc, RadMax=1e3*u.pc,
-                         interactive=True):
+                         interactive=False):
     """
     SurfMin
     SurfMax
@@ -41,7 +41,7 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
                    )
 
  
-def plotData(NQuery, table, FigureStrBase,variables,xMin,xMax,yMin,yMax,zMin,zMax):
+def plotData(NQuery, table, FigureStrBase,variables,xMin,xMax,yMin,yMax,zMin,zMax, interactive=False):
     """
     This is where documentation needs to be added
 
@@ -63,8 +63,8 @@ def plotData(NQuery, table, FigureStrBase,variables,xMin,xMax,yMin,yMax,zMin,zMa
     if interactive:
         from matplotlib import _pylab_helpers
         backend = getattr(matplotlib.backends,
-                          'backend_{0}'.format(matplotlib.rcParams['backend']).lower()) canvas =
-        backend.FigureCanvas(figure)
+                          'backend_{0}'.format(matplotlib.rcParams['backend']).lower())
+        canvas = backend.FigureCanvas(figure)
         figmanager = backend.FigureManager(canvas, 1)
         figmanager.canvas.figure.number = 1
         _pylab_helpers.Gcf.set_active(figmanager)
