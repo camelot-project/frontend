@@ -3,6 +3,7 @@ import glob
 import numpy as np
 import scipy
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pylab as plt
 import datetime
 import time
