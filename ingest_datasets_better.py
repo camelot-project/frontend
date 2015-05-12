@@ -87,6 +87,12 @@ def add_name_column(tbl, name):
     """
     tbl.add_column(table.Column(name='Names', data=[name]*len(tbl)), index=0)
 
+def add_filename_column(tbl, filename):
+    """
+    Add the filename as a column
+    """
+    tbl.add_column(table.Column(name='Filename', data=[filename]*len(tbl)))
+
 def append_table(merged_table, table_to_add):
     """
     Append a new table to the original
