@@ -19,13 +19,16 @@ import numpy as np
 from astropy.io import fits
 from astropy.io import ascii
 from astropy import table
+from astropy.table.jsviewer import write_table_jsviewer
 from astropy import units as u
 from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     add_name_column, add_generic_ids_if_needed,
-                                    add_is_sim_if_needed, fix_bad_types)
+                                    add_is_sim_if_needed, fix_bad_types,
+                                    add_filename_column,
+                                    reorder_columns, append_table)
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
-from simple_plot import plotData, timeString
+from simple_plot import plotData, plotData_Sigma_sigma, timeString
 from werkzeug import secure_filename
 import difflib
 
@@ -203,8 +206,6 @@ def set_columns(filename, fileformat=None):
     Then, assigns units and column information and does all the proper file
     ingestion work.
 
-    As of this commit, does not merge with a main table - that's the most
-    important next step (Simon)
     """
 
     if fileformat is None and 'fileformat' in request.args:
@@ -227,20 +228,55 @@ def set_columns(filename, fileformat=None):
         if pair['Name'] != "Ignore" and pair['Name'] != "IsSimulated" and key != "Username":
             units_data[pair['Name']] = pair['unit']
 
+    # Parse the table file, step-by-step
     rename_columns(table, {k: v['Name'] for k,v in column_data.items()})
     set_units(table, units_data)
     table = fix_bad_types(table)
-    print(table)
     convert_units(table)
     add_name_column(table, column_data.get('Username')['Name'])
-    print(table)
+    add_filename_column(table, filename)
     add_generic_ids_if_needed(table)
-    add_is_sim_if_needed(table)
+    if column_data.get('issimulated') is None:
+        add_is_sim_if_needed(table, False)
+    else:
+        add_is_sim_if_needed(table, True)
+
+    # If merged table already exists, then append the new entries.
+    # Otherwise, create the table
+
+    merged_table_name = os.path.join(app.config['UPLOAD_FOLDER'], 'merged_table.ipac')
+    if os.path.isfile(merged_table_name):
+        merged_table = Table.read(merged_table_name, converters={'Names': [ascii.convert_numpy('S64')], 
+        'IDs': [ascii.convert_numpy('S64')], 'IsSimulated': [ascii.convert_numpy('S5')]}, format='ascii.ipac')
+    else:
+    # Maximum string length of 64 for username, ID -- larger strings are silently truncated
+    # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
+    #       and verify that submitted data obeys these limits
+        merged_table = Table(data=None, names=['Names','IDs','SurfaceDensity',
+                       'VelocityDispersion','Radius','IsSimulated'], dtype=[('str', 64),('str', 64),'float','float','float','bool'])
+        set_units(merged_table)
+
+    table = reorder_columns(table, merged_table.colnames)
+    append_table(merged_table, table)
+    Table.write(merged_table, merged_table_name, format='ascii.ipac')
+
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
-    myplot = plotData(timeString(), table, 'static/figures/'+filename)
+    if not os.path.isdir('static/jstables/'):
+        os.mkdir('static/jstables')
 
-    return render_template('show_plot.html', imagename='/'+myplot)#url_for('static',filename='figures/'+myplot))
+    outfilename = os.path.splitext(filename)[0]
+    myplot = plotData_Sigma_sigma(timeString(), table, 'static/figures/'+outfilename)
+
+    tablecss = "table,th,td,tr,tbody {border: 1px solid black; border-collapse: collapse;}"
+    write_table_jsviewer(table,
+                         'static/jstables/{fn}.html'.format(fn=outfilename),
+                         css=tablecss,
+                         jskwargs={'use_local_files':False},
+                         table_id=outfilename)
+
+    return render_template('show_plot.html', imagename='/'+myplot,
+                           tablefile='{fn}.html'.format(fn=outfilename))
 
 
 

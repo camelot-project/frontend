@@ -7,6 +7,7 @@
 
 {% block scripts %}
 {{ super() }}
+<script src="http://cdn.datatables.net/1.10.2/js/jquery.dataTables.min.js"></script>
 {% endblock %}
 
 {% block body %}
@@ -16,5 +17,14 @@ This is a page with a figure
 imagename = {{imagename}}
 <img src="{{imagename}}" width=800>
 
+<br>
+<hr>
+ <div id="includedContent"></div>
+
+<script> 
+$(function(){
+        $("#includedContent").load("/static/jstables/{{tablefile}}"); 
+});
+</script> 
 
 {% endblock %}
