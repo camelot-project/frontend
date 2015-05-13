@@ -129,6 +129,8 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
     # NOTE this does NOT work with mpld3
     # ax.loglog()
 
+    scatters = []
+
     markers = ['o', 's']
     for iAu,color in zip(UniqueAuthor, colors) :
         UsePlot = (Author == iAu) & Use
@@ -144,6 +146,8 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
             scatter = ax.scatter(plot_x[ObsPlot], plot_y[ObsPlot], marker=markers[0],
                                  s=(np.log(np.array(z_ax[ObsPlot]))-np.log(np.array(zMin))+0.5)**3.,
                                  color=color, alpha=0.5)
+
+            scatters.append(scatter)
 
             labels = []
 
@@ -167,6 +171,8 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
             scatter = ax.scatter(plot_x[SimPlot], plot_y[SimPlot], marker=markers[1],
                         s=(np.log(np.array(z_ax[SimPlot]))-np.log(np.array(zMin))+0.5)**3.,
                         color=color, alpha=0.5)
+
+            scatters.append(scatter)
 
             labels = []
 
@@ -207,6 +213,13 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
 
     # ax.legend(UniqueAuthor, loc='center left', bbox_to_anchor=(1.0, 0.5),
     #           prop={'size':12}, markerscale = .7, scatterpoints = 1)
+
+    if hasattr(mpld3.plugins,'InteractiveLegendPlugin'):
+        mpld3.plugins.connect(figure,
+                              mpld3.plugins.InteractiveLegendPlugin(scatters,
+                                                                    UniqueAuthor,
+                                                                    alpha_unsel=0,
+                                                                    alpha_sel=0.5))
 
     # adding fake points to show the size
     axes_limits = ax.axis()
