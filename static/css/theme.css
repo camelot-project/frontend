@@ -3,11 +3,13 @@ h1{
     margin-right: auto;
     text-align: center;
     width: 70%;
+    color: white;
 }
 
 #upload_form{
-	margin-top: 250px;
+	margin-top: 140px;
 	padding-top: 24px;
+	margin-bottom: 87px;
 }
 
 #upload_header{
@@ -33,4 +35,23 @@ h1{
 
 .ui-menu-item:hover {
     color: #AAAAFF;
+}
+
+.row {
+	background: white;
+	padding-top: 24px;
+	padding-bottom: 24px;
+	padding-left: 24px;
+	padding-right: 24px;
+	font-size: 16px;
+}
+
+#hometext{
+	margin-top: 70px;
+	margin-bottom: 61px;
+}
+
+#menu{
+	font-size: 20px;
+	text-align: center;
 }

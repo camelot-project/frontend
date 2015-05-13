@@ -2,7 +2,7 @@
 
 {% block head %}
 {{ super() }}    
-<title>Upload new File</title>
+<title>CAMELOT Upload new File</title>
 {% endblock %}
 
 {% block scripts %}
@@ -28,6 +28,7 @@ $(document).ready(function(){
 {% endblock %}
 
 {% block body %}
+{{ super() }}
 {% if error %}
     <div class="alert alert-warning alert-dismissible" role="alert">
       <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -35,10 +36,11 @@ $(document).ready(function(){
     </div>
 {% endif %}
 
+<h1>CAMELOT Upload form</h1>
 <div class="row">
     <div class="col-md-6 col-md-offset-4" id="upload_form">
         <div id="upload_header">Upload a new data table file</div>
-        <div> Future steps will have you specify the column units etc. </div>
+        <div> Later steps will have you specify the column units etc. </div>
         <form class="form form-inline" action="upload" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <div class="input-group">
