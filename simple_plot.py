@@ -145,11 +145,18 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
                                  s=(np.log(np.array(z_ax[ObsPlot]))-np.log(np.array(zMin))+0.5)**3.,
                                  color=color, alpha=0.5)
 
-            labels = ['<h1>{title}</h1>'.format(title=i) for i in range(len(d[ObsPlot]))]
+            labels = []
 
-            # for row in d[ObsPlot]:
-            #     row_html = [str(j) for j in d[ObsPlot].pformat(html=True)]
-            #     labels.append("\n ".join(row_html))
+            for row in d[ObsPlot]:
+                colnames = ['<h1>{title}</h1>'.format(title=col) for col in row.colnames]
+                values = ['<h1>{title}</h1>'.format(title=str(val)) for val in row]
+
+                label = ""
+
+                for col, val in zip(colnames, values):
+                    label += col+" "+val+" \n "
+
+                labels.append(label)
 
             tooltip = plugins.PointHTMLTooltip(scatter, labels,
                                            voffset=10, hoffset=10)
@@ -161,15 +168,21 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
                         s=(np.log(np.array(z_ax[SimPlot]))-np.log(np.array(zMin))+0.5)**3.,
                         color=color, alpha=0.5)
 
-            labels = ['<h1>{title}</h1>'.format(title=i) for i in range(len(d[SimPlot]))]
+            labels = []
 
-            # for row in d[SimPlot]:
-            #     row_html = [str(j) for j in d[SimPlot].pformat(html=True)]
+            for row in d[SimPlot]:
+                colnames = ['<h1>{title}</h1>'.format(title=col) for col in row.colnames]
+                values = ['<h1>{title}</h1>'.format(title=str(val)) for val in row]
 
-            #     labels.append("\n ".join(row_html))
+                label = ""
+
+                for col, val in zip(colnames, values):
+                    label += col+" "+val+" \n "
+
+                labels.append(label)
 
             tooltip = plugins.PointHTMLTooltip(scatter, labels,
-                                           voffset=10, hoffset=10)
+                                           voffset=10, hoffset=10, css=css)
             plugins.connect(figure, tooltip)
 
     if any(Obs):
