@@ -238,7 +238,8 @@ def set_columns(filename, fileformat=None):
 
     merged_table_name = os.path.join(app.config['UPLOAD_FOLDER'], 'merged_table.ipac')
     if os.path.isfile(merged_table_name):
-        merged_table = Table.read(merged_table_name, converters={'Names': [ascii.convert_numpy('S64')], 'IDs': [ascii.convert_numpy('S64')]}, format='ascii.ipac')
+        merged_table = Table.read(merged_table_name, converters={'Names': [ascii.convert_numpy('S64')], 
+        'IDs': [ascii.convert_numpy('S64')], 'IsSimulated': [ascii.convert_numpy('S5')]}, format='ascii.ipac')
     else:
     # Maximum string length of 64 for username, ID -- larger strings are silently truncated
     # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
