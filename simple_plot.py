@@ -260,7 +260,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
 
         mpld3.show()
 
-    return FigureStrBase+NQuery+'.png'
+    return "mpld3_"+FigureStrBase+NQuery+'.html'
 
 def clearPlotOutput(FigureStrBase,TooOld) :
 
