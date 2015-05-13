@@ -37,13 +37,13 @@
 		</script>
 		{% endblock %}
 	</head>
-	<body background="static/bg.jpg">
+	<body background="/static/bg.jpg">
 		<div class="container" id="menu">
 		{% block body %}
 		<table class="table table-striped">
 		    <thead><tr><th> </th></thead>
-          <tbody>
-          <tr><td align=left width=1%><a href="/"><img src="static/logo.png" width=100px></a></td><td><a href="/">ET Phone Home</a></td><td><a href="query_form">Query Database</a></td><td><a href="upload_form">Upload Data</a></td></tr>
+          <tbody align=center>
+          <tr><td align=left width=1%><a href="/"><img src="/static/logo.png" width=100px></a></td><td><a href="/">ET Phone Home</a></td><td><a href="/query_form">Query Database</a></td><td><a href="/upload_form">Upload Data</a></td></tr>
           </tbody>
       </table>	    
 		{% endblock %}

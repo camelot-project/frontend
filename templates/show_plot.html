@@ -11,10 +11,11 @@
 
 {% block body %}
 {{ super() }}
+<div class="row">
 This is a page with a figure
 <br>
 imagename = {{imagename}}
 <img src="{{imagename}}" width=800>
-
+</div>
 
 {% endblock %}
