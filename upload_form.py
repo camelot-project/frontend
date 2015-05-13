@@ -334,16 +334,35 @@ def upload_to_github(filename):
     This will be tricky: we need to have a "replace existing file" logic in
     addition to the original submission.  We also need an account + API_KEY
     etc, which may be the most challenging part.
+
+    https://developer.github.com/v3/pulls/#create-a-pull-request
     """
     with open(os.path.join(app.config['UPLOAD_FOLDER'], filename)) as f:
         content = f.read()
+
+    """
+    Need a function that will cd into the database directory, add the change,
+    commit it, push.
+    """
+
+
+    S = requests.Session()
+    S.get('https://api.github.com/', data={'access_token':'e4942f7d7cc9468ffd0e'})
+
     data = {'path': 'data_files/',
             'content': content,
             'branch': 'master',
             'message': 'Upload a new data file {0}'.format(filename)}
+    # this is the correct form for the data?
+    {
+      "title": "Amazing new feature",
+      "body": "Please pull this in!",
+      "head": "octocat:new-feature",
+      "base": "master"
+    }
 
-    requests.post
-    pass
+    #api_url = 'https://api.github.com/repos/camelot-project/database/pulls'
+    S.post(api_url, data)
 
 
 @app.route('/query_form')
