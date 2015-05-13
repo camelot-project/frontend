@@ -233,6 +233,16 @@ def set_columns(filename, fileformat=None):
     else:
         add_is_sim_if_needed(table, True)
 
+# Detect duplicate IDs in uploaded data and bail out if found
+    seen = {}
+    for row in table:
+        name = row['Names']
+        id = row['IDs']
+        if id in seen:
+            raise Exception ("Duplicate ID detected in table: username = {0}, id = {1}. All IDs must be unique.".format(name, id))
+        else:
+            seen[id] = name
+
     # If merged table already exists, then append the new entries.
     # Otherwise, create the table
 
