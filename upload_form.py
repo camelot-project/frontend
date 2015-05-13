@@ -33,6 +33,7 @@ from werkzeug import secure_filename
 import difflib
 
 UPLOAD_FOLDER = 'uploads/'
+DATABASE_FOLDER = 'database/'
 OUTPUT_FOLDER = 'generated/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
@@ -55,6 +56,11 @@ table_formats = registry.get_formats(Table)
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
+app.config['DATABASE_FOLDER'] = DATABASE_FOLDER
+
+for path in (UPLOAD_FOLDER, OUTPUT_FOLDER, DATABASE_FOLDER):
+    if not os.path.isdir(path):
+        os.mkdir(path)
 
 
 # Allow zipping in jinja templates: http://stackoverflow.com/questions/5208252/ziplist1-list2-in-jinja2
@@ -260,10 +266,16 @@ def set_columns(filename, fileformat=None):
     # If merged table already exists, then append the new entries.
     # Otherwise, create the table
 
-    merged_table_name = os.path.join(app.config['UPLOAD_FOLDER'], 'merged_table.ipac')
+    merged_table_name = os.path.join(app.config['DATABASE_FOLDER'], 'merged_table.csv')
     if os.path.isfile(merged_table_name):
-        merged_table = Table.read(merged_table_name, converters={'Names': [ascii.convert_numpy('S64')], 
-        'IDs': [ascii.convert_numpy('S64')], 'IsSimulated': [ascii.convert_numpy('S5')]}, format='ascii.ipac')
+        merged_table = Table.read(merged_table_name,
+                                  converters={'Names':
+                                              [ascii.convert_numpy('S64')],
+                                              'IDs':
+                                              [ascii.convert_numpy('S64')],
+                                              'IsSimulated':
+                                              [ascii.convert_numpy('S5')]},
+                                  format='ascii.csv')
     else:
     # Maximum string length of 64 for username, ID -- larger strings are silently truncated
     # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
@@ -274,7 +286,7 @@ def set_columns(filename, fileformat=None):
 
     table = reorder_columns(table, merged_table.colnames)
     append_table(merged_table, table)
-    Table.write(merged_table, merged_table_name, format='ascii.ipac')
+    Table.write(merged_table, merged_table_name, format='ascii.csv')
 
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
@@ -317,10 +329,9 @@ def upload_to_github(filename):
 
 
 @app.route('/query_form')
-def query_form():
+def query_form(filename="merged_table.csv"):
     
-    filename = "merged_table.ipac"
-    table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename), format='ascii.ipac')
+    table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.csv')
     
     usetable = table[use_column_names]
     
@@ -333,7 +344,8 @@ def query_form():
     best_column_names = [best_matches[colname] if colname in best_matches else 'Ignore'
                          for colname in usetable.colnames]
 
-    return render_template("query_form.html", table=table, usetable=usetable, use_units=use_units, filename=filename,
+    return render_template("query_form.html", table=table, usetable=usetable,
+                           use_units=use_units, filename=filename,
                            use_column_names=use_column_names,
                            best_column_names=best_column_names,
                           )
@@ -368,7 +380,7 @@ def query(filename, fileformat=None):
         
     plt.clf()
 
-    table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename), format='ascii.ipac')
+    table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.csv')
     Author = table['Names']
     Run = table['IDs']
     SurfDens = table['SurfaceDensity']
