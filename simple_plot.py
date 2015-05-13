@@ -145,7 +145,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
             # Change to logs on next commit
             scatter = ax.scatter(plot_x[ObsPlot], plot_y[ObsPlot], marker=markers[0],
                                  s=(np.log(np.array(z_ax[ObsPlot]))-np.log(np.array(zMin))+0.5)**3.,
-                                 color=color, alpha=0.5)
+                                 color=color, alpha=0.5, edgecolors='k')
 
             scatters.append(scatter)
 
@@ -170,7 +170,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
             # Change to logs on next commit
             scatter = ax.scatter(plot_x[SimPlot], plot_y[SimPlot], marker=markers[1],
                         s=(np.log(np.array(z_ax[SimPlot]))-np.log(np.array(zMin))+0.5)**3.,
-                        color=color, alpha=0.5)
+                        color=color, alpha=0.5, edgecolors='k')
 
             scatters.append(scatter)
 
@@ -190,20 +190,6 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
             tooltip = plugins.PointHTMLTooltip(scatter, labels,
                                            voffset=10, hoffset=10, css=css)
             plugins.connect(figure, tooltip)
-
-    if any(Obs):
-        # Change to logs on next commit
-        ax.scatter(plot_x[Obs], plot_y[Obs], marker=markers[0],
-                    s=(np.log(np.array(z_ax[Obs]))-np.log(np.array(zMin))+0.5)**3.,
-                    facecolors='none', edgecolors='black',
-                    alpha=0.5)
-
-    if any(Sim):
-        # Change to logs on next commit
-        ax.scatter(plot_x[Sim], plot_y[Sim], marker=markers[1],
-                    s=(np.log(np.array(z_ax[Sim]))-np.log(np.array(zMin))+0.5)**3.,
-                    facecolors='none', edgecolors='black',
-                    alpha=0.5)
 
     ax.set_xlabel('$\Sigma$ [M$_{\odot}$ pc$^{-2}$]', fontsize=16)
     ax.set_ylabel('$\sigma$ [km s$^{-1}$]', fontsize=16)
