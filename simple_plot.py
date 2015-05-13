@@ -247,31 +247,3 @@ def timeString() :
 
     TimeString=datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
     return TimeString
-
-if __name__ == "__main__":
-    # TODO: change units according to the axes
-    xMin = 1e-1*u.M_sun/u.pc**2
-    xMax = 1e5*u.M_sun/u.pc**2
-    yMin = 1e-1*u.km/u.s
-    yMax = 3e2*u.km/u.s
-    zMin = 1e-2*u.pc
-    zMax = 1e3*u.pc
-
-    variables = ['SurfaceDensity','VelocityDispersion','Radius']
-    print variables
-    FigureStrBase = ''
-    for var in variables:
-      FigureStrBase += var + '_'
-    FigureStrBase = FigureStrBase[0:-1]
-
-    NQuery=timeString()
-    TooOld=300
-
-    clearPlotOutput(FigureStrBase,TooOld)
-
-    d = table.Table.read("/Users/eric/Dropbox/Florence-Workshop/hands_on_before_Florence_yay/merged_table.ipac", format='ascii.ipac')
-
-    print (NQuery, d, FigureStrBase, variables, xMin, xMax, yMin, yMax, zMin, zMax)
-
-    plotData_Sigma_sigma(NQuery, d, FigureStrBase,
-                         xMin, xMax, yMin, yMax, zMin, zMax, interactive=True)
