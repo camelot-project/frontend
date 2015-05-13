@@ -18,6 +18,7 @@ import inspect
 import numpy as np
 import datetime
 import subprocess
+import requests
 from astropy.io import fits
 from astropy.io import ascii
 from astropy import table
@@ -289,7 +290,9 @@ def set_columns(filename, fileformat=None):
     append_table(merged_table, table)
     Table.write(merged_table, merged_table_name, format='ascii.csv')
 
-    branch = commit_change_to_database(column_data.get('Username')['Name'])
+    username = column_data.get('Username')['Name']
+    branch,timestamp = commit_change_to_database(username)
+    pull_request(branch, username, timestamp)
 
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
@@ -310,7 +313,7 @@ def set_columns(filename, fileformat=None):
                            tablefile='{fn}.html'.format(fn=outfilename))
 
 
-def commit_change_to_database(username, remote='origin'):
+def commit_change_to_database(username, remote='upstream'):
     timestamp = datetime.datetime.now().isoformat().replace(":","_")
     subprocess.Popen(['git','add','merged_table.csv'], cwd='database/')
     branch = '{0}_{1}'.format(username, timestamp)
@@ -323,10 +326,10 @@ def commit_change_to_database(username, remote='origin'):
                      cwd='database/')
     subprocess.Popen(['git','push', remote, branch,], cwd='database/')
 
-    return branch
+    return branch,timestamp
 
 
-def upload_to_github(filename):
+def pull_request(branch, user, timestamp):
     """
     WIP: Eventually, we want each file to be uploaded to github and submitted
     as a pull request when people submit their data
@@ -337,8 +340,6 @@ def upload_to_github(filename):
 
     https://developer.github.com/v3/pulls/#create-a-pull-request
     """
-    with open(os.path.join(app.config['UPLOAD_FOLDER'], filename)) as f:
-        content = f.read()
 
     """
     Need a function that will cd into the database directory, add the change,
@@ -349,20 +350,22 @@ def upload_to_github(filename):
     S = requests.Session()
     S.get('https://api.github.com/', data={'access_token':'e4942f7d7cc9468ffd0e'})
 
-    data = {'path': 'data_files/',
-            'content': content,
-            'branch': 'master',
-            'message': 'Upload a new data file {0}'.format(filename)}
-    # this is the correct form for the data?
-    {
-      "title": "Amazing new feature",
-      "body": "Please pull this in!",
-      "head": "octocat:new-feature",
+    data = {
+      "title": "New data table from {user}".format(user=user),
+      "body": "Data table added by {user} at {timestamp}".format(user=user, timestamp=timestamp),
+      "head": "camelot-project:{0}".format(branch),
       "base": "master"
     }
 
-    #api_url = 'https://api.github.com/repos/camelot-project/database/pulls'
-    S.post(api_url, data)
+
+    api_url_branch = 'https://api.github.com/repos/camelot-project/database/branches/{0}'.format(branch)
+    branch_exists = S.get(api_url_branch)
+    branch_exists.raise_for_status()
+
+    api_url = 'https://api.github.com/repos/camelot-project/database/pulls'
+    response = S.post(api_url, data)
+    response.raise_for_status()
+    return response
 
 
 @app.route('/query_form')
