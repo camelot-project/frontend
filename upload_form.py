@@ -16,6 +16,8 @@ from __future__ import print_function
 import os
 import inspect
 import numpy as np
+import datetime
+import subprocess
 from astropy.io import fits
 from astropy.io import ascii
 from astropy import table
@@ -31,6 +33,13 @@ from flask import (Flask, request, redirect, url_for, render_template,
 from simple_plot import plotData, plotData_Sigma_sigma, timeString
 from werkzeug import secure_filename
 import difflib
+import glob
+import random
+import matplotlib
+import matplotlib.pylab as plt
+
+from astropy.io import registry
+from astropy.table import Table
 
 UPLOAD_FOLDER = 'uploads/'
 DATABASE_FOLDER = 'database/'
@@ -43,14 +52,6 @@ use_units = ['Msun/pc^2','km/s','pc']
 FigureStrBase='Output_Sigma_sigma_r_'
 TooOld=300
 
-import glob
-import random
-import datetime
-import matplotlib
-import matplotlib.pylab as plt
-
-from astropy.io import registry
-from astropy.table import Table
 table_formats = registry.get_formats(Table)
 
 app = Flask(__name__)
@@ -253,7 +254,7 @@ def set_columns(filename, fileformat=None):
     else:
         add_is_sim_if_needed(table, True)
 
-# Detect duplicate IDs in uploaded data and bail out if found
+    # Detect duplicate IDs in uploaded data and bail out if found
     seen = {}
     for row in table:
         name = row['Names']
@@ -288,6 +289,8 @@ def set_columns(filename, fileformat=None):
     append_table(merged_table, table)
     Table.write(merged_table, merged_table_name, format='ascii.csv')
 
+    branch = commit_change_to_database(column_data.get('Username')['Name'])
+
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
     if not os.path.isdir('static/jstables/'):
@@ -306,6 +309,21 @@ def set_columns(filename, fileformat=None):
     return render_template('show_plot.html', imagename='/'+myplot,
                            tablefile='{fn}.html'.format(fn=outfilename))
 
+
+def commit_change_to_database(username, remote='origin'):
+    timestamp = datetime.datetime.now().isoformat().replace(":","_")
+    subprocess.Popen(['git','add','merged_table.csv'], cwd='database/')
+    branch = '{0}_{1}'.format(username, timestamp)
+    subprocess.Popen(['git','checkout','-b', branch,
+                      '{remote}/master'.format(remote=remote)],
+                     cwd='database/')
+    subprocess.Popen(['git','commit','-m',
+                      'Add changes to table from {0} at {1}'.format(username,
+                                                                    timestamp)],
+                     cwd='database/')
+    subprocess.Popen(['git','push', remote, branch,], cwd='database/')
+
+    return branch
 
 
 def upload_to_github(filename):
