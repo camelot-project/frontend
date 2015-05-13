@@ -23,7 +23,7 @@ imagename = {{imagename}}
 
 <script> 
 $(function(){
-        $("#includedContent").load("/static/jstables/{{tablefile}}"); 
+        $("#includedContent").load("/static/jstables/{{tablefile}}?" + (new Date).getTime()); 
 });
 </script> 
 
