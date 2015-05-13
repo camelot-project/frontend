@@ -35,6 +35,14 @@ valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated', 'Username']
 use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
 use_units = ['Msun/pc^2','km/s','pc']
+FigureStrBase='Output_Sigma_sigma_r_'
+TooOld=300
+
+import glob
+import random
+import datetime
+import matplotlib
+import matplotlib.pylab as plt
 
 from astropy.io import registry
 from astropy.table import Table
@@ -278,5 +286,110 @@ def query_form():
                            best_column_names=best_column_names,
                           )
 
+def clearPlotOutput(FigureStrBase,TooOld) :
+    
+    for fl in glob.glob(FigureStrBase+"*.png") + glob.glob(FigureStrBase+"*.pdf"):
+        now = time.time()
+        if os.stat(fl).st_mtime < now - TooOld :
+            os.remove(fl)
+
+def timeString():
+    
+    TimeString=datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+    return TimeString
+                          
+@app.route('/query/<path:filename>', methods=['POST'])
+def query(filename, fileformat=None):
+    SurfMin = float(request.form['SurfaceDensity_min'])
+    SurfMax = float(request.form['SurfaceDensity_max'])
+    VDispMin = float(request.form['VelocityDispersion_min'])
+    VDispMax = float(request.form['VelocityDispersion_max'])
+    RadMin = float(request.form['Radius_min'])
+    RadMax = float(request.form['Radius_max'])
+#    print(np.type(SurfMin))
+    print(SurfMin,SurfMax,VDispMin,VDispMax,RadMin,RadMax)
+
+    NQuery=timeString()
+    clearPlotOutput(FigureStrBase,TooOld)
+    
+    print(NQuery)
+        
+    plt.clf()
+
+    table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename), format='ascii.ipac')
+    Author = table['Names']
+    Run = table['IDs']
+    SurfDens = table['SurfaceDensity']
+    VDisp = table['VelocityDispersion']
+    Rad = table['Radius']
+    IsSim = (table['IsSimulated'] == 'True')
+    print(SurfDens)
+    
+    temp_table = [table[h].index for i,j,k,h in zip(table['SurfaceDensity'],table['VelocityDispersion'],table['Radius'], range(len(table))) if SurfMin < i < SurfMax and VDispMin < j < VDispMax and RadMin < k < RadMax]
+    use_table = table[temp_table]
+    use_table.write('output_table_'+NQuery+'.csv', format='csv')	 		
+    
+    UseSurf = (SurfDens > SurfMin) & (SurfDens < SurfMax)
+    UseVDisp = (VDisp > VDispMin) & (VDisp < VDispMax)
+    UseRad = (Rad > RadMin) & (Rad < RadMax)
+    Use = UseSurf & UseVDisp & UseRad
+    Obs = (~IsSim) & Use
+    Sim = IsSim & Use
+    
+    UniqueAuthor = set(Author[Use])
+    NUniqueAuthor = len(UniqueAuthor)
+    
+    #colors = random.sample(matplotlib.colors.cnames, NUniqueAuthor)
+    colors = list(plt.cm.jet(np.linspace(0,1,NUniqueAuthor)))
+    random.shuffle(colors)
+    
+    plt.loglog()
+    markers = ['o','s']
+    for iAu,color in zip(UniqueAuthor,colors) :
+        UsePlot = (Author == iAu) & Use
+        ObsPlot = ((Author == iAu) & (~IsSim)) & Use 
+        SimPlot = ((Author == iAu) & (IsSim)) & Use
+        if any(ObsPlot):
+            plt.scatter(SurfDens[ObsPlot], VDisp[ObsPlot], marker=markers[0],
+                        s=(np.log(np.array(Rad[ObsPlot]))-np.log(np.array(RadMin))+0.5)**3.,
+                        color=color, alpha=0.5)
+        if any(SimPlot):
+            plt.scatter(SurfDens[SimPlot], VDisp[SimPlot], marker=markers[1],
+                        s=(np.log(np.array(Rad[SimPlot]))-np.log(np.array(RadMin))+0.5)**3.,
+                        color=color, alpha=0.5)
+    if any(Obs):
+        plt.scatter(SurfDens[Obs], VDisp[Obs], marker=markers[0],
+                    s=(np.log(np.array(Rad[Obs]))-np.log(np.array(RadMin))+0.5)**3.,
+                    facecolors='none', edgecolors='black',
+                    alpha=0.5)
+    if any(Sim):
+        plt.scatter(SurfDens[Sim], VDisp[Sim], marker=markers[1],
+                    s=(np.log(np.array(Rad[Sim]))-np.log(np.array(RadMin))+0.5)**3.,
+                    facecolors='none', edgecolors='black',
+                    alpha=0.5)
+    plt.xlabel('$\Sigma$ [M$_{\odot}$ pc$^{-2}$]', fontsize=16)
+    plt.ylabel('$\sigma$ [km s$^{-1}$]', fontsize=16)
+
+    ax = plt.gca()
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+
+    # Put a legend to the right of the current axis
+    ax.legend(UniqueAuthor, loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size':12}, markerscale = .7, scatterpoints = 1)
+
+#    plt.xlim((SurfMin.to(u.M_sun/u.pc**2).value,SurfMax.to(u.M_sun/u.pc**2).value))
+#    plt.ylim((VDispMin.to(u.km/u.s).value,VDispMax.to(u.km/u.s).value))
+    plt.show()
+    plt.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
+    plt.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
+    
+    return render_template('show_plot.html', imagename='/'+FigureStrBase+NQuery+'.png')
+
+
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+
+
