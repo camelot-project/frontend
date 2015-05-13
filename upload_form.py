@@ -33,6 +33,7 @@ from werkzeug import secure_filename
 import difflib
 
 UPLOAD_FOLDER = 'uploads/'
+OUTPUT_FOLDER = 'generated/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated', 'Username']
@@ -359,11 +360,11 @@ def query(filename, fileformat=None):
     VDisp = table['VelocityDispersion']
     Rad = table['Radius']
     IsSim = (table['IsSimulated'] == 'True')
-    print(SurfDens)
+#    print(SurfDens)
     
     temp_table = [table[h].index for i,j,k,h in zip(table['SurfaceDensity'],table['VelocityDispersion'],table['Radius'], range(len(table))) if SurfMin < i < SurfMax and VDispMin < j < VDispMax and RadMin < k < RadMax]
     use_table = table[temp_table]
-    use_table.write('output_table_'+NQuery+'.csv', format='csv')	 		
+    use_table.write(os.path.join(app.config['UPLOAD_FOLDER'], 'output_table_'+NQuery+'.csv'), format='csv')	 		
     
     UseSurf = (SurfDens > SurfMin) & (SurfDens < SurfMax)
     UseVDisp = (VDisp > VDispMin) & (VDisp < VDispMax)
@@ -416,8 +417,8 @@ def query(filename, fileformat=None):
 #    plt.xlim((SurfMin.to(u.M_sun/u.pc**2).value,SurfMax.to(u.M_sun/u.pc**2).value))
 #    plt.ylim((VDispMin.to(u.km/u.s).value,VDispMax.to(u.km/u.s).value))
     plt.show()
-    plt.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
-    plt.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
+    plt.savefig(os.path.join(app.config['UPLOAD_FOLDER'], FigureStrBase+NQuery+'.png'),bbox_inches='tight',dpi=150)
+#    plt.savefig(os.path.join(app.config['UPLOAD_FOLDER'], FigureStrBase+NQuery+'.pdf'),bbox_inches='tight',dpi=150)
     
     return render_template('show_plot.html', imagename='/'+FigureStrBase+NQuery+'.png')
 
