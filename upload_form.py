@@ -54,6 +54,7 @@ table_formats = registry.get_formats(Table)
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
 
 
 # Allow zipping in jinja templates: http://stackoverflow.com/questions/5208252/ziplist1-list2-in-jinja2
@@ -79,6 +80,10 @@ def get_file_extension(filename):
 
 @app.route('/')
 def index():
+    return render_template('index.html')
+
+@app.route('/upload_form')
+def upload_form():
     return render_template('upload_form.html')
 
 @app.route('/upload', methods=['POST'])
@@ -374,7 +379,7 @@ def query(filename, fileformat=None):
     
     temp_table = [table[h].index for i,j,k,h in zip(table['SurfaceDensity'],table['VelocityDispersion'],table['Radius'], range(len(table))) if SurfMin < i < SurfMax and VDispMin < j < VDispMax and RadMin < k < RadMax]
     use_table = table[temp_table]
-    use_table.write(os.path.join(app.config['UPLOAD_FOLDER'], 'output_table_'+NQuery+'.csv'), format='csv')	 		
+    use_table.write(os.path.join(app.config['OUTPUT_FOLDER'], 'output_table_'+NQuery+'.csv'), format='csv')	 		
     
     UseSurf = (SurfDens > SurfMin) & (SurfDens < SurfMax)
     UseVDisp = (VDisp > VDispMin) & (VDisp < VDispMax)
@@ -427,8 +432,8 @@ def query(filename, fileformat=None):
 #    plt.xlim((SurfMin.to(u.M_sun/u.pc**2).value,SurfMax.to(u.M_sun/u.pc**2).value))
 #    plt.ylim((VDispMin.to(u.km/u.s).value,VDispMax.to(u.km/u.s).value))
     plt.show()
-    plt.savefig(os.path.join(app.config['UPLOAD_FOLDER'], FigureStrBase+NQuery+'.png'),bbox_inches='tight',dpi=150)
-#    plt.savefig(os.path.join(app.config['UPLOAD_FOLDER'], FigureStrBase+NQuery+'.pdf'),bbox_inches='tight',dpi=150)
+    plt.savefig(os.path.join(app.config['OUTPUT_FOLDER'], FigureStrBase+NQuery+'.png'),bbox_inches='tight',dpi=150)
+#    plt.savefig(os.path.join(app.config['OUTPUT_FOLDER'], FigureStrBase+NQuery+'.pdf'),bbox_inches='tight',dpi=150)
     
     return render_template('show_plot.html', imagename='/'+FigureStrBase+NQuery+'.png')
 
