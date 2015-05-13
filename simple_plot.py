@@ -128,8 +128,8 @@ def plotData(NQuery, table, FigureStrBase, variables, xMin, xMax, yMin, yMax,
                     facecolors='none', edgecolors='black',
                     alpha=0.5)
 
-    plt.xlabel(label_dict[variables[0]], fontsize=16)
-    plt.ylabel(label_dict[variables[1]], fontsize=16)
+    ax.xlabel(label_dict[variables[0]], fontsize=16)
+    ax.ylabel(label_dict[variables[1]], fontsize=16)
 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
