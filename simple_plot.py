@@ -65,7 +65,7 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
 
 
 def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yMax,
-             zMin, zMax, interactive=False):
+             zMin, zMax, interactive=False, show_log=True):
     """
     This is where documentation needs to be added
 
@@ -135,9 +135,13 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
         ObsPlot = ((Author == iAu) & (~IsSim)) & Use
         SimPlot = ((Author == iAu) & (IsSim)) & Use
 
+        if show_log:
+            plot_x = np.log10(x_ax)
+            plot_y = np.log10(y_ax)
+
         if any(ObsPlot):
             # Change to logs on next commit
-            scatter = ax.scatter(x_ax[ObsPlot], y_ax[ObsPlot], marker=markers[0],
+            scatter = ax.scatter(plot_x[ObsPlot], plot_y[ObsPlot], marker=markers[0],
                                  s=(np.log(np.array(z_ax[ObsPlot]))-np.log(np.array(zMin))+0.5)**3.,
                                  color=color, alpha=0.5)
 
@@ -153,7 +157,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
 
         if any(SimPlot):
             # Change to logs on next commit
-            scatter = ax.scatter(x_ax[SimPlot], y_ax[SimPlot], marker=markers[1],
+            scatter = ax.scatter(plot_x[SimPlot], plot_y[SimPlot], marker=markers[1],
                         s=(np.log(np.array(z_ax[SimPlot]))-np.log(np.array(zMin))+0.5)**3.,
                         color=color, alpha=0.5)
 
@@ -170,14 +174,14 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
 
     if any(Obs):
         # Change to logs on next commit
-        ax.scatter(x_ax[Obs], y_ax[Obs], marker=markers[0],
+        ax.scatter(plot_x[Obs], plot_y[Obs], marker=markers[0],
                     s=(np.log(np.array(z_ax[Obs]))-np.log(np.array(zMin))+0.5)**3.,
                     facecolors='none', edgecolors='black',
                     alpha=0.5)
 
     if any(Sim):
         # Change to logs on next commit
-        ax.scatter(x_ax[Sim], y_ax[Sim], marker=markers[1],
+        ax.scatter(plot_x[Sim], plot_y[Sim], marker=markers[1],
                     s=(np.log(np.array(z_ax[Sim]))-np.log(np.array(zMin))+0.5)**3.,
                     facecolors='none', edgecolors='black',
                     alpha=0.5)
@@ -209,8 +213,12 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
     for xf,yf,rad in zip(xfake,yfake,radius):
         ax.text(xf + 0.05,yf-0.01, str(rad) + ' ' + str(zMin.unit), transform=ax.transAxes)
 
-    ax.set_xlim(xMin.value,xMax.value)
-    ax.set_ylim(yMin.value,yMax.value)
+    if show_log:
+        ax.set_xlim(np.log10(xMin.value),np.log10(xMax.value))
+        ax.set_ylim(np.log10(yMin.value),np.log10(yMax.value))
+    else:
+        ax.set_xlim(xMin.value,xMax.value)
+        ax.set_ylim(yMin.value,yMax.value)
 
     html = mpld3.fig_to_html(figure)
     with open("mpld3_"+FigureStrBase+NQuery+'.html','w') as f:
