@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{{ super() }}
+<title>Query form</title>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+$(document).ready(function(){
+    $(".units").on('input', function(){
+        var units = $(this).val();
+        var input_id = $(this)[0].id;
+        $.getJSON('/validate_units', {
+            unit_str: units
+        }, function(data){
+            console.log(data);
+            if (data.OK) {
+                $("#"+input_id).css("background-color","#66FF66");
+                $("#"+input_id).addClass("background-color","#66FF66");
+            } else {
+                $("#"+input_id).css("background-color","#FFAAAA");
+            };
+        })
+    });
+});
+
+</script>
+{% endblock %}
+
+{% block body %}
+<h1>Query form</h1>
+<div class="row">
+    <div class="col-lg-8 col-lg-offset-2" id="column_form">
+        <form action="{{ url_for('set_columns', filename=filename, fileformat=fileformat) }}" method="post">
+            <table class="table table-striped">
+                <thead><tr><th>Quantity</th><th>Minimum</th><th>Maximum</th><th>Units</th></tr></thead>
+                <tbody>                
+                {% for column_name,best_column_name in zip(usetable.colnames,use_column_names) %}
+                <tr>
+                    <div class="form-group">
+                    <td><p>{{ column_name }}</p></td>
+                    <td>
+                        <input class="units form-control" id="{{column_name|striptags}}_min" name="{{column_name|striptags}}_min">
+                    </td>
+                    <td>
+                        <input class="units form-control" id="{{column_name|striptags}}_max" name="{{column_name|striptags}}_max">
+                    </td>
+                    <td>
+                        <select class="form-control real_column_name" name="{{column_name}}">
+                            {% for use_unit,use_column_name in zip(use_units,use_column_names) %}
+                            {% if use_column_name == best_column_name %}
+                            <option value="{{use_unit}}" selected>{{use_unit}}</option>
+                            {% else %}
+                            <option value="{{use_unit}}">{{use_unit}}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </td>
+                    </div>
+                </tr>
+                {% endfor %}
+                </tbody>
+                <thead><tr><th>Show:</th></tr></thead>
+                <tbody>
+                <tr><td>  <input type="checkbox" name="IsObserved" value="IsObserved" checked> Observations </td>
+                    <td>  <input type="checkbox" name="IsSimulated" value="IsSimulated" checked> Simulations </td></tr>
+                <tr><td>  <input type="checkbox" name="IsGalactic" value="IsGalactic" checked> Galactic </td>
+                    <td>  <input type="checkbox" name="IsExtragalactic" value="IsExtragalactic" checked> Extragalactic </td></tr>
+                </tbody>
+            </table>
+            <div class="col-md-2 col-md-offset-10" id="column_submit">
+                <input class="btn btn-success" id="submit_button" type="submit" value="Submit"> 
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
