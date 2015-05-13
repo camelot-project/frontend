@@ -265,5 +265,5 @@ if __name__ == "__main__":
 
     print (NQuery, d, FigureStrBase, variables, xMin, xMax, yMin, yMax, zMin, zMax)
 
-    plotData_Sigma_sigma(NQuery, d, FigureStrBase, variables,
-                         xMin, xMax, yMin, yMax, zMin, zMax)
+    plotData_Sigma_sigma(NQuery, d, FigureStrBase,
+                         xMin, xMax, yMin, yMax, zMin, zMax, interactive=True)
