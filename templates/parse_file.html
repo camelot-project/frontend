@@ -24,6 +24,7 @@ $(document).ready(function(){
             };
         })
     });
+
 });
 
 </script>
@@ -31,6 +32,7 @@ $(document).ready(function(){
 
 {% block body %}
 <h1>Parse file {{filename}}</h1>
+
 <div class="row">
     <div class="col-lg-8 col-lg-offset-2" id="column_form">
         <form action="{{ url_for('set_columns', filename=filename, fileformat=fileformat) }}" method="post">
@@ -38,8 +40,7 @@ $(document).ready(function(){
                 <thead><tr><th>File Column Name</th><th>Real Column Name</th><th>Units</th></tr></thead>
                 <tbody>
                 <tr><td>  <input type="checkbox" name="issimulated" value="IsSimulated">Is simulated? </td></tr>
-                <tr><td>  <input type="" name="Username" value="Username"></td> <td>Username? </td></tr>
-
+                <tr><td>  <input type="text" id="username" name="Username" value="" required></td> <td>Username? </td></tr>
                 
                 {% for column_name,best_column_name in zip(table.colnames, best_column_names) %}
                 <tr>

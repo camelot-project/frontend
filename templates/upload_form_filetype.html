@@ -17,7 +17,7 @@ $(document).ready(function(){
         var value = $(this).val();
         var value2 = $('#file_format').val();
         console.log(value);
-        if(value != '' && value2 != ''){
+        if(value != ''){
             $('#upload_button').removeAttr('disabled');
         }
         else{
@@ -25,16 +25,6 @@ $(document).ready(function(){
         }
     })
 
-    $('#file_format').change(function(){
-        var value = $(this).val();
-        var value2 = $('#file_field').val();
-        if(value != '' && value2 != ''){
-            $('#upload_button').removeAttr('disabled');
-        }
-        else{
-            $('#upload_button').attr('disabled','disabled');
-        }
-    })
 });
 </script>
 {% endblock %}
@@ -49,7 +39,7 @@ $(document).ready(function(){
                     <label class="sr-only" for="file">Choose file and specify file type</label>
                     <!-- TODO: add a callback that finds the best-match format when a filename is set -->
                     <input class="form-control" id="file_field" type="file" name="file" value={{filename}}>
-                    <input class="fileformat" id="file_format" name="fileformat" value={{best_match_extension}}>
+                    <input class="fileformat" id="file_format" name="fileformat" required value="{{best_match_extension}}">
                     <input class="btn btn-success" id="upload_button" type="submit" value="Upload">
                 </div>    
             </div>
