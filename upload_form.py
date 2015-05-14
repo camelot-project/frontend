@@ -39,6 +39,7 @@ import glob
 import random
 import matplotlib
 import matplotlib.pylab as plt
+import keyring
 
 from astropy.io import registry
 from astropy.table import Table
@@ -326,11 +327,11 @@ def set_columns(filename, fileformat=None):
 
 def commit_change_to_database(username, remote='upstream'):
     timestamp = datetime.datetime.now().isoformat().replace(":","_")
-    subprocess.Popen(['git','add','merged_table.csv'], cwd='database/')
     branch = '{0}_{1}'.format(username, timestamp)
     subprocess.Popen(['git','checkout','-b', branch,
                       '{remote}/master'.format(remote=remote)],
                      cwd='database/')
+    subprocess.Popen(['git','add','merged_table.csv'], cwd='database/')
     subprocess.Popen(['git','commit','-m',
                       'Add changes to table from {0} at {1}'.format(username,
                                                                     timestamp)],
@@ -352,15 +353,12 @@ def pull_request(branch, user, timestamp):
     https://developer.github.com/v3/pulls/#create-a-pull-request
     """
 
-    """
-    Need a function that will cd into the database directory, add the change,
-    commit it, push.
-    """
-
 
     S = requests.Session()
     S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
-    S.get('https://api.github.com/', data={'access_token':'e4942f7d7cc9468ffd0e'})
+    user = 'SirArthurTheSubmitter'
+    password = keyring.get_password('github', user)
+    #S.get('https://api.github.com/', data={'access_token':'e4942f7d7cc9468ffd0e'})
 
     data = {
       "title": "New data table from {user}".format(user=user),
@@ -375,7 +373,7 @@ def pull_request(branch, user, timestamp):
     branch_exists.raise_for_status()
 
     api_url = 'https://api.github.com/repos/camelot-project/database/pulls'
-    response = S.post(api_url, data)
+    response = S.post(url=api_url, data=json.dumps(data), auth=(user, password))
     response.raise_for_status()
     return response
 
