@@ -389,11 +389,11 @@ def query(filename, fileformat=None):
     use_table = table[temp_table]
     use_table.write(os.path.join(app.config['OUTPUT_FOLDER'], 'output_table_'+NQuery+'.csv'), format='csv')	 		
     
-    return plotData_Sigma_sigma(NQuery, use_table, FigureStrBase,
-                         SurfMin, SurfMax,
-                         VDispMin,
-                         VDispMax, RadMin, RadMax,
-                         interactive=False)
+    plot_file = plotData_Sigma_sigma(NQuery, use_table, FigureStrBase, SurfMin,
+                                     SurfMax, VDispMin, VDispMax, RadMin,
+                                     RadMax, interactive=False)
+
+    return render_template('show_plot.html', imagename='/'+plot_file)
 
 
 class InvalidUsage(Exception):
