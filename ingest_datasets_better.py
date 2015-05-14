@@ -73,8 +73,7 @@ def convert_units(tbl, units={'SurfaceDensity':u.M_sun/u.pc**2,
                           'VelocityDispersion':u.km/u.s,
                           'Radius':u.pc}):
     """
-    Set the units of the table to the specified units.
-    WARNING: this *overwrites* existing units, it does not convert them!
+    Convert from the units used in the table to the specified units.
     """
     for k,v in units.items():
         if k not in tbl.colnames:
