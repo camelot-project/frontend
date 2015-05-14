@@ -358,14 +358,15 @@ def set_columns(filename, fileformat=None):
                            tablefile='{fn}.html'.format(fn=outfilename))
 
 
-def commit_change_to_database(username, remote='upstream', tablename='merged_table.ipac',
+def commit_change_to_database(username, remote='origin', tablename='merged_table.ipac',
                               workingdir='database/', database='database'):
     """
     """
     timestamp = datetime.now().isoformat().replace(":","_")
     branch = '{0}_{1}'.format(username, timestamp)
 
-    check_upstream = subprocess.check_output(['git', 'config', '--get', 'remote.upstream.url'],
+    check_upstream = subprocess.check_output(['git', 'config', '--get',
+                                              'remote.{remote}.url'.format(remote=remote)],
                                              cwd=workingdir)
     name = os.path.split(check_upstream)[1][:-5]
     if name != database:
