@@ -391,10 +391,10 @@ def query(filename, fileformat=None):
     NQuery=timeString()
     clearPlotOutput(os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase),
                     TooOld)
-    
+
     print(NQuery)
 
-    table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename), format='ascii.ipac')
+    table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.ipac')
     set_units(table)
     Author = table['Names']
     Run = table['IDs']
@@ -407,7 +407,7 @@ def query(filename, fileformat=None):
     temp_table = [table[h].index for i,j,k,h in zip(table['SurfaceDensity'],table['VelocityDispersion'],table['Radius'], range(len(table))) if SurfMin < i*table['SurfaceDensity'].unit < SurfMax and VDispMin < j*table['VelocityDispersion'].unit < VDispMax and RadMin < k*table['Radius'].unit < RadMax]
     use_table = table[temp_table]
     use_table.write(os.path.join(app.config['TABLE_FOLDER'], 'output_table_'+NQuery+'.ipac'), format='ipac')
-    
+
     plot_file = plotData_Sigma_sigma(NQuery, use_table,
                                      os.path.join(app.config['MPLD3_FOLDER'],
                                                   FigureStrBase), SurfMin,
