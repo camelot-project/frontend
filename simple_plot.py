@@ -249,7 +249,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
         ax.set_ylim(yMin.value, yMax.value)
 
     html = mpld3.fig_to_html(figure)
-    with open("mpld3_"+FigureStrBase+NQuery+'.html', 'w') as f:
+    with open(FigureStrBase+NQuery+'.html', 'w') as f:
        f.write(html)
 
     # figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
@@ -262,16 +262,17 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
 
         mpld3.show()
 
-    return "mpld3_"+FigureStrBase+NQuery+'.html'
+    return FigureStrBase+NQuery+'.html'
 
-def clearPlotOutput(FigureStrBase,TooOld) :
+
+def clearPlotOutput(FigureStrBase, TooOld):
 
     for fl in glob.glob(FigureStrBase+"*.png") + glob.glob(FigureStrBase+"*.pdf"):
         now = time.time()
-        if os.stat(fl).st_mtime < now - TooOld :
+        if os.stat(fl).st_mtime < now - TooOld:
             os.remove(fl)
 
-def timeString() :
 
-    TimeString=datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+def timeString():
+    TimeString = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
     return TimeString
