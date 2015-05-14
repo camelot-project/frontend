@@ -19,6 +19,7 @@ import numpy as np
 import datetime
 import subprocess
 import requests
+import json
 from astropy.io import fits
 from astropy.io import ascii
 from astropy import table
@@ -241,6 +242,8 @@ def set_columns(filename, fileformat=None):
     for key, pair in column_data.items():
         if pair['Name'] != "Ignore" and pair['Name'] != "IsSimulated" and key != "Username":
             units_data[pair['Name']] = pair['unit']
+
+    mapping = {filename: [column_data, units_data]}
 
     # Parse the table file, step-by-step
     rename_columns(table, {k: v['Name'] for k,v in column_data.items()})
