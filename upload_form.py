@@ -386,6 +386,14 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
         raise Exception("Error: the remote URL {0} (which is really '{2}') does not match the expected one '{1}'"
                         .format(check_upstream, database, name))
 
+    checkout_master_result = subprocess.call(['git','checkout',
+                                              '{remote}/master'.format(remote=remote)],
+                                             cwd=workingdir)
+    if checkout_master_result != 0:
+        raise Exception("Checking out the {remote}/master branch in the database failed.  "
+                        "Try 'cd {workingdir}; git checkout {remote}/master'"
+                        .format(remote=remote, workingdir=workingdir))
+
     checkout_result = subprocess.call(['git','checkout','-b', branch,
                                        '{remote}/master'.format(remote=remote)],
                                       cwd=workingdir)
@@ -409,6 +417,14 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
     push_result = subprocess.call(['git','push', remote, branch,], cwd=workingdir)
     if push_result != 0:
         raise Exception("Pushing to the remote {0} folder failed".format(workingdir))
+
+    checkout_master_result = subprocess.call(['git','checkout',
+                                              '{remote}/master'.format(remote=remote)],
+                                             cwd=workingdir)
+    if checkout_master_result != 0:
+        raise Exception("Checking out the {remote}/master branch in the database failed.  "
+                        "This will prevent future uploads from working, which is bad!!"
+                        .format(remote=remote, workingdir=workingdir))
 
     return branch,timestamp
 
