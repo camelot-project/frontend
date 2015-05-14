@@ -40,10 +40,10 @@ table, th, td
 """
 
 def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
-                         SurfMin, SurfMax,
-                         VDispMin,
-                         VDispMax, RadMin, RadMax,
-                         interactive):
+                         SurfMin=1e-1*u.M_sun/u.pc**2, SurfMax=1e5*u.M_sun/u.pc**2,
+                         VDispMin=1e-1*u.km/u.s,
+                         VDispMax=3e2*u.km/u.s, RadMin=1e-2*u.pc, RadMax=1e3*u.pc,
+                         interactive=False):
     """
     SurfMin
     SurfMax
