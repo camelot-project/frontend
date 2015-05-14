@@ -453,13 +453,13 @@ def query(filename, fileformat=None):
         temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsSimulated']) if i == 'True']
         use_table.remove_rows(temp_table)
         
-#    if not ShowGal :
-#        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsGalactic']) if i == 'True']
-#        use_table.remove_rows(temp_table)
-#        
-#    if not ShowExgal :
-#        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsGalactic']) if i == 'False']
-#        use_table.remove_rows(temp_table)
+    if not ShowGal :
+        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsGalactic']) if i == 'True']
+        use_table.remove_rows(temp_table)
+        
+    if not ShowExgal :
+        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsGalactic']) if i == 'False']
+        use_table.remove_rows(temp_table)
     
     use_table.write(os.path.join(app.config['TABLE_FOLDER'], TableStrBase+NQuery+'.ipac'), format='ipac')
     
