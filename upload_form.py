@@ -364,9 +364,11 @@ def upload_to_github(filename):
 def query_form(filename="merged_table.ipac"):
 
     table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.ipac')
+    
+    tolerance=1.1
 
-    min_values=[np.round(min(table['SurfaceDensity']),4),np.round(min(table['VelocityDispersion']),4),np.round(min(table['Radius']),4)]
-    max_values=[np.round(max(table['SurfaceDensity']),1),np.round(max(table['VelocityDispersion']),1),np.round(max(table['Radius']),1)]
+    min_values=[np.round(min(table['SurfaceDensity'])/tolerance,4),np.round(min(table['VelocityDispersion'])/tolerance,4),np.round(min(table['Radius'])/tolerance,4)]
+    max_values=[np.round(max(table['SurfaceDensity'])*tolerance,1),np.round(max(table['VelocityDispersion'])*tolerance,1),np.round(max(table['Radius'])*tolerance,1)]
 
     usetable = table[use_column_names]
 
