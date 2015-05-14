@@ -26,7 +26,7 @@ from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     add_is_sim_if_needed, fix_bad_types,
                                     add_filename_column, add_timestamp_column,
                                     reorder_columns, append_table,
-                                    ignore_duplicates, update_duplicates
+                                    ignore_duplicates, update_duplicates,
                                     add_is_gal_if_needed, add_is_gal_column)
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
