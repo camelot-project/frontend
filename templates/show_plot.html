@@ -12,8 +12,6 @@
 {% block body %}
 {{ super() }}
 <div class="row">
-This is a page with a figure
-<br>
 
 <html>
   <body>
@@ -22,7 +20,7 @@ This is a page with a figure
   </body>
 </html>
 
-imagename = {{imagename}}
+<!-- imagename = {{imagename}} -->
 
 {% if imagename[:-3] == 'png' %}
     <img src="{{imagename}}" width=800>
