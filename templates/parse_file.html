@@ -2,7 +2,7 @@
 
 {% block head %}
 {{ super() }}
-<title>Parse file {{filename}}</title>
+<title>CAMELOT Parse file {{filename}}</title>
 {% endblock %}
 
 {% block scripts %}
@@ -37,15 +37,14 @@ $(document).ready(function(){
             };
         })
     });
-
 });
 
 </script>
 {% endblock %}
 
 {% block body %}
-<h1>Parse file {{filename}}</h1>
-
+{{ super() }}
+<h1>CAMELOT Parse file {{filename}}</h1>
 <div class="row">
     <div class="col-lg-8 col-lg-offset-2" id="column_form">
         <form action="{{ url_for('set_columns', filename=filename, fileformat=fileformat) }}" method="post">

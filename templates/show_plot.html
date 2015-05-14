@@ -1,18 +1,22 @@
 {% extends 'base.html' %}
 
 {% block head %}
-{{ super() }}
-<title>PLOT </title>
+{{ super() }}    
+<title>CAMELOT Plot</title>
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
-<script src="http://cdn.datatables.net/1.10.2/js/jquery.dataTables.min.js"></script>
 {% endblock %}
 
 {% block body %}
-
+{{ super() }}
+<div class="row">
 This is a page with a figure
+<br>
+imagename = {{imagename}}
+<img src="{{imagename}}" width=800>
+</div>
 <html>
   <head>
     <!-- imagename = {{imagename}} -->
@@ -31,7 +35,7 @@ This is a page with a figure
 
 <script>
 $(function(){
-        $("#includedContent").load("/static/jstables/{{tablefile}}");
+        $("#includedContent").load("/static/jstables/{{tablefile}}?" + (new Date).getTime()); 
 });
 </script>
 
