@@ -239,7 +239,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
     with open("mpld3_"+FigureStrBase+NQuery+'.html','w') as f:
        f.write(html)
 
-    # figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
+    figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
     # figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
 
     if interactive:
