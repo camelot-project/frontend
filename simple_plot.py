@@ -108,6 +108,10 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
     else:
         IsSim = d['IsSimulated'] == 'True'
 
+    label_dict = {'SurfaceDensity':'$\Sigma$ [M$_{\odot}$ pc$^{-2}$]',
+                  'VelocityDispersion':'$\sigma$ [km s$^{-1}$]',
+                  'Radius':'$R$ [pc]'}
+
     # selects surface density points wthin the limits
     Use_x_ax = (x_ax > xMin) & (x_ax < xMax)
     Use_y_ax = (y_ax > yMin) & (y_ax < yMax)
@@ -191,8 +195,8 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
                                            voffset=10, hoffset=10, css=css)
             plugins.connect(figure, tooltip)
 
-    ax.set_xlabel('$\Sigma$ [M$_{\odot}$ pc$^{-2}$]', fontsize=16)
-    ax.set_ylabel('$\sigma$ [km s$^{-1}$]', fontsize=16)
+    ax.set_xlabel(label_dict[variables[0]], fontsize=16)
+    ax.set_ylabel(label_dict[variables[1]], fontsize=16)
 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
@@ -218,8 +222,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
     yfake = [0.85,0.9,0.95,] #[yax_limits[1] - yax_limits[1]*0.01,yax_limits[1] - yax_limits[1]*0.3,yax_limits[1] - yax_limits[1]*0.6]
     radius = np.array([1e-1,1e0,1e1]) #*u.pc #(zMin + zMax)*0.5
 
-
-    ax.scatter(np.array(xfake), np.array(yfake), marker='s',
+    ax.scatter(np.array(xfake), np.array(yfake), marker='+',
 	       s=(np.log(np.array(radius))-np.log(np.array(zMin.value))+0.5)**3., transform=ax.transAxes,
 	       facecolors='g')
     for xf,yf,rad in zip(xfake,yfake,radius):

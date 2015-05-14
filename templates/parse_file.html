@@ -9,6 +9,19 @@
 {{ super() }}
 <script>
 $(document).ready(function(){
+    if($('#username').val() == ''){
+        $('#submit_button').attr('disabled','disabled');
+    }
+
+    $('#username').change(function(){
+        if($(this).val() != ''){
+            $('#submit_button').removeAttr('disabled');
+        }
+        else{
+            $('#submit_button').attr('disabled','disabled');
+        }
+    });
+
     $(".units").on('input', function(){
         var units = $(this).val();
         var input_id = $(this)[0].id;
@@ -39,7 +52,7 @@ $(document).ready(function(){
             <table class="table table-striped">
                 <thead><tr><th>File Column Name</th><th>Real Column Name</th><th>Units</th></tr></thead>
                 <tbody>
-                <tr><td>  <input type="checkbox" name="issimulated" value="IsSimulated">Is simulated? </td></tr>
+                <tr><td>  <input type="checkbox" name="issimulated" value="IsSimulated"> Is this simulated data? </td></tr>
                 <tr><td>  <input type="text" id="username" name="Username" value="" required></td> <td>Username? </td></tr>
                 
                 {% for column_name,best_column_name in zip(table.colnames, best_column_names) %}
