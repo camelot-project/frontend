@@ -334,6 +334,7 @@ def set_columns(filename, fileformat=None):
 
     username = column_data.get('Username')['Name']
     branch,timestamp = commit_change_to_database(username)
+    time.sleep(2)
     pull_request(branch, username, timestamp)
 
     if not os.path.isdir('static/figures/'):
@@ -360,15 +361,27 @@ def set_columns(filename, fileformat=None):
 def commit_change_to_database(username, remote='upstream'):
     timestamp = datetime.now().isoformat().replace(":","_")
     branch = '{0}_{1}'.format(username, timestamp)
-    subprocess.Popen(['git','checkout','-b', branch,
-                      '{remote}/master'.format(remote=remote)],
-                     cwd='database/')
-    subprocess.Popen(['git','add','merged_table.ipac'], cwd='database/')
-    subprocess.Popen(['git','commit','-m',
+    checkout_result = subprocess.call(['git','checkout','-b', branch,
+                                       '{remote}/master'.format(remote=remote)],
+                                      cwd='database/')
+    if checkout_result != 0:
+        raise Exception("Checking out a new branch in the database failed.  "
+                        "Attempted to checkout branch {0}".format(branch))
+
+    add_result = subprocess.call(['git','add','merged_table.ipac'], cwd='database/')
+    if add_result != 0:
+        raise Exception("Adding merged_table.ipac to the commit failed.")
+
+    commit_result = subprocess.call(['git','commit','-m',
                       'Add changes to table from {0} at {1}'.format(username,
                                                                     timestamp)],
                      cwd='database/')
-    subprocess.Popen(['git','push', remote, branch,], cwd='database/')
+    if commit_result != 0:
+        raise Exception("Committing the new branch failed")
+
+    push_result = subprocess.call(['git','push', remote, branch,], cwd='database/')
+    if push_result != 0:
+        raise Exception("Pushing to the remote database failed")
 
     return branch,timestamp
 
@@ -388,8 +401,8 @@ def pull_request(branch, user, timestamp):
 
     S = requests.Session()
     S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
-    user = 'SirArthurTheSubmitter'
-    password = keyring.get_password('github', user)
+    git_user = 'SirArthurTheSubmitter'
+    password = keyring.get_password('github', git_user)
     #S.get('https://api.github.com/', data={'access_token':'e4942f7d7cc9468ffd0e'})
 
     data = {
@@ -405,7 +418,7 @@ def pull_request(branch, user, timestamp):
     branch_exists.raise_for_status()
 
     api_url = 'https://api.github.com/repos/camelot-project/database/pulls'
-    response = S.post(url=api_url, data=json.dumps(data), auth=(user, password))
+    response = S.post(url=api_url, data=json.dumps(data), auth=(git_user, password))
     response.raise_for_status()
     return response
 
