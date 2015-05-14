@@ -34,7 +34,9 @@ import difflib
 
 UPLOAD_FOLDER = 'uploads/'
 DATABASE_FOLDER = 'database/'
-OUTPUT_FOLDER = 'generated/'
+MPLD3_FOLDER = 'static/mpld3/'
+PNG_PLOT_FOLDER = 'static/figures/'
+TABLE_FOLDER = 'static/tables/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated', 'Username']
@@ -57,10 +59,12 @@ table_formats = registry.get_formats(Table)
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
+app.config['MPLD3_FOLDER'] = MPLD3_FOLDER
 app.config['DATABASE_FOLDER'] = DATABASE_FOLDER
+app.config['PNG_PLOT_FOLDER'] = PNG_PLOT_FOLDER
+app.config['TABLE_FOLDER'] = TABLE_FOLDER
 
-for path in (UPLOAD_FOLDER, OUTPUT_FOLDER, DATABASE_FOLDER):
+for path in (UPLOAD_FOLDER, MPLD3_FOLDER, DATABASE_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
     if not os.path.isdir(path):
         os.mkdir(path)
 
@@ -303,7 +307,9 @@ def set_columns(filename, fileformat=None):
         os.mkdir('static/jstables')
 
     outfilename = os.path.splitext(filename)[0]
-    myplot = plotData_Sigma_sigma(timeString(), table, 'static/figures/'+outfilename)
+    myplot = plotData_Sigma_sigma(timeString(), table,
+                                  os.path.join(app.config['MPLD3_PLOT_FOLDER'],
+                                               outfilename))
 
     tablecss = "table,th,td,tr,tbody {border: 1px solid black; border-collapse: collapse;}"
     write_table_jsviewer(table,
@@ -399,7 +405,7 @@ def query(filename, fileformat=None):
     
     temp_table = [table[h].index for i,j,k,h in zip(table['SurfaceDensity'],table['VelocityDispersion'],table['Radius'], range(len(table))) if SurfMin < i*table['SurfaceDensity'].unit < SurfMax and VDispMin < j*table['VelocityDispersion'].unit < VDispMax and RadMin < k*table['Radius'].unit < RadMax]
     use_table = table[temp_table]
-    use_table.write(os.path.join(app.config['OUTPUT_FOLDER'], 'output_table_'+NQuery+'.ipac'), format='ipac')	 		
+    use_table.write(os.path.join(app.config['TABLE_FOLDER'], 'output_table_'+NQuery+'.ipac'), format='ipac')	 		
     
     return plotData_Sigma_sigma(NQuery, use_table, FigureStrBase,
                          SurfMin, SurfMax,
