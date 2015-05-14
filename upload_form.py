@@ -270,7 +270,7 @@ def set_columns(filename, fileformat=None):
     # If merged table already exists, then append the new entries.
     # Otherwise, create the table
 
-    merged_table_name = os.path.join(app.config['DATABASE_FOLDER'], 'merged_table.csv')
+    merged_table_name = os.path.join(app.config['DATABASE_FOLDER'], 'merged_table.ipac')
     if os.path.isfile(merged_table_name):
         merged_table = Table.read(merged_table_name,
                                   converters={'Names':
@@ -279,7 +279,7 @@ def set_columns(filename, fileformat=None):
                                               [ascii.convert_numpy('S64')],
                                               'IsSimulated':
                                               [ascii.convert_numpy('S5')]},
-                                  format='ascii.csv')
+                                  format='ascii.ipac')
         if 'Timestamp' not in merged_table.colnames:
             # Create a fake timestamp for the previous entries if they don't already have one
             fake_timestamp = datetime.min
@@ -295,7 +295,7 @@ def set_columns(filename, fileformat=None):
 
     table = reorder_columns(table, merged_table.colnames)
     append_table(merged_table, table)
-    Table.write(merged_table, merged_table_name, format='ascii.csv')
+    Table.write(merged_table, merged_table_name, format='ascii.ipac')
 
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
@@ -338,9 +338,9 @@ def upload_to_github(filename):
 
 
 @app.route('/query_form')
-def query_form(filename="merged_table.csv"):
+def query_form(filename="merged_table.ipac"):
     
-    table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.csv')
+    table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.ipac')
     
     usetable = table[use_column_names]
     
@@ -387,7 +387,7 @@ def query(filename, fileformat=None):
     
     print(NQuery)
         
-    table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename), format='ascii.csv')
+    table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename), format='ascii.ipac')
     set_units(table)
     Author = table['Names']
     Run = table['IDs']
@@ -399,7 +399,7 @@ def query(filename, fileformat=None):
     
     temp_table = [table[h].index for i,j,k,h in zip(table['SurfaceDensity'],table['VelocityDispersion'],table['Radius'], range(len(table))) if SurfMin < i*table['SurfaceDensity'].unit < SurfMax and VDispMin < j*table['VelocityDispersion'].unit < VDispMax and RadMin < k*table['Radius'].unit < RadMax]
     use_table = table[temp_table]
-    use_table.write(os.path.join(app.config['OUTPUT_FOLDER'], 'output_table_'+NQuery+'.csv'), format='csv')	 		
+    use_table.write(os.path.join(app.config['OUTPUT_FOLDER'], 'output_table_'+NQuery+'.ipac'), format='ipac')	 		
     
     return plotData_Sigma_sigma(NQuery, use_table, FigureStrBase,
                          SurfMin, SurfMax,
