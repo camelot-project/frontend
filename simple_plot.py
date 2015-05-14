@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import os
 import glob
 import numpy as np
@@ -11,6 +12,8 @@ from astropy import units as u
 import mpld3
 from mpld3 import plugins
 import pdb
+
+
 
 matplotlib.rcParams['figure.figsize'] = (12, 8)
 
@@ -111,8 +114,8 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
         IsSim = d['IsSimulated'] == 'True'
 
     label_dict = \
-        {'SurfaceDensity': '$\Sigma$ [M$_{\odot}$ pc$^{-2}$]',
-         'VelocityDispersion': '$\sigma$ [km s$^{-1}$]',
+        {'SurfaceDensity': '\u03A3 [M\u2609 pc\u207B\u00B2]',
+         'VelocityDispersion': "\u03C3 [km s\u207B\u00B9]",#$^{-1}$]",
          'Radius': '$R$ [pc]'}
 
     # selects surface density points wthin the limits

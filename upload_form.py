@@ -30,6 +30,7 @@ from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     add_is_sim_if_needed, fix_bad_types,
                                     add_filename_column, add_timestamp_column,
                                     reorder_columns, append_table,
+                                    ignore_duplicates, update_duplicates,
                                     add_is_gal_if_needed, add_is_gal_column)
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
@@ -329,6 +330,18 @@ def set_columns(filename, fileformat=None):
         set_units(merged_table)
 
     table = reorder_columns(table, merged_table.colnames)
+
+    # Detect whether any username, ID pairs match entries already in the merged table
+    duplicates = {}
+    for row in merged_table:
+        name = row['Names']
+        id = row['IDs']
+        if id in seen:
+            if name == seen[id]:
+                duplicates[id] = name
+
+    handle_duplicates(table, merged_table, duplicates)
+
     append_table(merged_table, table)
     Table.write(merged_table, merged_table_name, format='ascii.ipac')
 
@@ -358,20 +371,41 @@ def set_columns(filename, fileformat=None):
                            tablefile='{fn}.html'.format(fn=outfilename))
 
 
-def commit_change_to_database(username, remote='upstream', tablename='merged_table.ipac',
-                              workingdir='database/'):
+def commit_change_to_database(username, remote='origin', tablename='merged_table.ipac',
+                              workingdir='database/', database='database'):
+    """
+    """
     timestamp = datetime.now().isoformat().replace(":","_")
     branch = '{0}_{1}'.format(username, timestamp)
+
+    check_upstream = subprocess.check_output(['git', 'config', '--get',
+                                              'remote.{remote}.url'.format(remote=remote)],
+                                             cwd=workingdir)
+    name = os.path.split(check_upstream)[1][:-5]
+    if name != database:
+        raise Exception("Error: the remote URL {0} (which is really '{2}') does not match the expected one '{1}'"
+                        .format(check_upstream, database, name))
+
+    checkout_master_result = subprocess.call(['git','checkout',
+                                              '{remote}/master'.format(remote=remote)],
+                                             cwd=workingdir)
+    if checkout_master_result != 0:
+        raise Exception("Checking out the {remote}/master branch in the database failed.  "
+                        "Try 'cd {workingdir}; git checkout {remote}/master'"
+                        .format(remote=remote, workingdir=workingdir))
+
     checkout_result = subprocess.call(['git','checkout','-b', branch,
                                        '{remote}/master'.format(remote=remote)],
                                       cwd=workingdir)
     if checkout_result != 0:
         raise Exception("Checking out a new branch in the database failed.  "
-                        "Attempted to checkout branch {0}".format(branch))
+                        "Attempted to checkout branch {0} in {1}"
+                        .format(branch, workingdir))
 
-    add_result = subprocess.call(['git','add','merged_table.ipac'], cwd=workingdir)
+    add_result = subprocess.call(['git','add',tablename], cwd=workingdir)
     if add_result != 0:
-        raise Exception("Adding {tablename} to the commit failed.".format(tablename=tablename))
+        raise Exception("Adding {tablename} to the commit failed in {cwd}."
+                        .format(tablename=tablename, cwd=workingdir))
 
     commit_result = subprocess.call(['git','commit','-m',
                       'Add changes to table from {0} at {1}'.format(username,
@@ -383,6 +417,14 @@ def commit_change_to_database(username, remote='upstream', tablename='merged_tab
     push_result = subprocess.call(['git','push', remote, branch,], cwd=workingdir)
     if push_result != 0:
         raise Exception("Pushing to the remote {0} folder failed".format(workingdir))
+
+    checkout_master_result = subprocess.call(['git','checkout',
+                                              '{remote}/master'.format(remote=remote)],
+                                             cwd=workingdir)
+    if checkout_master_result != 0:
+        raise Exception("Checking out the {remote}/master branch in the database failed.  "
+                        "This will prevent future uploads from working, which is bad!!"
+                        .format(remote=remote, workingdir=workingdir))
 
     return branch,timestamp
 
@@ -423,6 +465,8 @@ def pull_request(branch, user, timestamp):
     response.raise_for_status()
     return response
 
+def handle_duplicates(table, merged_table, duplicates):
+    print("TODO: DO SOMETHING HERE")
 
 @app.route('/query_form')
 def query_form(filename="merged_table.ipac"):
