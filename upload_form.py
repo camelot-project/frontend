@@ -330,7 +330,7 @@ def set_columns(filename, fileformat=None):
 
     table = reorder_columns(table, merged_table.colnames)
     append_table(merged_table, table)
-    Table.write(merged_table, merged_table_name, format='ascii.csv')
+    Table.write(merged_table, merged_table_name, format='ascii.ipac')
 
     username = column_data.get('Username')['Name']
     branch,timestamp = commit_change_to_database(username)
@@ -358,12 +358,12 @@ def set_columns(filename, fileformat=None):
 
 
 def commit_change_to_database(username, remote='upstream'):
-    timestamp = datetime.datetime.now().isoformat().replace(":","_")
+    timestamp = datetime.now().isoformat().replace(":","_")
     branch = '{0}_{1}'.format(username, timestamp)
     subprocess.Popen(['git','checkout','-b', branch,
                       '{remote}/master'.format(remote=remote)],
                      cwd='database/')
-    subprocess.Popen(['git','add','merged_table.csv'], cwd='database/')
+    subprocess.Popen(['git','add','merged_table.ipac'], cwd='database/')
     subprocess.Popen(['git','commit','-m',
                       'Add changes to table from {0} at {1}'.format(username,
                                                                     timestamp)],
@@ -446,7 +446,7 @@ def clearOutput() :
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
 
-    for fl in glob.glob(os.path.join(app.config['TABLE_FOLDER'], TableStrBase+"*.csv")):
+    for fl in glob.glob(os.path.join(app.config['TABLE_FOLDER'], TableStrBase+"*.ipac")):
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
