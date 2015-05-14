@@ -308,11 +308,9 @@ def set_columns(filename, fileformat=None):
         id = row['IDs']
         if id in seen:
             if name == seen[id]:
-                print("Found duplicate! {0}, {1}".format(name, id))
                 duplicates[id] = name
 
-    #ignore_duplicates(table, duplicates)
-    #update_duplicates(merged_table, duplicates)
+    handle_duplicates(table, merged_table, duplicates)
 
     append_table(merged_table, table)
     Table.write(merged_table, merged_table_name, format='ascii.ipac')
@@ -337,7 +335,8 @@ def set_columns(filename, fileformat=None):
     return render_template('show_plot.html', imagename='/'+myplot,
                            tablefile='{fn}.html'.format(fn=outfilename))
 
-
+def handle_duplicates(table, merged_table, duplicates):
+    print("TODO: DO SOMETHING HERE")
 
 def upload_to_github(filename):
     """
