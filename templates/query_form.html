@@ -38,18 +38,18 @@ $(document).ready(function(){
             <table class="table table-striped">
                 <thead><tr><th>Quantity</th><th>Minimum</th><th>Maximum</th><th>Units</th></tr></thead>
                 <tbody>                
-                {% for column_name,best_column_name in zip(usetable.colnames,use_column_names) %}
+                {% for column_name,best_column_name,default_min,default_max in zip(usetable.colnames,use_column_names,min_values,max_values) %}
                 <tr>
                     <div class="form-group">
                     <td style="vertical-align:bottom"><p>{{ column_name }}</p></td>
                     <td>
-                        <input class="units form-control" id="{{column_name|striptags}}_min" name="{{column_name|striptags}}_min">
+                        <input class="units form-control" id="{{column_name|striptags}}_min" name="{{column_name|striptags}}_min" value="{{default_min}}">
                     </td>
                     <td>
-                        <input class="units form-control" id="{{column_name|striptags}}_max" name="{{column_name|striptags}}_max">
+                        <input class="units form-control" id="{{column_name|striptags}}_max" name="{{column_name|striptags}}_max" value="{{default_max}}">
                     </td>
                     <td>
-                        <select class="form-control real_column_name" name="{{column_name}}">
+                        <select class="form-control real_column_name" name="{{column_name}}_unit">
                             {% for use_unit,use_column_name in zip(use_units,use_column_names) %}
                             {% if use_column_name == best_column_name %}
                             <option value="{{use_unit}}" selected>{{use_unit}}</option>
