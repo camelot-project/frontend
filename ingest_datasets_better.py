@@ -93,6 +93,12 @@ def add_filename_column(tbl, filename):
     """
     tbl.add_column(table.Column(name='Filename', data=[filename]*len(tbl)))
 
+def add_timestamp_column(tbl, timestamp):
+    """
+    Add the current date and time as a column
+    """
+    tbl.add_column(table.Column(name='Timestamp', data=[timestamp]*len(tbl)))
+
 def append_table(merged_table, table_to_add):
     """
     Append a new table to the original
