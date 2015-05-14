@@ -152,7 +152,6 @@ def handle_ambiguous_table(filename, exception):
     else:
         best_match = ""
 
-    # This doesn't work right now - don't know why.
     return render_template('upload_form_filetype.html', filename=filename,
                            best_match_extension=best_match,
                            exception=exception)
