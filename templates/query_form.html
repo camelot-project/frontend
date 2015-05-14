@@ -41,7 +41,7 @@ $(document).ready(function(){
                 {% for column_name,best_column_name in zip(usetable.colnames,use_column_names) %}
                 <tr>
                     <div class="form-group">
-                    <td><p>{{ column_name }}</p></td>
+                    <td style="vertical-align:bottom"><p>{{ column_name }}</p></td>
                     <td>
                         <input class="units form-control" id="{{column_name|striptags}}_min" name="{{column_name|striptags}}_min">
                     </td>
