@@ -25,7 +25,8 @@ from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     add_name_column, add_generic_ids_if_needed,
                                     add_is_sim_if_needed, fix_bad_types,
                                     add_filename_column, add_timestamp_column,
-                                    reorder_columns, append_table)
+                                    reorder_columns, append_table,
+                                    ignore_duplicates, update_duplicates)
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
 from simple_plot import plotData, plotData_Sigma_sigma
@@ -282,6 +283,20 @@ def set_columns(filename, fileformat=None):
         set_units(merged_table)
 
     table = reorder_columns(table, merged_table.colnames)
+
+    # Detect whether any username, ID pairs match entries already in the merged table
+    duplicates = {}
+    for row in merged_table:
+        name = row['Names']
+        id = row['IDs']
+        if id in seen:
+            if name == seen[id]:
+                print("Found duplicate! {0}, {1}".format(name, id))
+                duplicates[id] = name
+
+    #ignore_duplicates(table, duplicates)
+    #update_duplicates(merged_table, duplicates)
+
     append_table(merged_table, table)
     Table.write(merged_table, merged_table_name, format='ascii.ipac')
 
