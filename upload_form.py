@@ -359,19 +359,31 @@ def set_columns(filename, fileformat=None):
 
 
 def commit_change_to_database(username, remote='upstream', tablename='merged_table.ipac',
-                              workingdir='database/'):
+                              workingdir='database/', database='database'):
+    """
+    """
     timestamp = datetime.now().isoformat().replace(":","_")
     branch = '{0}_{1}'.format(username, timestamp)
+
+    check_upstream = subprocess.check_output(['git', 'config', '--get', 'remote.upstream.url'],
+                                             cwd=workingdir)
+    name = os.path.split(check_upstream)[1][:-5]
+    if name != database:
+        raise Exception("Error: the remote URL {0} (which is really '{2}') does not match the expected one '{1}'"
+                        .format(check_upstream, database, name))
+
     checkout_result = subprocess.call(['git','checkout','-b', branch,
                                        '{remote}/master'.format(remote=remote)],
                                       cwd=workingdir)
     if checkout_result != 0:
         raise Exception("Checking out a new branch in the database failed.  "
-                        "Attempted to checkout branch {0}".format(branch))
+                        "Attempted to checkout branch {0} in {1}"
+                        .format(branch, workingdir))
 
-    add_result = subprocess.call(['git','add','merged_table.ipac'], cwd=workingdir)
+    add_result = subprocess.call(['git','add',tablename], cwd=workingdir)
     if add_result != 0:
-        raise Exception("Adding {tablename} to the commit failed.".format(tablename=tablename))
+        raise Exception("Adding {tablename} to the commit failed in {cwd}."
+                        .format(tablename=tablename, cwd=workingdir))
 
     commit_result = subprocess.call(['git','commit','-m',
                       'Add changes to table from {0} at {1}'.format(username,
