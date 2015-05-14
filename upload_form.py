@@ -358,30 +358,31 @@ def set_columns(filename, fileformat=None):
                            tablefile='{fn}.html'.format(fn=outfilename))
 
 
-def commit_change_to_database(username, remote='upstream'):
+def commit_change_to_database(username, remote='upstream', tablename='merged_table.ipac',
+                              workingdir='database/'):
     timestamp = datetime.now().isoformat().replace(":","_")
     branch = '{0}_{1}'.format(username, timestamp)
     checkout_result = subprocess.call(['git','checkout','-b', branch,
                                        '{remote}/master'.format(remote=remote)],
-                                      cwd='database/')
+                                      cwd=workingdir)
     if checkout_result != 0:
         raise Exception("Checking out a new branch in the database failed.  "
                         "Attempted to checkout branch {0}".format(branch))
 
-    add_result = subprocess.call(['git','add','merged_table.ipac'], cwd='database/')
+    add_result = subprocess.call(['git','add','merged_table.ipac'], cwd=workingdir)
     if add_result != 0:
-        raise Exception("Adding merged_table.ipac to the commit failed.")
+        raise Exception("Adding {tablename} to the commit failed.".format(tablename=tablename))
 
     commit_result = subprocess.call(['git','commit','-m',
                       'Add changes to table from {0} at {1}'.format(username,
                                                                     timestamp)],
-                     cwd='database/')
+                     cwd=workingdir)
     if commit_result != 0:
         raise Exception("Committing the new branch failed")
 
-    push_result = subprocess.call(['git','push', remote, branch,], cwd='database/')
+    push_result = subprocess.call(['git','push', remote, branch,], cwd=workingdir)
     if push_result != 0:
-        raise Exception("Pushing to the remote database failed")
+        raise Exception("Pushing to the remote {0} folder failed".format(workingdir))
 
     return branch,timestamp
 
