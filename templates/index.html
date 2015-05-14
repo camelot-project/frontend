@@ -2,7 +2,7 @@
 
 {% block head %}
 {{ super() }}
-<title>Query form</title>
+<title>CAMELOT</title>
 {% endblock %}
 
 {% block scripts %}
@@ -33,7 +33,7 @@ $(document).ready(function(){
 <h1>Query form</h1>
 <div class="row">
     <div class="col-lg-8 col-lg-offset-2" id="column_form">
-        <form action="{{ url_for('query', filename=filename, fileformat=fileformat) }}" method="post">
+        <form action="{{ url_for('set_columns', filename=filename, fileformat=fileformat) }}" method="post">
             <table class="table table-striped">
                 <thead><tr><th>Quantity</th><th>Minimum</th><th>Maximum</th><th>Units</th></tr></thead>
                 <tbody>                
