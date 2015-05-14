@@ -73,8 +73,7 @@ def convert_units(tbl, units={'SurfaceDensity':u.M_sun/u.pc**2,
                           'VelocityDispersion':u.km/u.s,
                           'Radius':u.pc}):
     """
-    Set the units of the table to the specified units.
-    WARNING: this *overwrites* existing units, it does not convert them!
+    Convert from the units used in the table to the specified units.
     """
     for k,v in units.items():
         if k not in tbl.colnames:
@@ -92,6 +91,18 @@ def add_filename_column(tbl, filename):
     Add the filename as a column
     """
     tbl.add_column(table.Column(name='Filename', data=[filename]*len(tbl)))
+
+def add_timestamp_column(tbl, timestamp):
+    """
+    Add the current date and time as a column
+    """
+    tbl.add_column(table.Column(name='Timestamp', data=[timestamp]*len(tbl)))
+
+def add_is_gal_column(tbl, is_gal):
+    """
+    Add IsGalactic column
+    """
+    tbl.add_column(table.Column(name='IsGalactic', data=[is_gal]*len(tbl)))
 
 def append_table(merged_table, table_to_add):
     """
@@ -113,3 +124,10 @@ def add_is_sim_if_needed(tbl, is_sim=True):
     """
     if 'IsSimulated' not in tbl.colnames:
         tbl.add_column(table.Column(data=[is_sim]*(len(tbl)), name='IsSimulated'))
+
+def add_is_gal_if_needed(tbl, is_gal=True):
+    """
+    Add is_gal if no is_gal column is provided
+    """
+    if 'IsGalactic' not in tbl.colnames:
+        tbl.add_column(table.Column(data=[is_gal]*(len(tbl)), name='IsGalactic'))

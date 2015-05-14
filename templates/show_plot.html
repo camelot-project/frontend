@@ -12,30 +12,36 @@
 {% block body %}
 {{ super() }}
 <div class="row">
-This is a page with a figure
-<br>
-imagename = {{imagename}}
-<img src="{{imagename}}" width=800>
-</div>
+
 <html>
+  <body>
+     <div id="includedContent"></div>
+     <div id="includedTable"></div>
+  </body>
+</html>
+
+<!-- imagename = {{imagename}} -->
+
+{% if imagename[:-3] == 'png' %}
+    <img src="{{imagename}}" width=800>
+{% else %}
+
+</div>
   <head>
     <!-- imagename = {{imagename}} -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.js"></script>
     <script>
     $(function(){
-      $("#includedContent").load(imagename);
+            $("#includedContent").load("{{imagename}}");
     });
     </script>
   </head>
 
-  <body>
-     <div id="includedContent"></div>
-  </body>
-</html>
+
+{% endif %}
 
 <script>
 $(function(){
-        $("#includedContent").load("/static/jstables/{{tablefile}}?" + (new Date).getTime()); 
+        $("#includedTable").load("/static/jstables/{{tablefile}}?" + (new Date).getTime()); 
 });
 </script>
 

@@ -1,21 +1,18 @@
 import os
 import glob
 import numpy as np
-import scipy
 import matplotlib
 import matplotlib.figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import datetime
 import time
 import random
-import astropy
-from astropy.io import fits
 from astropy import units as u
-from astropy import table
 import mpld3
 from mpld3 import plugins
 import pdb
-matplotlib.rcParams['figure.figsize'] = (12,8)
+
+matplotlib.rcParams['figure.figsize'] = (12, 8)
 
 css = """
 table
@@ -39,10 +36,14 @@ table, th, td
 }
 """
 
+
 def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
-                         SurfMin=1e-1*u.M_sun/u.pc**2, SurfMax=1e5*u.M_sun/u.pc**2,
+                         SurfMin=1e-1*u.M_sun/u.pc**2,
+                         SurfMax=1e5*u.M_sun/u.pc**2,
                          VDispMin=1e-1*u.km/u.s,
-                         VDispMax=3e2*u.km/u.s, RadMin=1e-2*u.pc, RadMax=1e3*u.pc,
+                         VDispMax=3e2*u.km/u.s,
+                         RadMin=1e-2*u.pc,
+                         RadMax=1e3*u.pc,
                          interactive=False):
     """
     SurfMin
@@ -53,19 +54,20 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
     RadMax
     """
     return plotData(NQuery, table, FigureStrBase,
-                    variables=('SurfaceDensity', 'VelocityDispersion', 'Radius'),
+                    variables=('SurfaceDensity',
+                               'VelocityDispersion',
+                               'Radius'),
                     xMin=SurfMin,
                     xMax=SurfMax,
                     yMin=VDispMin,
                     yMax=VDispMax,
                     zMin=RadMin,
                     zMax=RadMax,
-                    interactive=interactive
-                   )
+                    interactive=interactive)
 
 
-def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yMax,
-             zMin, zMax, interactive=False, show_log=True):
+def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
+             yMin, yMax, zMin, zMax, interactive=False, show_log=True):
     """
     This is where documentation needs to be added
 
@@ -108,9 +110,10 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
     else:
         IsSim = d['IsSimulated'] == 'True'
 
-    label_dict = {'SurfaceDensity':'$\Sigma$ [M$_{\odot}$ pc$^{-2}$]',
-                  'VelocityDispersion':'$\sigma$ [km s$^{-1}$]',
-                  'Radius':'$R$ [pc]'}
+    label_dict = \
+        {'SurfaceDensity': '$\Sigma$ [M$_{\odot}$ pc$^{-2}$]',
+         'VelocityDispersion': '$\sigma$ [km s$^{-1}$]',
+         'Radius': '$R$ [pc]'}
 
     # selects surface density points wthin the limits
     Use_x_ax = (x_ax > xMin) & (x_ax < xMax)
@@ -119,14 +122,10 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
     # intersects the three subsets defined above
     Use = Use_x_ax & Use_y_ax & Use_z_ax
 
-    Obs = (~IsSim) & Use
-    Sim = IsSim & Use
-
     UniqueAuthor = list(set(Author[Use]))
     NUniqueAuthor = len(UniqueAuthor)
 
-    #colors = random.sample(matplotlib.colors.cnames, NUniqueAuthor)
-    colors = list(matplotlib.cm.jet(np.linspace(0,1,NUniqueAuthor)))
+    colors = list(matplotlib.cm.jet(np.linspace(0, 1, NUniqueAuthor)))
     random.seed(12)
     random.shuffle(colors)
 
@@ -136,8 +135,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
     scatters = []
 
     markers = ['o', 's']
-    for iAu,color in zip(UniqueAuthor, colors) :
-        UsePlot = (Author == iAu) & Use
+    for iAu, color in zip(UniqueAuthor, colors):
         ObsPlot = ((Author == iAu) & (~IsSim)) & Use
         SimPlot = ((Author == iAu) & (IsSim)) & Use
 
@@ -147,17 +145,20 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
 
         if any(ObsPlot):
             # Change to logs on next commit
-            scatter = ax.scatter(plot_x[ObsPlot], plot_y[ObsPlot], marker=markers[0],
-                                 s=(np.log(np.array(z_ax[ObsPlot]))-np.log(np.array(zMin))+0.5)**3.,
-                                 color=color, alpha=0.5, edgecolors='k')
+            scatter = \
+                ax.scatter(plot_x[ObsPlot], plot_y[ObsPlot], marker=markers[0],
+                           s=(np.log(np.array(z_ax[ObsPlot]))-np.log(zMin.value)+0.5)**3.,
+                           color=color, alpha=0.5, edgecolors='k')
 
             scatters.append(scatter)
 
             labels = []
 
             for row in d[ObsPlot]:
-                colnames = ['<h1>{title}</h1>'.format(title=col) for col in row.colnames]
-                values = ['<h1>{title}</h1>'.format(title=str(val)) for val in row]
+                colnames = ['<div>{title}</div>'.format(title=col)
+                            for col in row.colnames]
+                values = ['<div>{title}</div>'.format(title=str(val))
+                          for val in row]
 
                 label = ""
 
@@ -167,22 +168,25 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
                 labels.append(label)
 
             tooltip = plugins.PointHTMLTooltip(scatter, labels,
-                                           voffset=10, hoffset=10)
+                                               voffset=10, hoffset=10)
             plugins.connect(figure, tooltip)
 
         if any(SimPlot):
             # Change to logs on next commit
-            scatter = ax.scatter(plot_x[SimPlot], plot_y[SimPlot], marker=markers[1],
-                        s=(np.log(np.array(z_ax[SimPlot]))-np.log(np.array(zMin))+0.5)**3.,
-                        color=color, alpha=0.5, edgecolors='k')
+            scatter = \
+                ax.scatter(plot_x[SimPlot], plot_y[SimPlot], marker=markers[1],
+                           s=(np.log(np.array(z_ax[SimPlot]))-np.log(zMin.value)+0.5)**3.,
+                           color=color, alpha=0.5, edgecolors='k')
 
             scatters.append(scatter)
 
             labels = []
 
             for row in d[SimPlot]:
-                colnames = ['<h1>{title}</h1>'.format(title=col) for col in row.colnames]
-                values = ['<h1>{title}</h1>'.format(title=str(val)) for val in row]
+                colnames = ['<div>{title}</div>'.format(title=col)
+                            for col in row.colnames]
+                values = ['<div>{title}</div>'.format(title=str(val))
+                          for val in row]
 
                 label = ""
 
@@ -192,7 +196,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
                 labels.append(label)
 
             tooltip = plugins.PointHTMLTooltip(scatter, labels,
-                                           voffset=10, hoffset=10, css=css)
+                                               voffset=10, hoffset=10, css=css)
             plugins.connect(figure, tooltip)
 
     ax.set_xlabel(label_dict[variables[0]], fontsize=16)
@@ -204,12 +208,12 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
     # ax.legend(UniqueAuthor, loc='center left', bbox_to_anchor=(1.0, 0.5),
     #           prop={'size':12}, markerscale = .7, scatterpoints = 1)
 
-    if hasattr(mpld3.plugins,'InteractiveLegendPlugin'):
-        mpld3.plugins.connect(figure,
-                              mpld3.plugins.InteractiveLegendPlugin(scatters,
-                                                                    UniqueAuthor,
-                                                                    alpha_unsel=0,
-                                                                    alpha_sel=0.5))
+    if hasattr(mpld3.plugins, 'InteractiveLegendPlugin'):
+        plugins.connect(figure,
+                        plugins.InteractiveLegendPlugin(scatters,
+                                                        UniqueAuthor,
+                                                        alpha_unsel=0,
+                                                        alpha_sel=0.5))
 
     # adding fake points to show the size
     axes_limits = ax.axis()
@@ -218,28 +222,37 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
 
     # TODO: write a function with this section
     # TODO: change position based on user input
-    xfake = [0.1,0.1,0.1] #[xax_limits[0] + xax_limits[0]*2.,xax_limits[0] + xax_limits[0]*2.,xax_limits[0] + xax_limits[0]*2.]
-    yfake = [0.85,0.9,0.95,] #[yax_limits[1] - yax_limits[1]*0.01,yax_limits[1] - yax_limits[1]*0.3,yax_limits[1] - yax_limits[1]*0.6]
-    radius = np.array([1e-1,1e0,1e1]) #*u.pc #(zMin + zMax)*0.5
+    xfake = [0.1, 0.1, 0.1]
+    yfake = [0.85, 0.9, 0.95]
+    radius = np.array([1e-1, 1e0, 1e1])  # *u.pc #(zMin + zMax)*0.5
+
+    # xfake = [xax_limits[0] + xax_limits[0]*2.,
+    #          xax_limits[0] + xax_limits[0]*2.,
+    #          xax_limits[0] + xax_limits[0]*2.]
+    # yfake = [yax_limits[1] - yax_limits[1]*0.01,
+    #          yax_limits[1] - yax_limits[1]*0.3,
+    #          yax_limits[1] - yax_limits[1]*0.6]
 
     ax.scatter(np.array(xfake), np.array(yfake), marker='+',
-	       s=(np.log(np.array(radius))-np.log(np.array(zMin.value))+0.5)**3., transform=ax.transAxes,
-	       facecolors='g')
-    for xf,yf,rad in zip(xfake,yfake,radius):
-        ax.text(xf + 0.05,yf-0.01, str(rad) + ' ' + str(zMin.unit), transform=ax.transAxes)
+               s=(np.log(np.array(radius))-np.log(zMin.value)+0.5)**3.,
+               transform=ax.transAxes,
+               facecolors='g')
+    for xf, yf, rad in zip(xfake, yfake, radius):
+        ax.text(xf + 0.05, yf-0.01, str(rad) + ' ' + str(zMin.unit),
+                transform=ax.transAxes)
 
     if show_log:
-        ax.set_xlim(np.log10(xMin.value),np.log10(xMax.value))
-        ax.set_ylim(np.log10(yMin.value),np.log10(yMax.value))
+        ax.set_xlim(np.log10(xMin.value), np.log10(xMax.value))
+        ax.set_ylim(np.log10(yMin.value), np.log10(yMax.value))
     else:
-        ax.set_xlim(xMin.value,xMax.value)
-        ax.set_ylim(yMin.value,yMax.value)
+        ax.set_xlim(xMin.value, xMax.value)
+        ax.set_ylim(yMin.value, yMax.value)
 
     html = mpld3.fig_to_html(figure)
-    with open("mpld3_"+FigureStrBase+NQuery+'.html','w') as f:
+    with open(FigureStrBase+NQuery+'.html', 'w') as f:
        f.write(html)
 
-    # figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
+    figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
     # figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
 
     if interactive:
@@ -249,16 +262,4 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
 
         mpld3.show()
 
-    return "mpld3_"+FigureStrBase+NQuery+'.html'
-
-def clearPlotOutput(FigureStrBase,TooOld) :
-
-    for fl in glob.glob(FigureStrBase+"*.png") + glob.glob(FigureStrBase+"*.pdf"):
-        now = time.time()
-        if os.stat(fl).st_mtime < now - TooOld :
-            os.remove(fl)
-
-def timeString() :
-
-    TimeString=datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
-    return TimeString
+    return FigureStrBase+NQuery+'.html'
