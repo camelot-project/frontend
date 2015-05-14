@@ -34,7 +34,7 @@ import difflib
 
 UPLOAD_FOLDER = 'uploads/'
 DATABASE_FOLDER = 'database/'
-MPLD3_PLOT_FOLDER = 'static/mpld3/'
+MPLD3_FOLDER = 'static/mpld3/'
 PNG_PLOT_FOLDER = 'static/figures/'
 TABLE_FOLDER = 'static/tables/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
@@ -61,10 +61,10 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MPLD3_FOLDER'] = MPLD3_FOLDER
 app.config['DATABASE_FOLDER'] = DATABASE_FOLDER
-app.config['PNG_FOLDER'] = PNG_FOLDER
+app.config['PNG_PLOT_FOLDER'] = PNG_PLOT_FOLDER
 app.config['TABLE_FOLDER'] = TABLE_FOLDER
 
-for path in (UPLOAD_FOLDER, MPLD3_FOLDER, DATABASE_FOLDER, PNG_FOLDER, TABLE_FOLDER):
+for path in (UPLOAD_FOLDER, MPLD3_FOLDER, DATABASE_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
     if not os.path.isdir(path):
         os.mkdir(path)
 
