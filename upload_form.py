@@ -24,16 +24,19 @@ from astropy import units as u
 from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     add_name_column, add_generic_ids_if_needed,
                                     add_is_sim_if_needed, fix_bad_types,
-                                    add_filename_column,
+                                    add_filename_column, add_timestamp_column,
                                     reorder_columns, append_table)
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
-from simple_plot import plotData, plotData_Sigma_sigma, timeString
+from simple_plot import plotData, plotData_Sigma_sigma
 from werkzeug import secure_filename
 import difflib
 
 UPLOAD_FOLDER = 'uploads/'
-OUTPUT_FOLDER = 'generated/'
+DATABASE_FOLDER = 'database/'
+MPLD3_FOLDER = 'static/mpld3/'
+PNG_PLOT_FOLDER = 'static/figures/'
+TABLE_FOLDER = 'static/tables/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated', 'Username']
@@ -44,7 +47,9 @@ TooOld=300
 
 import glob
 import random
+import time
 import datetime
+from datetime import datetime
 import matplotlib
 import matplotlib.pylab as plt
 
@@ -54,8 +59,16 @@ table_formats = registry.get_formats(Table)
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
+app.config['MPLD3_FOLDER'] = MPLD3_FOLDER
+app.config['DATABASE_FOLDER'] = DATABASE_FOLDER
+app.config['PNG_PLOT_FOLDER'] = PNG_PLOT_FOLDER
+app.config['TABLE_FOLDER'] = TABLE_FOLDER
 
+for path in (UPLOAD_FOLDER, MPLD3_FOLDER, DATABASE_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
+    if not os.path.isdir(path):
+        os.mkdir(path)
+
+# En
 
 # Allow zipping in jinja templates: http://stackoverflow.com/questions/5208252/ziplist1-list2-in-jinja2
 import jinja2
@@ -177,7 +190,7 @@ def autocomplete_units():
 @app.route('/validate_units', methods=['GET', 'POST'])
 def validate_units():
     """
-    Validate the units: try to interpret the passed string as an astropy unit. 
+    Validate the units: try to interpret the passed string as an astropy unit.
     """
     try:
         unit_str = request.args.get('unit_str', 'error', type=str)
@@ -221,13 +234,13 @@ def set_columns(filename, fileformat=None):
     # table; how do we arrange that?
     table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename),
                        format=fileformat)
-    
+
     column_data = \
         {field:{'Name':value} for field,value in request.form.items() if '_units' not in field}
     for field,value in request.form.items():
         if '_units' in field:
             column_data[field[:-6]]['unit'] = value
-    
+
     units_data = {}
     for key, pair in column_data.items():
         if pair['Name'] != "Ignore" and pair['Name'] != "IsSimulated" and key != "Username":
@@ -240,6 +253,9 @@ def set_columns(filename, fileformat=None):
     convert_units(table)
     add_name_column(table, column_data.get('Username')['Name'])
     add_filename_column(table, filename)
+    timestamp = datetime.now()
+    add_timestamp_column(table, timestamp)
+
     add_generic_ids_if_needed(table)
     if column_data.get('issimulated') is None:
         add_is_sim_if_needed(table, False)
@@ -259,16 +275,27 @@ def set_columns(filename, fileformat=None):
     # If merged table already exists, then append the new entries.
     # Otherwise, create the table
 
-    merged_table_name = os.path.join(app.config['UPLOAD_FOLDER'], 'merged_table.ipac')
+    merged_table_name = os.path.join(app.config['DATABASE_FOLDER'], 'merged_table.ipac')
     if os.path.isfile(merged_table_name):
-        merged_table = Table.read(merged_table_name, converters={'Names': [ascii.convert_numpy('S64')], 
-        'IDs': [ascii.convert_numpy('S64')], 'IsSimulated': [ascii.convert_numpy('S5')]}, format='ascii.ipac')
+        merged_table = Table.read(merged_table_name,
+                                  converters={'Names':
+                                              [ascii.convert_numpy('S64')],
+                                              'IDs':
+                                              [ascii.convert_numpy('S64')],
+                                              'IsSimulated':
+                                              [ascii.convert_numpy('S5')]},
+                                  format='ascii.ipac')
+        if 'Timestamp' not in merged_table.colnames:
+            # Create a fake timestamp for the previous entries if they don't already have one
+            fake_timestamp = datetime.min
+            add_timestamp_column(merged_table, fake_timestamp)
     else:
     # Maximum string length of 64 for username, ID -- larger strings are silently truncated
     # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
     #       and verify that submitted data obeys these limits
         merged_table = Table(data=None, names=['Names','IDs','SurfaceDensity',
-                       'VelocityDispersion','Radius','IsSimulated'], dtype=[('str', 64),('str', 64),'float','float','float','bool'])
+                       'VelocityDispersion','Radius','IsSimulated', 'Timestamp'],
+                       dtype=[('str', 64),('str', 64),'float','float','float','bool',('str', 26)])
         set_units(merged_table)
 
     table = reorder_columns(table, merged_table.colnames)
@@ -281,7 +308,9 @@ def set_columns(filename, fileformat=None):
         os.mkdir('static/jstables')
 
     outfilename = os.path.splitext(filename)[0]
-    myplot = plotData_Sigma_sigma(timeString(), table, 'static/figures/'+outfilename)
+    myplot = plotData_Sigma_sigma(timeString(), table,
+                                  os.path.join(app.config['MPLD3_PLOT_FOLDER'],
+                                               outfilename))
 
     tablecss = "table,th,td,tr,tbody {border: 1px solid black; border-collapse: collapse;}"
     write_table_jsviewer(table,
@@ -316,13 +345,12 @@ def upload_to_github(filename):
 
 
 @app.route('/query_form')
-def query_form():
-    
-    filename = "merged_table.ipac"
-    table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename), format='ascii.ipac')
-    
+def query_form(filename="merged_table.ipac"):
+
+    table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.ipac')
+
     usetable = table[use_column_names]
-    
+
     best_matches = {difflib.get_close_matches(vcn, usetable.colnames,  n=1,
                                               cutoff=0.4)[0]: vcn
                     for vcn in use_column_names
@@ -332,42 +360,41 @@ def query_form():
     best_column_names = [best_matches[colname] if colname in best_matches else 'Ignore'
                          for colname in usetable.colnames]
 
-    return render_template("query_form.html", table=table, usetable=usetable, use_units=use_units, filename=filename,
+    return render_template("query_form.html", table=table, usetable=usetable,
+                           use_units=use_units, filename=filename,
                            use_column_names=use_column_names,
                            best_column_names=best_column_names,
                           )
 
 def clearPlotOutput(FigureStrBase,TooOld) :
-    
+
     for fl in glob.glob(FigureStrBase+"*.png") + glob.glob(FigureStrBase+"*.pdf"):
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
 
 def timeString():
-    
-    TimeString=datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+    TimeString=datetime.now().strftime("%Y%m%d%H%M%S%f")
     return TimeString
-                          
+
 @app.route('/query/<path:filename>', methods=['POST'])
 def query(filename, fileformat=None):
-    SurfMin = float(request.form['SurfaceDensity_min'])
-    SurfMax = float(request.form['SurfaceDensity_max'])
-    VDispMin = float(request.form['VelocityDispersion_min'])
-    VDispMax = float(request.form['VelocityDispersion_max'])
-    RadMin = float(request.form['Radius_min'])
-    RadMax = float(request.form['Radius_max'])
+    SurfMin = float(request.form['SurfaceDensity_min'])*u.M_sun/u.pc**2
+    SurfMax = float(request.form['SurfaceDensity_max'])*u.M_sun/u.pc**2
+    VDispMin = float(request.form['VelocityDispersion_min'])*u.km/u.s
+    VDispMax = float(request.form['VelocityDispersion_max'])*u.km/u.s
+    RadMin = float(request.form['Radius_min'])*u.pc
+    RadMax = float(request.form['Radius_max'])*u.pc
 #    print(np.type(SurfMin))
     print(SurfMin,SurfMax,VDispMin,VDispMax,RadMin,RadMax)
 
     NQuery=timeString()
     clearPlotOutput(FigureStrBase,TooOld)
-    
+
     print(NQuery)
-        
-    plt.clf()
 
     table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename), format='ascii.ipac')
+    set_units(table)
     Author = table['Names']
     Run = table['IDs']
     SurfDens = table['SurfaceDensity']
@@ -375,66 +402,72 @@ def query(filename, fileformat=None):
     Rad = table['Radius']
     IsSim = (table['IsSimulated'] == 'True')
 #    print(SurfDens)
-    
-    temp_table = [table[h].index for i,j,k,h in zip(table['SurfaceDensity'],table['VelocityDispersion'],table['Radius'], range(len(table))) if SurfMin < i < SurfMax and VDispMin < j < VDispMax and RadMin < k < RadMax]
+
+    temp_table = [table[h].index for i,j,k,h in zip(table['SurfaceDensity'],table['VelocityDispersion'],table['Radius'], range(len(table))) if SurfMin < i*table['SurfaceDensity'].unit < SurfMax and VDispMin < j*table['VelocityDispersion'].unit < VDispMax and RadMin < k*table['Radius'].unit < RadMax]
     use_table = table[temp_table]
-    use_table.write(os.path.join(app.config['OUTPUT_FOLDER'], 'output_table_'+NQuery+'.csv'), format='csv')	 		
-    
-    UseSurf = (SurfDens > SurfMin) & (SurfDens < SurfMax)
-    UseVDisp = (VDisp > VDispMin) & (VDisp < VDispMax)
-    UseRad = (Rad > RadMin) & (Rad < RadMax)
-    Use = UseSurf & UseVDisp & UseRad
-    Obs = (~IsSim) & Use
-    Sim = IsSim & Use
-    
-    UniqueAuthor = set(Author[Use])
-    NUniqueAuthor = len(UniqueAuthor)
-    
-    #colors = random.sample(matplotlib.colors.cnames, NUniqueAuthor)
-    colors = list(plt.cm.jet(np.linspace(0,1,NUniqueAuthor)))
-    random.shuffle(colors)
-    
-    plt.loglog()
-    markers = ['o','s']
-    for iAu,color in zip(UniqueAuthor,colors) :
-        UsePlot = (Author == iAu) & Use
-        ObsPlot = ((Author == iAu) & (~IsSim)) & Use 
-        SimPlot = ((Author == iAu) & (IsSim)) & Use
-        if any(ObsPlot):
-            plt.scatter(SurfDens[ObsPlot], VDisp[ObsPlot], marker=markers[0],
-                        s=(np.log(np.array(Rad[ObsPlot]))-np.log(np.array(RadMin))+0.5)**3.,
-                        color=color, alpha=0.5)
-        if any(SimPlot):
-            plt.scatter(SurfDens[SimPlot], VDisp[SimPlot], marker=markers[1],
-                        s=(np.log(np.array(Rad[SimPlot]))-np.log(np.array(RadMin))+0.5)**3.,
-                        color=color, alpha=0.5)
-    if any(Obs):
-        plt.scatter(SurfDens[Obs], VDisp[Obs], marker=markers[0],
-                    s=(np.log(np.array(Rad[Obs]))-np.log(np.array(RadMin))+0.5)**3.,
-                    facecolors='none', edgecolors='black',
-                    alpha=0.5)
-    if any(Sim):
-        plt.scatter(SurfDens[Sim], VDisp[Sim], marker=markers[1],
-                    s=(np.log(np.array(Rad[Sim]))-np.log(np.array(RadMin))+0.5)**3.,
-                    facecolors='none', edgecolors='black',
-                    alpha=0.5)
-    plt.xlabel('$\Sigma$ [M$_{\odot}$ pc$^{-2}$]', fontsize=16)
-    plt.ylabel('$\sigma$ [km s$^{-1}$]', fontsize=16)
+    use_table.write(os.path.join(app.config['TABLE_FOLDER'], 'output_table_'+NQuery+'.ipac'), format='ipac')
 
-    ax = plt.gca()
-    box = ax.get_position()
-    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    return plotData_Sigma_sigma(NQuery, use_table, FigureStrBase,
+                         SurfMin, SurfMax,
+                         VDispMin,
+                         VDispMax, RadMin, RadMax,
+                         interactive=False)
 
-    # Put a legend to the right of the current axis
-    ax.legend(UniqueAuthor, loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size':12}, markerscale = .7, scatterpoints = 1)
-
-#    plt.xlim((SurfMin.to(u.M_sun/u.pc**2).value,SurfMax.to(u.M_sun/u.pc**2).value))
-#    plt.ylim((VDispMin.to(u.km/u.s).value,VDispMax.to(u.km/u.s).value))
-    plt.show()
-    plt.savefig(os.path.join(app.config['OUTPUT_FOLDER'], FigureStrBase+NQuery+'.png'),bbox_inches='tight',dpi=150)
-#    plt.savefig(os.path.join(app.config['OUTPUT_FOLDER'], FigureStrBase+NQuery+'.pdf'),bbox_inches='tight',dpi=150)
-    
-    return render_template('show_plot.html', imagename='/'+FigureStrBase+NQuery+'.png')
+#    UseSurf = (SurfDens > SurfMin) & (SurfDens < SurfMax)
+#    UseVDisp = (VDisp > VDispMin) & (VDisp < VDispMax)
+#    UseRad = (Rad > RadMin) & (Rad < RadMax)
+#    Use = UseSurf & UseVDisp & UseRad
+#    Obs = (~IsSim) & Use
+#    Sim = IsSim & Use
+#
+#    UniqueAuthor = set(Author[Use])
+#    NUniqueAuthor = len(UniqueAuthor)
+#
+#    #colors = random.sample(matplotlib.colors.cnames, NUniqueAuthor)
+#    colors = list(plt.cm.jet(np.linspace(0,1,NUniqueAuthor)))
+#    random.shuffle(colors)
+#
+#    plt.loglog()
+#    markers = ['o','s']
+#    for iAu,color in zip(UniqueAuthor,colors) :
+#        UsePlot = (Author == iAu) & Use
+#        ObsPlot = ((Author == iAu) & (~IsSim)) & Use
+#        SimPlot = ((Author == iAu) & (IsSim)) & Use
+#        if any(ObsPlot):
+#            plt.scatter(SurfDens[ObsPlot], VDisp[ObsPlot], marker=markers[0],
+#                        s=(np.log(np.array(Rad[ObsPlot]))-np.log(np.array(RadMin))+0.5)**3.,
+#                        color=color, alpha=0.5)
+#        if any(SimPlot):
+#            plt.scatter(SurfDens[SimPlot], VDisp[SimPlot], marker=markers[1],
+#                        s=(np.log(np.array(Rad[SimPlot]))-np.log(np.array(RadMin))+0.5)**3.,
+#                        color=color, alpha=0.5)
+#    if any(Obs):
+#        plt.scatter(SurfDens[Obs], VDisp[Obs], marker=markers[0],
+#                    s=(np.log(np.array(Rad[Obs]))-np.log(np.array(RadMin))+0.5)**3.,
+#                    facecolors='none', edgecolors='black',
+#                    alpha=0.5)
+#    if any(Sim):
+#        plt.scatter(SurfDens[Sim], VDisp[Sim], marker=markers[1],
+#                    s=(np.log(np.array(Rad[Sim]))-np.log(np.array(RadMin))+0.5)**3.,
+#                    facecolors='none', edgecolors='black',
+#                    alpha=0.5)
+#    plt.xlabel('$\Sigma$ [M$_{\odot}$ pc$^{-2}$]', fontsize=16)
+#    plt.ylabel('$\sigma$ [km s$^{-1}$]', fontsize=16)
+#
+#    ax = plt.gca()
+#    box = ax.get_position()
+#    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+#
+#    # Put a legend to the right of the current axis
+#    ax.legend(UniqueAuthor, loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size':12}, markerscale = .7, scatterpoints = 1)
+#
+##    plt.xlim((SurfMin.to(u.M_sun/u.pc**2).value,SurfMax.to(u.M_sun/u.pc**2).value))
+##    plt.ylim((VDispMin.to(u.km/u.s).value,VDispMax.to(u.km/u.s).value))
+#    plt.show()
+#    plt.savefig(os.path.join(app.config['OUTPUT_FOLDER'], FigureStrBase+NQuery+'.png'),bbox_inches='tight',dpi=150)
+##    plt.savefig(os.path.join(app.config['OUTPUT_FOLDER'], FigureStrBase+NQuery+'.pdf'),bbox_inches='tight',dpi=150)
+#
+#    return render_template('show_plot.html', imagename='/'+FigureStrBase+NQuery+'.png')
 
 
 class InvalidUsage(Exception):
@@ -460,8 +493,3 @@ def handle_invalid_usage(error):
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
-
