@@ -33,6 +33,7 @@ from werkzeug import secure_filename
 import difflib
 
 UPLOAD_FOLDER = 'uploads/'
+DATABASE_FOLDER = 'database/'
 OUTPUT_FOLDER = 'generated/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
@@ -57,6 +58,11 @@ table_formats = registry.get_formats(Table)
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
+app.config['DATABASE_FOLDER'] = DATABASE_FOLDER
+
+for path in (UPLOAD_FOLDER, OUTPUT_FOLDER, DATABASE_FOLDER):
+    if not os.path.isdir(path):
+        os.mkdir(path)
 
 
 # Allow zipping in jinja templates: http://stackoverflow.com/questions/5208252/ziplist1-list2-in-jinja2
@@ -264,10 +270,16 @@ def set_columns(filename, fileformat=None):
     # If merged table already exists, then append the new entries.
     # Otherwise, create the table
 
-    merged_table_name = os.path.join(app.config['UPLOAD_FOLDER'], 'merged_table.ipac')
+    merged_table_name = os.path.join(app.config['DATABASE_FOLDER'], 'merged_table.ipac')
     if os.path.isfile(merged_table_name):
-        merged_table = Table.read(merged_table_name, converters={'Names': [ascii.convert_numpy('S64')], 
-        'IDs': [ascii.convert_numpy('S64')], 'IsSimulated': [ascii.convert_numpy('S5')]}, format='ascii.ipac')
+        merged_table = Table.read(merged_table_name,
+                                  converters={'Names':
+                                              [ascii.convert_numpy('S64')],
+                                              'IDs':
+                                              [ascii.convert_numpy('S64')],
+                                              'IsSimulated':
+                                              [ascii.convert_numpy('S5')]},
+                                  format='ascii.ipac')
         if 'Timestamp' not in merged_table.colnames:
             # Create a fake timestamp for the previous entries if they don't already have one
             fake_timestamp = datetime.min
@@ -326,10 +338,9 @@ def upload_to_github(filename):
 
 
 @app.route('/query_form')
-def query_form():
+def query_form(filename="merged_table.ipac"):
     
-    filename = "merged_table.ipac"
-    table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename), format='ascii.ipac')
+    table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.ipac')
     
     usetable = table[use_column_names]
     
@@ -342,7 +353,8 @@ def query_form():
     best_column_names = [best_matches[colname] if colname in best_matches else 'Ignore'
                          for colname in usetable.colnames]
 
-    return render_template("query_form.html", table=table, usetable=usetable, use_units=use_units, filename=filename,
+    return render_template("query_form.html", table=table, usetable=usetable,
+                           use_units=use_units, filename=filename,
                            use_column_names=use_column_names,
                            best_column_names=best_column_names,
                           )
@@ -387,7 +399,7 @@ def query(filename, fileformat=None):
     
     temp_table = [table[h].index for i,j,k,h in zip(table['SurfaceDensity'],table['VelocityDispersion'],table['Radius'], range(len(table))) if SurfMin < i*table['SurfaceDensity'].unit < SurfMax and VDispMin < j*table['VelocityDispersion'].unit < VDispMax and RadMin < k*table['Radius'].unit < RadMax]
     use_table = table[temp_table]
-    use_table.write(os.path.join(app.config['OUTPUT_FOLDER'], 'output_table_'+NQuery+'.csv'), format='csv')	 		
+    use_table.write(os.path.join(app.config['OUTPUT_FOLDER'], 'output_table_'+NQuery+'.ipac'), format='ipac')	 		
     
     return plotData_Sigma_sigma(NQuery, use_table, FigureStrBase,
                          SurfMin, SurfMax,
