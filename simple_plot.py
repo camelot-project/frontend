@@ -183,9 +183,9 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
             labels = []
 
             for row in d[SimPlot]:
-                colnames = ['<h1>{title}</h1>'.format(title=col)
+                colnames = ['<div>{title}</div>'.format(title=col)
                             for col in row.colnames]
-                values = ['<h1>{title}</h1>'.format(title=str(val))
+                values = ['<div>{title}</div>'.format(title=str(val))
                           for val in row]
 
                 label = ""
