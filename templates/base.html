@@ -2,8 +2,8 @@
 <html>
 	<head>
 		{% block head %}
-		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/theme.css') }}">
 		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}">
+		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/theme.css') }}">
 		{% endblock %}
 
 		{% block scripts %}
@@ -37,9 +37,20 @@
 		</script>
 		{% endblock %}
 	</head>
-	<body>
-		<div class="container">
-		{% block body %}	    
+	<body background="/static/bg.jpg">
+		<div class="container" id="menu">
+		{% block body %}
+		<table class="table table-striped">
+		    <thead><tr><th> </th></thead>
+          <tbody align=center>
+          <tr>
+              <td align=left width=10%><a href="/"><img src="/static/logo.png" width=100px></a></td>
+              <td style="vertical-align:middle" width=30%><a href="/">Home</a></td>
+              <td style="vertical-align:middle" width=30%><a href="/query_form">Query Database</a></td>
+              <td style="vertical-align:middle" width=30%><a href="/upload_form">Upload Data</a></td>
+          </tr>
+          </tbody>
+      </table>	    
 		{% endblock %}
 		</div>
 	</body>
