@@ -58,7 +58,3 @@ docs/_build/
 target/
 
 *.DS_Store
-
-# Should ignore static/figures/ and static/jstables/ as these are made while running
-static/jstables
-static/figures

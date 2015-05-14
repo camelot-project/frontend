@@ -73,8 +73,7 @@ def convert_units(tbl, units={'SurfaceDensity':u.M_sun/u.pc**2,
                           'VelocityDispersion':u.km/u.s,
                           'Radius':u.pc}):
     """
-    Set the units of the table to the specified units.
-    WARNING: this *overwrites* existing units, it does not convert them!
+    Convert from the units used in the table to the specified units.
     """
     for k,v in units.items():
         if k not in tbl.colnames:
@@ -92,6 +91,12 @@ def add_filename_column(tbl, filename):
     Add the filename as a column
     """
     tbl.add_column(table.Column(name='Filename', data=[filename]*len(tbl)))
+
+def add_timestamp_column(tbl, timestamp):
+    """
+    Add the current date and time as a column
+    """
+    tbl.add_column(table.Column(name='Timestamp', data=[timestamp]*len(tbl)))
 
 def append_table(merged_table, table_to_add):
     """
