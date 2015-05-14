@@ -359,6 +359,7 @@ def pull_request(branch, user, timestamp):
 
 
     S = requests.Session()
+    S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
     S.get('https://api.github.com/', data={'access_token':'e4942f7d7cc9468ffd0e'})
 
     data = {
