@@ -131,3 +131,37 @@ def add_is_gal_if_needed(tbl, is_gal=True):
     """
     if 'IsGalactic' not in tbl.colnames:
         tbl.add_column(table.Column(data=[is_gal]*(len(tbl)), name='IsGalactic'))
+
+def ignore_duplicates(table, duplicates):
+    """
+    If entries in upload data duplicate entries already in table, ignore them.
+    Needs list of duplicates, which is constructed elsewhere.
+    """
+    to_delete = []
+    for row in table:
+        name = row['Names']
+        id   = row['IDs']
+        if id in duplicates:
+            if duplicates[id] == name:
+                to_delete.append(row.index)
+ 
+    table.remove_rows(to_delete) 
+
+def update_duplicates(merged_table, duplicates):
+    """
+    If entries in upload data duplicate entries already in table, remove
+    the versions already in the table. Needs list of duplicates, which is 
+    constructed elsewhere.
+    """
+
+    to_delete = []
+    for row in merged_table:
+        name = row['Names']
+        id   = row['IDs']
+        if id in duplicates:
+            if duplicates[id] == name:
+                to_delete.append(row.index)
+ 
+    merged_table.remove_rows(to_delete) 
+
+
