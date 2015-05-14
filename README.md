@@ -1,3 +1,3 @@
 # CAMELOT
 
-CAMELOT is the Cloud Archive MEtadata, Library, & Online Tools
+CAMELOT is the Cloud Archive for MEtadata, Library, & Online Tools
