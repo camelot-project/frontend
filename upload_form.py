@@ -25,7 +25,8 @@ from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     add_name_column, add_generic_ids_if_needed,
                                     add_is_sim_if_needed, fix_bad_types,
                                     add_filename_column, add_timestamp_column,
-                                    reorder_columns, append_table)
+                                    reorder_columns, append_table,
+                                    add_is_gal_if_needed, add_is_gal_column)
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
 from simple_plot import plotData, plotData_Sigma_sigma
@@ -39,7 +40,8 @@ PNG_PLOT_FOLDER = 'static/figures/'
 TABLE_FOLDER = 'static/tables/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
-                      'Radius', 'IsSimulated', 'Username']
+                      'Radius', 'IsSimulated', 'IsGalactic', 'Username']
+dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic', 'Username']
 use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
 use_units = ['Msun/pc^2','km/s','pc']
 HTMLStrBase='mpld3_Output_Sigma_sigma_r_'
@@ -246,7 +248,7 @@ def set_columns(filename, fileformat=None):
 
     units_data = {}
     for key, pair in column_data.items():
-        if pair['Name'] != "Ignore" and pair['Name'] != "IsSimulated" and key != "Username":
+        if key not in dimensionless_column_names and pair['Name'] not in dimensionless_column_names:
             units_data[pair['Name']] = pair['unit']
 
     # Parse the table file, step-by-step
@@ -264,6 +266,11 @@ def set_columns(filename, fileformat=None):
         add_is_sim_if_needed(table, False)
     else:
         add_is_sim_if_needed(table, True)
+
+    if column_data.get('isgalactic') is None:
+        add_is_gal_if_needed(table, False)
+    else:
+        add_is_gal_if_needed(table, True)
 
 # Detect duplicate IDs in uploaded data and bail out if found
     seen = {}
@@ -286,8 +293,14 @@ def set_columns(filename, fileformat=None):
                                               'IDs':
                                               [ascii.convert_numpy('S64')],
                                               'IsSimulated':
+                                              [ascii.convert_numpy('S5')],
+                                              'IsGalactic':
                                               [ascii.convert_numpy('S5')]},
                                   format='ascii.ipac')
+        if 'IsGalactic' not in merged_table.colnames:
+            # Assume that anything we didn't already tag as Galactic is probably Galactic
+            add_is_gal_column(merged_table, True)
+
         if 'Timestamp' not in merged_table.colnames:
             # Create a fake timestamp for the previous entries if they don't already have one
             fake_timestamp = datetime.min
@@ -297,8 +310,8 @@ def set_columns(filename, fileformat=None):
     # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
     #       and verify that submitted data obeys these limits
         merged_table = Table(data=None, names=['Names','IDs','SurfaceDensity',
-                       'VelocityDispersion','Radius','IsSimulated', 'Timestamp'],
-                       dtype=[('str', 64),('str', 64),'float','float','float','bool',('str', 26)])
+                       'VelocityDispersion','Radius','IsSimulated', 'IsGalactic', 'Timestamp'],
+                       dtype=[('str', 64),('str', 64),'float','float','float','bool','bool',('str', 26)])
         set_units(merged_table)
 
     table = reorder_columns(table, merged_table.colnames)
