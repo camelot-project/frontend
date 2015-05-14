@@ -17,5 +17,26 @@ This is a page with a figure
 imagename = {{imagename}}
 <img src="{{imagename}}" width=800>
 </div>
+<html>
+  <head>
+    <!-- imagename = {{imagename}} -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.js"></script>
+    <script>
+    $(function(){
+      $("#includedContent").load(imagename);
+    });
+    </script>
+  </head>
+
+  <body>
+     <div id="includedContent"></div>
+  </body>
+</html>
+
+<script>
+$(function(){
+        $("#includedContent").load("/static/jstables/{{tablefile}}");
+});
+</script>
 
 {% endblock %}

@@ -247,6 +247,16 @@ def set_columns(filename, fileformat=None):
     else:
         add_is_sim_if_needed(table, True)
 
+# Detect duplicate IDs in uploaded data and bail out if found
+    seen = {}
+    for row in table:
+        name = row['Names']
+        id = row['IDs']
+        if id in seen:
+            raise InvalidUsage("Duplicate ID detected in table: username = {0}, id = {1}. All IDs must be unique.".format(name, id))
+        else:
+            seen[id] = name
+
     # If merged table already exists, then append the new entries.
     # Otherwise, create the table
 
@@ -427,6 +437,27 @@ def query(filename, fileformat=None):
     
     return render_template('show_plot.html', imagename='/'+FigureStrBase+NQuery+'.png')
 
+
+class InvalidUsage(Exception):
+    status_code = 400
+
+    def __init__(self, message, status_code=None, payload=None):
+        Exception.__init__(self)
+        self.message = message
+        if status_code is not None:
+            self.status_code = status_code
+        self.payload = payload
+
+    def to_dict(self):
+        rv = dict(self.payload or ())
+        rv['Error'] = self.message
+        return rv
+
+@app.errorhandler(InvalidUsage)
+def handle_invalid_usage(error):
+    response = jsonify(error.to_dict())
+    response.status_code = error.status_code
+    return response
 
 if __name__ == '__main__':
     app.run(debug=True)
