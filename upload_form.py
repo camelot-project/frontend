@@ -448,7 +448,7 @@ def query(filename, fileformat=None):
     
     use_table.write(os.path.join(app.config['TABLE_FOLDER'], TableStrBase+NQuery+'.ipac'), format='ipac')
     
-    plotfile = plotData_Sigma_sigma(NQuery, use_table, os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase),
+    plot_file = plotData_Sigma_sigma(NQuery, use_table, os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase),
                          SurfMin, SurfMax,
                          VDispMin,
                          VDispMax, RadMin, RadMax,
