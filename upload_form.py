@@ -308,7 +308,7 @@ def set_columns(filename, fileformat=None):
 
     outfilename = os.path.splitext(filename)[0]
     myplot = plotData_Sigma_sigma(timeString(), table,
-                                  os.path.join(app.config['MPLD3_PLOT_FOLDER'],
+                                  os.path.join(app.config['MPLD3_FOLDER'],
                                                outfilename))
 
     tablecss = "table,th,td,tr,tbody {border: 1px solid black; border-collapse: collapse;}"
@@ -389,7 +389,8 @@ def query(filename, fileformat=None):
     print(SurfMin,SurfMax,VDispMin,VDispMax,RadMin,RadMax)
 
     NQuery=timeString()
-    clearPlotOutput(FigureStrBase,TooOld)
+    clearPlotOutput(os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase),
+                    TooOld)
     
     print(NQuery)
         
@@ -407,7 +408,9 @@ def query(filename, fileformat=None):
     use_table = table[temp_table]
     use_table.write(os.path.join(app.config['TABLE_FOLDER'], 'output_table_'+NQuery+'.ipac'), format='ipac')	 		
     
-    plot_file = plotData_Sigma_sigma(NQuery, use_table, FigureStrBase, SurfMin,
+    plot_file = plotData_Sigma_sigma(NQuery, use_table,
+                                     os.path.join(app.config['MPLD3_FOLDER'],
+                                                  FigureStrBase), SurfMin,
                                      SurfMax, VDispMin, VDispMax, RadMin,
                                      RadMax, interactive=False)
 
