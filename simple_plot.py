@@ -40,10 +40,10 @@ table, th, td
 """
 
 def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
-                         SurfMin=1e-1*u.M_sun/u.pc**2, SurfMax=1e5*u.M_sun/u.pc**2,
-                         VDispMin=1e-1*u.km/u.s,
-                         VDispMax=3e2*u.km/u.s, RadMin=1e-2*u.pc, RadMax=1e3*u.pc,
-                         interactive=False):
+                         SurfMin, SurfMax,
+                         VDispMin,
+                         VDispMax, RadMin, RadMax,
+                         interactive):
     """
     SurfMin
     SurfMax
@@ -219,7 +219,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
     # TODO: write a function with this section
     # TODO: change position based on user input
     xfake = [0.1,0.1,0.1] #[xax_limits[0] + xax_limits[0]*2.,xax_limits[0] + xax_limits[0]*2.,xax_limits[0] + xax_limits[0]*2.]
-    yfake = [0.85,0.9,0.95,] #[yax_limits[1] - yax_limits[1]*0.01,yax_limits[1] - yax_limits[1]*0.3,yax_limits[1] - yax_limits[1]*0.6]
+    yfake = [0.85,0.9,0.95] #[yax_limits[1] - yax_limits[1]*0.01,yax_limits[1] - yax_limits[1]*0.3,yax_limits[1] - yax_limits[1]*0.6]
     radius = np.array([1e-1,1e0,1e1]) #*u.pc #(zMin + zMax)*0.5
 
     ax.scatter(np.array(xfake), np.array(yfake), marker='+',
@@ -251,14 +251,4 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax, yMin, yM
 
     return "mpld3_"+FigureStrBase+NQuery+'.html'
 
-def clearPlotOutput(FigureStrBase,TooOld) :
 
-    for fl in glob.glob(FigureStrBase+"*.png") + glob.glob(FigureStrBase+"*.pdf"):
-        now = time.time()
-        if os.stat(fl).st_mtime < now - TooOld :
-            os.remove(fl)
-
-def timeString() :
-
-    TimeString=datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
-    return TimeString
