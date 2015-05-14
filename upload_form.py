@@ -42,7 +42,9 @@ valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated', 'Username']
 use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
 use_units = ['Msun/pc^2','km/s','pc']
+HTMLStrBase='mpld3_Output_Sigma_sigma_r_'
 FigureStrBase='Output_Sigma_sigma_r_'
+TableStrBase='Output_Table_'
 TooOld=300
 
 import glob
@@ -52,6 +54,7 @@ import datetime
 from datetime import datetime
 import matplotlib
 import matplotlib.pylab as plt
+from astropy.table import vstack
 
 from astropy.io import registry
 from astropy.table import Table
@@ -349,6 +352,9 @@ def query_form(filename="merged_table.ipac"):
 
     table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.ipac')
 
+    min_values=[np.round(min(table['SurfaceDensity']),4),np.round(min(table['VelocityDispersion']),4),np.round(min(table['Radius']),4)]
+    max_values=[np.round(max(table['SurfaceDensity']),1),np.round(max(table['VelocityDispersion']),1),np.round(max(table['Radius']),1)]
+
     usetable = table[use_column_names]
 
     best_matches = {difflib.get_close_matches(vcn, usetable.colnames,  n=1,
@@ -364,35 +370,52 @@ def query_form(filename="merged_table.ipac"):
                            use_units=use_units, filename=filename,
                            use_column_names=use_column_names,
                            best_column_names=best_column_names,
+                           min_values=min_values,
+                           max_values=max_values
                           )
 
-def clearPlotOutput(FigureStrBase,TooOld) :
-
-    for fl in glob.glob(FigureStrBase+"*.png") + glob.glob(FigureStrBase+"*.pdf"):
+def clearOutput() :
+    
+    for fl in glob.glob(os.path.join(app.config['PNG_PLOT_FOLDER'], FigureStrBase+"*.png")):
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
 
+    for fl in glob.glob(os.path.join(app.config['TABLE_FOLDER'], TableStrBase+"*.csv")):
+        now = time.time()
+        if os.stat(fl).st_mtime < now - TooOld :
+            os.remove(fl)
+            
+    for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'], HTMLStrBase+"*.html")):
+        now = time.time()
+        if os.stat(fl).st_mtime < now - TooOld :
+            os.remove(fl)
+            
 def timeString():
     TimeString=datetime.now().strftime("%Y%m%d%H%M%S%f")
     return TimeString
 
 @app.route('/query/<path:filename>', methods=['POST'])
 def query(filename, fileformat=None):
-    SurfMin = float(request.form['SurfaceDensity_min'])*u.M_sun/u.pc**2
-    SurfMax = float(request.form['SurfaceDensity_max'])*u.M_sun/u.pc**2
-    VDispMin = float(request.form['VelocityDispersion_min'])*u.km/u.s
-    VDispMax = float(request.form['VelocityDispersion_max'])*u.km/u.s
-    RadMin = float(request.form['Radius_min'])*u.pc
-    RadMax = float(request.form['Radius_max'])*u.pc
+    SurfMin = float(request.form['SurfaceDensity_min'])*u.Unit(request.form['SurfaceDensity_unit'])
+    SurfMax = float(request.form['SurfaceDensity_max'])*u.Unit(request.form['SurfaceDensity_unit'])
+    VDispMin = float(request.form['VelocityDispersion_min'])*u.Unit(request.form['VelocityDispersion_unit'])
+    VDispMax = float(request.form['VelocityDispersion_max'])*u.Unit(request.form['VelocityDispersion_unit'])
+    RadMin = float(request.form['Radius_min'])*u.Unit(request.form['Radius_unit'])
+    RadMax = float(request.form['Radius_max'])*u.Unit(request.form['Radius_unit'])
+    
+    ShowObs=('IsObserved' in request.form and request.form['IsObserved'] == 'IsObserved')
+    ShowSim=('IsSimulated' in request.form and request.form['IsSimulated'] == 'IsSimulated')
+    ShowGal=('IsGalactic' in request.form and request.form['IsGalactic'] == 'IsGalactic')
+    ShowExgal=('IsExtragalactic' in request.form and request.form['IsExtragalactic'] == 'IsExtragalactic')
 #    print(np.type(SurfMin))
-    print(SurfMin,SurfMax,VDispMin,VDispMax,RadMin,RadMax)
+#    print(SurfMin,SurfMax,VDispMin,VDispMax,RadMin,RadMax)
+#    print(ShowObs,ShowSim,ShowGal,ShowExgal)
+#    print(request.form)
 
     NQuery=timeString()
-    clearPlotOutput(os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase),
-                    TooOld)
 
-    print(NQuery)
+    clearOutput()
 
     table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.ipac')
     set_units(table)
@@ -403,19 +426,35 @@ def query(filename, fileformat=None):
     Rad = table['Radius']
     IsSim = (table['IsSimulated'] == 'True')
 #    print(SurfDens)
-
-    temp_table = [table[h].index for i,j,k,h in zip(table['SurfaceDensity'],table['VelocityDispersion'],table['Radius'], range(len(table))) if SurfMin < i*table['SurfaceDensity'].unit < SurfMax and VDispMin < j*table['VelocityDispersion'].unit < VDispMax and RadMin < k*table['Radius'].unit < RadMax]
+    
+    temp_table = [table[h].index for h,i,j,k in zip(range(len(table)),table['SurfaceDensity'],table['VelocityDispersion'],table['Radius']) if SurfMin < i*table['SurfaceDensity'].unit < SurfMax and VDispMin < j*table['VelocityDispersion'].unit < VDispMax and RadMin < k*table['Radius'].unit < RadMax]
     use_table = table[temp_table]
-    use_table.write(os.path.join(app.config['TABLE_FOLDER'], 'output_table_'+NQuery+'.ipac'), format='ipac')
+    
+    if not ShowObs :
+        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsSimulated']) if i == 'False']
+        use_table.remove_rows(temp_table)
 
-    plot_file = plotData_Sigma_sigma(NQuery, use_table,
-                                     os.path.join(app.config['MPLD3_FOLDER'],
-                                                  FigureStrBase), SurfMin,
-                                     SurfMax, VDispMin, VDispMax, RadMin,
-                                     RadMax, interactive=False)
-
+    if not ShowSim :
+        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsSimulated']) if i == 'True']
+        use_table.remove_rows(temp_table)
+        
+#    if not ShowGal :
+#        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsGalactic']) if i == 'True']
+#        use_table.remove_rows(temp_table)
+#        
+#    if not ShowExgal :
+#        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsGalactic']) if i == 'False']
+#        use_table.remove_rows(temp_table)
+    
+    use_table.write(os.path.join(app.config['TABLE_FOLDER'], TableStrBase+NQuery+'.ipac'), format='ipac')
+    
+    plot_file = plotData_Sigma_sigma(NQuery, use_table, os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase),
+                         SurfMin, SurfMax,
+                         VDispMin,
+                         VDispMax, RadMin, RadMax,
+                         interactive=False)
+    
     return render_template('show_plot.html', imagename='/'+plot_file)
-
 
 class InvalidUsage(Exception):
     status_code = 400
