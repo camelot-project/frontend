@@ -24,7 +24,7 @@ from astropy import units as u
 from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     add_name_column, add_generic_ids_if_needed,
                                     add_is_sim_if_needed, fix_bad_types,
-                                    add_filename_column,
+                                    add_filename_column, add_timestamp_column,
                                     reorder_columns, append_table)
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
@@ -46,6 +46,7 @@ import glob
 import random
 import time
 import datetime
+from datetime import datetime
 import matplotlib
 import matplotlib.pylab as plt
 
@@ -241,6 +242,9 @@ def set_columns(filename, fileformat=None):
     convert_units(table)
     add_name_column(table, column_data.get('Username')['Name'])
     add_filename_column(table, filename)
+    timestamp = datetime.now()
+    add_timestamp_column(table, timestamp)
+
     add_generic_ids_if_needed(table)
     if column_data.get('issimulated') is None:
         add_is_sim_if_needed(table, False)
@@ -264,12 +268,17 @@ def set_columns(filename, fileformat=None):
     if os.path.isfile(merged_table_name):
         merged_table = Table.read(merged_table_name, converters={'Names': [ascii.convert_numpy('S64')], 
         'IDs': [ascii.convert_numpy('S64')], 'IsSimulated': [ascii.convert_numpy('S5')]}, format='ascii.ipac')
+        if 'Timestamp' not in merged_table.colnames:
+            # Create a fake timestamp for the previous entries if they don't already have one
+            fake_timestamp = datetime.min
+            add_timestamp_column(merged_table, fake_timestamp)
     else:
     # Maximum string length of 64 for username, ID -- larger strings are silently truncated
     # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
     #       and verify that submitted data obeys these limits
         merged_table = Table(data=None, names=['Names','IDs','SurfaceDensity',
-                       'VelocityDispersion','Radius','IsSimulated'], dtype=[('str', 64),('str', 64),'float','float','float','bool'])
+                       'VelocityDispersion','Radius','IsSimulated', 'Timestamp'], 
+                       dtype=[('str', 64),('str', 64),'float','float','float','bool',('str', 26)])
         set_units(merged_table)
 
     table = reorder_columns(table, merged_table.colnames)
@@ -347,7 +356,7 @@ def clearPlotOutput(FigureStrBase,TooOld) :
 
 def timeString():
     
-    TimeString=datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+    TimeString=datetime.now().strftime("%Y%m%d%H%M%S%f")
     return TimeString
                           
 @app.route('/query/<path:filename>', methods=['POST'])
