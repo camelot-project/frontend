@@ -263,16 +263,3 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
         mpld3.show()
 
     return FigureStrBase+NQuery+'.html'
-
-
-def clearPlotOutput(FigureStrBase, TooOld):
-
-    for fl in glob.glob(FigureStrBase+"*.png") + glob.glob(FigureStrBase+"*.pdf"):
-        now = time.time()
-        if os.stat(fl).st_mtime < now - TooOld:
-            os.remove(fl)
-
-
-def timeString():
-    TimeString = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
-    return TimeString
