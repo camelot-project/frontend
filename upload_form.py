@@ -16,6 +16,10 @@ from __future__ import print_function
 import os
 import inspect
 import numpy as np
+import datetime
+import subprocess
+import requests
+import json
 from astropy.io import fits
 from astropy.io import ascii
 from astropy import table
@@ -32,6 +36,14 @@ from flask import (Flask, request, redirect, url_for, render_template,
 from simple_plot import plotData, plotData_Sigma_sigma
 from werkzeug import secure_filename
 import difflib
+import glob
+import random
+import matplotlib
+import matplotlib.pylab as plt
+import keyring
+
+from astropy.io import registry
+from astropy.table import Table
 
 UPLOAD_FOLDER = 'uploads/'
 DATABASE_FOLDER = 'database/'
@@ -251,6 +263,8 @@ def set_columns(filename, fileformat=None):
         if key not in dimensionless_column_names and pair['Name'] not in dimensionless_column_names:
             units_data[pair['Name']] = pair['unit']
 
+    mapping = {filename: [column_data, units_data]}
+
     # Parse the table file, step-by-step
     rename_columns(table, {k: v['Name'] for k,v in column_data.items()})
     set_units(table, units_data)
@@ -318,6 +332,11 @@ def set_columns(filename, fileformat=None):
     append_table(merged_table, table)
     Table.write(merged_table, merged_table_name, format='ascii.ipac')
 
+    username = column_data.get('Username')['Name']
+    branch,timestamp = commit_change_to_database(username)
+    time.sleep(2)
+    pull_request(branch, username, timestamp)
+
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
     if not os.path.isdir('static/jstables/'):
@@ -339,8 +358,36 @@ def set_columns(filename, fileformat=None):
                            tablefile='{fn}.html'.format(fn=outfilename))
 
 
+def commit_change_to_database(username, remote='upstream', tablename='merged_table.ipac',
+                              workingdir='database/'):
+    timestamp = datetime.now().isoformat().replace(":","_")
+    branch = '{0}_{1}'.format(username, timestamp)
+    checkout_result = subprocess.call(['git','checkout','-b', branch,
+                                       '{remote}/master'.format(remote=remote)],
+                                      cwd=workingdir)
+    if checkout_result != 0:
+        raise Exception("Checking out a new branch in the database failed.  "
+                        "Attempted to checkout branch {0}".format(branch))
 
-def upload_to_github(filename):
+    add_result = subprocess.call(['git','add','merged_table.ipac'], cwd=workingdir)
+    if add_result != 0:
+        raise Exception("Adding {tablename} to the commit failed.".format(tablename=tablename))
+
+    commit_result = subprocess.call(['git','commit','-m',
+                      'Add changes to table from {0} at {1}'.format(username,
+                                                                    timestamp)],
+                     cwd=workingdir)
+    if commit_result != 0:
+        raise Exception("Committing the new branch failed")
+
+    push_result = subprocess.call(['git','push', remote, branch,], cwd=workingdir)
+    if push_result != 0:
+        raise Exception("Pushing to the remote {0} folder failed".format(workingdir))
+
+    return branch,timestamp
+
+
+def pull_request(branch, user, timestamp):
     """
     WIP: Eventually, we want each file to be uploaded to github and submitted
     as a pull request when people submit their data
@@ -348,16 +395,33 @@ def upload_to_github(filename):
     This will be tricky: we need to have a "replace existing file" logic in
     addition to the original submission.  We also need an account + API_KEY
     etc, which may be the most challenging part.
-    """
-    with open(os.path.join(app.config['UPLOAD_FOLDER'], filename)) as f:
-        content = f.read()
-    data = {'path': 'data_files/',
-            'content': content,
-            'branch': 'master',
-            'message': 'Upload a new data file {0}'.format(filename)}
 
-    requests.post
-    pass
+    https://developer.github.com/v3/pulls/#create-a-pull-request
+    """
+
+
+    S = requests.Session()
+    S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
+    git_user = 'SirArthurTheSubmitter'
+    password = keyring.get_password('github', git_user)
+    #S.get('https://api.github.com/', data={'access_token':'e4942f7d7cc9468ffd0e'})
+
+    data = {
+      "title": "New data table from {user}".format(user=user),
+      "body": "Data table added by {user} at {timestamp}".format(user=user, timestamp=timestamp),
+      "head": "camelot-project:{0}".format(branch),
+      "base": "master"
+    }
+
+
+    api_url_branch = 'https://api.github.com/repos/camelot-project/database/branches/{0}'.format(branch)
+    branch_exists = S.get(api_url_branch)
+    branch_exists.raise_for_status()
+
+    api_url = 'https://api.github.com/repos/camelot-project/database/pulls'
+    response = S.post(url=api_url, data=json.dumps(data), auth=(git_user, password))
+    response.raise_for_status()
+    return response
 
 
 @app.route('/query_form')
@@ -396,7 +460,7 @@ def clearOutput() :
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
 
-    for fl in glob.glob(os.path.join(app.config['TABLE_FOLDER'], TableStrBase+"*.csv")):
+    for fl in glob.glob(os.path.join(app.config['TABLE_FOLDER'], TableStrBase+"*.ipac")):
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
