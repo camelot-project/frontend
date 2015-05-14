@@ -3,6 +3,9 @@ h1{
     margin-right: auto;
     text-align: center;
     width: 70%;
+}
+
+h1 .title {
     color: white;
 }
 
@@ -53,4 +56,9 @@ h1{
 
 #menu{
 	font-size: 20px;
+}
+
+.mpld3-tooltip {
+    color: black;
+    background-color: white;
 }
