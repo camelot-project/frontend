@@ -488,8 +488,13 @@ def query_form(filename="merged_table.ipac"):
     
     tolerance=1.1
 
-    min_values=[np.round(min(table['SurfaceDensity'])/tolerance,4),np.round(min(table['VelocityDispersion'])/tolerance,4),np.round(min(table['Radius'])/tolerance,4)]
-    max_values=[np.round(max(table['SurfaceDensity'])*tolerance,1),np.round(max(table['VelocityDispersion'])*tolerance,1),np.round(max(table['Radius'])*tolerance,1)]
+    min_values=[np.round(min(table['SurfaceDensity'])/tolerance,4),
+                np.round(min(table['VelocityDispersion'])/tolerance,4),
+                np.round(min(table['Radius'])/tolerance,4)]
+
+    max_values=[np.round(max(table['SurfaceDensity'])*tolerance,1),
+                np.round(max(table['VelocityDispersion'])*tolerance,1),
+                np.round(max(table['Radius'])*tolerance,1)]
 
     usetable = table[use_column_names]
 
@@ -544,10 +549,6 @@ def query(filename, fileformat=None):
     ShowSim=('IsSimulated' in request.form and request.form['IsSimulated'] == 'IsSimulated')
     ShowGal=('IsGalactic' in request.form and request.form['IsGalactic'] == 'IsGalactic')
     ShowExgal=('IsExtragalactic' in request.form and request.form['IsExtragalactic'] == 'IsExtragalactic')
-#    print(np.type(SurfMin))
-#    print(SurfMin,SurfMax,VDispMin,VDispMax,RadMin,RadMax)
-#    print(ShowObs,ShowSim,ShowGal,ShowExgal)
-#    print(request.form)
 
     NQuery=timeString()
 
@@ -561,9 +562,11 @@ def query(filename, fileformat=None):
     VDisp = table['VelocityDispersion']
     Rad = table['Radius']
     IsSim = (table['IsSimulated'] == 'True')
-#    print(SurfDens)
     
-    temp_table = [table[h].index for h,i,j,k in zip(range(len(table)),table['SurfaceDensity'],table['VelocityDispersion'],table['Radius']) if SurfMin < i*table['SurfaceDensity'].unit < SurfMax and VDispMin < j*table['VelocityDispersion'].unit < VDispMax and RadMin < k*table['Radius'].unit < RadMax]
+    temp_table = [table[h].index for h,i,j,k in zip(range(len(table)),table['SurfaceDensity'],table['VelocityDispersion'],table['Radius']) 
+                 if  SurfMin  < i*table['SurfaceDensity'].unit     < SurfMax 
+                 and VDispMin < j*table['VelocityDispersion'].unit < VDispMax 
+                 and RadMin   < k*table['Radius'].unit             < RadMax]
     use_table = table[temp_table]
     
     if not ShowObs :
