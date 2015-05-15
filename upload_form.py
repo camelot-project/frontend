@@ -349,7 +349,7 @@ def set_columns(filename, fileformat=None):
     username = column_data.get('Username')['Name']
     branch,timestamp = commit_change_to_database(username)
     time.sleep(2)
-    pull_request(branch, username, timestamp)
+    response, link_pull = pull_request(branch, username, timestamp)
     # Adding raw file to uploads
     dummy = commit_change_to_database(username, tablename=filename, workingdir='uploads/',database='upl',branch=branch)
     time.sleep(2)
@@ -373,7 +373,7 @@ def set_columns(filename, fileformat=None):
                          table_id=outfilename)
 
     return render_template('show_plot.html', imagename='/'+myplot,
-                           tablefile='{fn}.html'.format(fn=outfilename))
+                           tablefile='{fn}.html'.format(fn=outfilename),link_pull=link_pull)
 
 
 def commit_change_to_database(username, remote='origin', tablename='merged_table.ipac',
@@ -476,7 +476,9 @@ def pull_request(branch, user, timestamp, database='database'):
     api_url = 'https://api.github.com/repos/camelot-project/{0}/pulls'.format(database)
     response = S.post(url=api_url, data=json.dumps(data), auth=(git_user, password))
     response.raise_for_status()
-    return response
+    time.sleep(1)
+    pull_url = S.get(url=api_url).json()[-1]['html_url']
+    return response, pull_url
 
 def handle_duplicates(table, merged_table, duplicates):
     print("TODO: DO SOMETHING HERE")
