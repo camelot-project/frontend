@@ -39,12 +39,15 @@ from werkzeug import secure_filename
 import difflib
 import glob
 import random
-import matplotlib
-import matplotlib.pylab as plt
 import keyring
-
+import __builtin__
+import glob
+import random
+import time
+import datetime
+from datetime import datetime
 from astropy.io import registry
-from astropy.table import Table
+from astropy.table import Table, vstack
 
 UPLOAD_FOLDER = 'uploads/'
 DATABASE_FOLDER = 'database/'
@@ -60,20 +63,8 @@ use_units = ['Msun/pc^2','km/s','pc']
 HTMLStrBase='mpld3_Output_Sigma_sigma_r_'
 FigureStrBase='Output_Sigma_sigma_r_'
 TableStrBase='Output_Table_'
-TooOld=300
+TooOld=300 # age in seconds of files to delete
 
-import __builtin__
-import glob
-import random
-import time
-import datetime
-from datetime import datetime
-import matplotlib
-import matplotlib.pylab as plt
-from astropy.table import vstack
-
-from astropy.io import registry
-from astropy.table import Table
 table_formats = registry.get_formats(Table)
 
 app = Flask(__name__)
@@ -170,8 +161,6 @@ def uploaded_file(filename, fileformat=None):
                            best_column_names=best_column_names,
                            fileformat=fileformat,
                           )
-    #return send_from_directory(app.config['UPLOAD_FOLDER'],
-    #                           filename)
 
 def handle_ambiguous_table(filename, exception):
     """
@@ -249,13 +238,12 @@ def set_columns(filename, fileformat=None):
         fileformat = request.args['fileformat']
 
 
-    # This function needs to know about the filename or have access to the
-    # table; how do we arrange that?
     table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename),
                        format=fileformat)
 
-    column_data = \
-        {field:{'Name':value} for field,value in request.form.items() if '_units' not in field}
+    column_data = {field:{'Name':value}
+                   for field,value in request.form.items()
+                   if '_units' not in field}
     for field,value in request.form.items():
         if '_units' in field:
             column_data[field[:-6]]['unit'] = value
@@ -288,7 +276,7 @@ def set_columns(filename, fileformat=None):
     else:
         add_is_gal_if_needed(table, True)
 
-# Detect duplicate IDs in uploaded data and bail out if found
+    # Detect duplicate IDs in uploaded data and bail out if found
     seen = {}
     for row in table:
         name = row['Names']
@@ -548,10 +536,6 @@ def query(filename, fileformat=None):
     ShowSim=('IsSimulated' in request.form and request.form['IsSimulated'] == 'IsSimulated')
     ShowGal=('IsGalactic' in request.form and request.form['IsGalactic'] == 'IsGalactic')
     ShowExgal=('IsExtragalactic' in request.form and request.form['IsExtragalactic'] == 'IsExtragalactic')
-#    print(np.type(SurfMin))
-#    print(SurfMin,SurfMax,VDispMin,VDispMax,RadMin,RadMax)
-#    print(ShowObs,ShowSim,ShowGal,ShowExgal)
-#    print(request.form)
 
     NQuery=timeString()
 
@@ -565,7 +549,6 @@ def query(filename, fileformat=None):
     VDisp = table['VelocityDispersion']
     Rad = table['Radius']
     IsSim = (table['IsSimulated'] == 'True')
-#    print(SurfDens)
     
     temp_table = [table[index].index for index, (surfdens, vdisp, radius) in
                   enumerate(zip(table['SurfaceDensity'],
