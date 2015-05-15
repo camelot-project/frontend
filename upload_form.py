@@ -488,8 +488,12 @@ def query_form(filename="merged_table.ipac"):
     
     tolerance=1.1
 
-    min_values=[np.round(min(table['SurfaceDensity'])/tolerance,4),np.round(min(table['VelocityDispersion'])/tolerance,4),np.round(min(table['Radius'])/tolerance,4)]
-    max_values=[np.round(max(table['SurfaceDensity'])*tolerance,1),np.round(max(table['VelocityDispersion'])*tolerance,1),np.round(max(table['Radius'])*tolerance,1)]
+    min_values=[np.round(min(table['SurfaceDensity'])/tolerance, 4),
+                np.round(min(table['VelocityDispersion'])/tolerance, 4),
+                np.round(min(table['Radius'])/tolerance, 4)]
+    max_values=[np.round(max(table['SurfaceDensity'])*tolerance, 1),
+                np.round(max(table['VelocityDispersion'])*tolerance, 1),
+                np.round(max(table['Radius'])*tolerance, 1)]
 
     usetable = table[use_column_names]
 
@@ -563,32 +567,49 @@ def query(filename, fileformat=None):
     IsSim = (table['IsSimulated'] == 'True')
 #    print(SurfDens)
     
-    temp_table = [table[h].index for h,i,j,k in zip(range(len(table)),table['SurfaceDensity'],table['VelocityDispersion'],table['Radius']) if SurfMin < i*table['SurfaceDensity'].unit < SurfMax and VDispMin < j*table['VelocityDispersion'].unit < VDispMax and RadMin < k*table['Radius'].unit < RadMax]
+    temp_table = [table[index].index for index, (surfdens, vdisp, radius) in
+                  enumerate(zip(table['SurfaceDensity'],
+                                table['VelocityDispersion'],
+                                table['Radius']))
+                  if (SurfMin < surfdens*table['SurfaceDensity'].unit < SurfMax
+                      and VDispMin < vdisp*table['VelocityDispersion'].unit < VDispMax
+                      and RadMin < radius*table['Radius'].unit < RadMax)
+                 ]
     use_table = table[temp_table]
     
     if not ShowObs :
-        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsSimulated']) if i == 'False']
+        temp_table = [use_table[h].index for h,i in
+                      zip(range(len(use_table)),use_table['IsSimulated'])
+                      if i == 'False']
         use_table.remove_rows(temp_table)
 
     if not ShowSim :
-        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsSimulated']) if i == 'True']
+        temp_table = [use_table[h].index for h,i in
+                      zip(range(len(use_table)),use_table['IsSimulated'])
+                      if i == 'True']
         use_table.remove_rows(temp_table)
         
     if not ShowGal :
-        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsGalactic']) if i == 'True']
+        temp_table = [use_table[h].index for h,i in
+                      zip(range(len(use_table)),use_table['IsGalactic'])
+                      if i == 'True']
         use_table.remove_rows(temp_table)
         
     if not ShowExgal :
-        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsGalactic']) if i == 'False']
+        temp_table = [use_table[h].index for h,i in
+                      zip(range(len(use_table)),use_table['IsGalactic'])
+                      if i == 'False']
         use_table.remove_rows(temp_table)
     
     use_table.write(os.path.join(app.config['TABLE_FOLDER'], TableStrBase+NQuery+'.ipac'), format='ipac')
     
-    plot_file = plotData_Sigma_sigma(NQuery, use_table, os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase),
-                         SurfMin, SurfMax,
-                         VDispMin,
-                         VDispMax, RadMin, RadMax,
-                         interactive=False)
+    plot_file = plotData_Sigma_sigma(NQuery, use_table,
+                                     os.path.join(app.config['MPLD3_FOLDER'],
+                                                  FigureStrBase), 
+                                     SurfMin, SurfMax,
+                                     VDispMin, VDispMax,
+                                     RadMin, RadMax,
+                                     interactive=False)
     
     return render_template('show_plot.html', imagename='/'+plot_file)
 
