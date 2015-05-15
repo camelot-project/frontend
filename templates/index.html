@@ -5,6 +5,11 @@
 <title>CAMELOT</title>
 {% endblock %}
 
+{% block scripts %}
+{{ super() }}
+
+{% endblock %}
+
 {% block body %}
 {{ super() }}
 <h1 class="title">CAMELOT</h1>
@@ -16,7 +21,22 @@
 To bridge the fundamental disconnect between inherently 2D observational data and 3D simulations, we identified the key physical properties that, in principle, are straightforward for both observers and simulators to measure — the surface density (<i>Sigma</i>), velocity dispersion (<i>sigma</i>) and radius (<i>R</i>). By determining these in a self-consistent way for all entries in the database, it should be possible to make robust comparisons.
     <br><br>
 CAMELOT is an acronym for <i>Cloud Archive for MEtadata, Library & Online Toolkit</i>.
+<br><br>
+<center>
+<table>
+<tr>
+<td>
+<img src="/static/sword.jpg" height=50px>
+</td>
+<td width=30px></td>
+<td><img id="image_canv" src="/static/sword.jpg" height=50px class="rotate180"></td>
+</tr>
+</table>
+</center>
 </div>
 </div>
 </body>
 {% endblock %}
+
+
+
