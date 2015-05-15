@@ -20,11 +20,6 @@ import datetime
 import subprocess
 import requests
 import json
-from astropy.io import fits
-from astropy.io import ascii
-from astropy import table
-from astropy.table.jsviewer import write_table_jsviewer
-from astropy import units as u
 from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     add_name_column, add_generic_ids_if_needed,
                                     add_is_sim_if_needed, fix_bad_types,
@@ -46,8 +41,10 @@ import random
 import time
 import datetime
 from datetime import datetime
-from astropy.io import registry
+from astropy.io import registry, ascii
 from astropy.table import Table, vstack
+from astropy.table.jsviewer import write_table_jsviewer
+from astropy import units as u
 
 UPLOAD_FOLDER = 'uploads/'
 DATABASE_FOLDER = 'database/'
