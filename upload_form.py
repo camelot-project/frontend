@@ -351,10 +351,10 @@ def set_columns(filename, fileformat=None):
     branch,timestamp = commit_change_to_database(username)
     time.sleep(2)
     # Adding raw file to uploads
-    #dummy = commit_change_to_database(username, tablename=filename, workingdir='uploads/',database='upl')
-    #time.sleep(2)
+    dummy = commit_change_to_database(username, tablename=filename, workingdir='uploads/',database='upl')
+    time.sleep(2)
     pull_request(branch, username, timestamp)
-    #pull_request(branch, username, timestamp, database='uploads')
+    pull_request(branch, username, timestamp, database='uploads')
 
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
