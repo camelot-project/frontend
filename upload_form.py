@@ -57,7 +57,6 @@ valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
 dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic', 'Username']
 use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
 use_units = ['Msun/pc^2','km/s','pc']
-HTMLStrBase='mpld3_Output_Sigma_sigma_r_'
 FigureStrBase='Output_Sigma_sigma_r_'
 TableStrBase='Output_Table_'
 TooOld=300
@@ -486,7 +485,7 @@ def query_form(filename="merged_table.ipac"):
 
     table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.ipac')
     
-    tolerance=1.1
+    tolerance=1.2
 
     min_values=[np.round(min(table['SurfaceDensity'])/tolerance,4),
                 np.round(min(table['VelocityDispersion'])/tolerance,4),
@@ -517,7 +516,7 @@ def query_form(filename="merged_table.ipac"):
 
 def clearOutput() :
     
-    for fl in glob.glob(os.path.join(app.config['PNG_PLOT_FOLDER'], FigureStrBase+"*.png")):
+    for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase+"*.png")):
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
@@ -527,7 +526,7 @@ def clearOutput() :
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
             
-    for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'], HTMLStrBase+"*.html")):
+    for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase+"*.html")):
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
@@ -585,15 +584,17 @@ def query(filename, fileformat=None):
         temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsGalactic']) if i == 'False']
         use_table.remove_rows(temp_table)
     
-    use_table.write(os.path.join(app.config['TABLE_FOLDER'], TableStrBase+NQuery+'.ipac'), format='ipac')
+    tablefile = os.path.join(app.config['TABLE_FOLDER'], TableStrBase+NQuery+'.ipac')
+    
+    use_table.write(tablefile, format='ipac')
     
     plot_file = plotData_Sigma_sigma(NQuery, use_table, os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase),
                          SurfMin, SurfMax,
                          VDispMin,
                          VDispMax, RadMin, RadMax,
                          interactive=False)
-    
-    return render_template('show_plot.html', imagename='/'+plot_file)
+
+    return render_template('show_plot.html', imagename='/'+plot_file, tablefile=tablefile)
 
 class InvalidUsage(Exception):
     status_code = 400

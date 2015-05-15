@@ -51,9 +51,9 @@ $(document).ready(function(){
             <table class="table table-striped">
                 <thead><tr><th>File Column Name</th><th>Real Column Name</th><th>Units</th></tr></thead>
                 <tbody>
-                <tr><td>  <input type="checkbox" name="issimulated" value="IsSimulated"> Is this simulated data? </td></tr>
-                <tr><td>  <input type="checkbox" name="isgalactic"  value="IsGalactic">  Is this Galactic data? (for simulated data, check when the simulation covers scales smaller than a galaxy) </td></tr>
-                <tr><td>  <input type="text" id="username" name="Username" value="" required></td> <td>Username? </td></tr>
+                <tr><td colspan=3>  <input type="checkbox" name="issimulated" value="IsSimulated"> Is this simulated data? </td></tr>
+                <tr><td colspan=3>  <input type="checkbox" name="isgalactic"  value="IsGalactic">  Is this Galactic data? <font color="#BDBDBD">(for simulations, check this box unless an entire galaxy is covered)</font> </td></tr>
+                <tr><td>  <input type="text" id="username" name="Username" value="" required></td> <td colspan=2>Username? </td></tr>
                 
                 {% for column_name,best_column_name in zip(table.colnames, best_column_names) %}
                 <tr>
