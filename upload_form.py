@@ -446,6 +446,12 @@ def pull_request(branch, user, timestamp):
     S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
     git_user = 'SirArthurTheSubmitter'
     password = keyring.get_password('github', git_user)
+    if password is None:
+        password = os.getenv('GITHUB_PASSWORD')
+    if password is None:
+        raise Exception("No password specified for the submitter account.  "
+                        "Configure your server to use either keyring or the "
+                        "appropriate environmental variable")
     #S.get('https://api.github.com/', data={'access_token':'e4942f7d7cc9468ffd0e'})
 
     data = {
