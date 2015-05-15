@@ -62,6 +62,7 @@ FigureStrBase='Output_Sigma_sigma_r_'
 TableStrBase='Output_Table_'
 TooOld=300
 
+import __builtin__
 import glob
 import random
 import time
@@ -81,12 +82,12 @@ app.config['MPLD3_FOLDER'] = MPLD3_FOLDER
 app.config['DATABASE_FOLDER'] = DATABASE_FOLDER
 app.config['PNG_PLOT_FOLDER'] = PNG_PLOT_FOLDER
 app.config['TABLE_FOLDER'] = TABLE_FOLDER
+app.config['DEBUG']=True
 
 for path in (UPLOAD_FOLDER, MPLD3_FOLDER, DATABASE_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
     if not os.path.isdir(path):
         os.mkdir(path)
 
-# En
 
 # Allow zipping in jinja templates: http://stackoverflow.com/questions/5208252/ziplist1-list2-in-jinja2
 import jinja2
@@ -97,7 +98,7 @@ env.globals.update(zip=zip)
 @app.template_global(name='zip')
 def _zip(*args, **kwargs): #to not overwrite builtin zip in globals
     """ This function allows the use of "zip" in jinja2 templates """
-    return __builtins__.zip(*args, **kwargs)
+    return __builtin__.zip(*args, **kwargs)
 
 def allowed_file(filename):
     """
