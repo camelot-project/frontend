@@ -486,7 +486,7 @@ def query_form(filename="merged_table.ipac"):
 
     table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.ipac')
     
-    tolerance=1.1
+    tolerance=1.2
 
     min_values=[np.round(min(table['SurfaceDensity'])/tolerance,4),np.round(min(table['VelocityDispersion'])/tolerance,4),np.round(min(table['Radius'])/tolerance,4)]
     max_values=[np.round(max(table['SurfaceDensity'])*tolerance,1),np.round(max(table['VelocityDispersion'])*tolerance,1),np.round(max(table['Radius'])*tolerance,1)]
@@ -512,7 +512,7 @@ def query_form(filename="merged_table.ipac"):
 
 def clearOutput() :
     
-    for fl in glob.glob(os.path.join(app.config['PNG_PLOT_FOLDER'], FigureStrBase+"*.png")):
+    for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase+"*.png")):
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
@@ -582,15 +582,17 @@ def query(filename, fileformat=None):
         temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsGalactic']) if i == 'False']
         use_table.remove_rows(temp_table)
     
-    use_table.write(os.path.join(app.config['TABLE_FOLDER'], TableStrBase+NQuery+'.ipac'), format='ipac')
+    tablefile = os.path.join(app.config['TABLE_FOLDER'], TableStrBase+NQuery+'.ipac')
+    
+    use_table.write(tablefile, format='ipac')
     
     plot_file = plotData_Sigma_sigma(NQuery, use_table, os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase),
                          SurfMin, SurfMax,
                          VDispMin,
                          VDispMax, RadMin, RadMax,
                          interactive=False)
-    
-    return render_template('show_plot.html', imagename='/'+plot_file)
+
+    return render_template('show_plot.html', imagename='/'+plot_file, tablefile=tablefile)
 
 class InvalidUsage(Exception):
     status_code = 400
