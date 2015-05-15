@@ -16,6 +16,10 @@ from __future__ import print_function
 import os
 import inspect
 import numpy as np
+import datetime
+import subprocess
+import requests
+import json
 from astropy.io import fits
 from astropy.io import ascii
 from astropy import table
@@ -25,12 +29,22 @@ from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     add_name_column, add_generic_ids_if_needed,
                                     add_is_sim_if_needed, fix_bad_types,
                                     add_filename_column, add_timestamp_column,
-                                    reorder_columns, append_table)
+                                    reorder_columns, append_table,
+                                    ignore_duplicates, update_duplicates,
+                                    add_is_gal_if_needed, add_is_gal_column)
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
 from simple_plot import plotData, plotData_Sigma_sigma
 from werkzeug import secure_filename
 import difflib
+import glob
+import random
+import matplotlib
+import matplotlib.pylab as plt
+import keyring
+
+from astropy.io import registry
+from astropy.table import Table
 
 UPLOAD_FOLDER = 'uploads/'
 DATABASE_FOLDER = 'database/'
@@ -39,10 +53,10 @@ PNG_PLOT_FOLDER = 'static/figures/'
 TABLE_FOLDER = 'static/tables/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
-                      'Radius', 'IsSimulated', 'Username']
+                      'Radius', 'IsSimulated', 'IsGalactic', 'Username']
+dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic', 'Username']
 use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
 use_units = ['Msun/pc^2','km/s','pc']
-HTMLStrBase='mpld3_Output_Sigma_sigma_r_'
 FigureStrBase='Output_Sigma_sigma_r_'
 TableStrBase='Output_Table_'
 TooOld=300
@@ -247,8 +261,10 @@ def set_columns(filename, fileformat=None):
 
     units_data = {}
     for key, pair in column_data.items():
-        if pair['Name'] != "Ignore" and pair['Name'] != "IsSimulated" and key != "Username":
+        if key not in dimensionless_column_names and pair['Name'] not in dimensionless_column_names:
             units_data[pair['Name']] = pair['unit']
+
+    mapping = {filename: [column_data, units_data]}
 
     # Parse the table file, step-by-step
     rename_columns(table, {k: v['Name'] for k,v in column_data.items()})
@@ -265,6 +281,11 @@ def set_columns(filename, fileformat=None):
         add_is_sim_if_needed(table, False)
     else:
         add_is_sim_if_needed(table, True)
+
+    if column_data.get('isgalactic') is None:
+        add_is_gal_if_needed(table, False)
+    else:
+        add_is_gal_if_needed(table, True)
 
 # Detect duplicate IDs in uploaded data and bail out if found
     seen = {}
@@ -287,8 +308,14 @@ def set_columns(filename, fileformat=None):
                                               'IDs':
                                               [ascii.convert_numpy('S64')],
                                               'IsSimulated':
+                                              [ascii.convert_numpy('S5')],
+                                              'IsGalactic':
                                               [ascii.convert_numpy('S5')]},
                                   format='ascii.ipac')
+        if 'IsGalactic' not in merged_table.colnames:
+            # Assume that anything we didn't already tag as Galactic is probably Galactic
+            add_is_gal_column(merged_table, True)
+
         if 'Timestamp' not in merged_table.colnames:
             # Create a fake timestamp for the previous entries if they don't already have one
             fake_timestamp = datetime.min
@@ -298,13 +325,34 @@ def set_columns(filename, fileformat=None):
     # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
     #       and verify that submitted data obeys these limits
         merged_table = Table(data=None, names=['Names','IDs','SurfaceDensity',
-                       'VelocityDispersion','Radius','IsSimulated', 'Timestamp'],
-                       dtype=[('str', 64),('str', 64),'float','float','float','bool',('str', 26)])
+                       'VelocityDispersion','Radius','IsSimulated', 'IsGalactic', 'Timestamp'],
+                       dtype=[('str', 64),('str', 64),'float','float','float','bool','bool',('str', 26)])
         set_units(merged_table)
 
     table = reorder_columns(table, merged_table.colnames)
+
+    # Detect whether any username, ID pairs match entries already in the merged table
+    duplicates = {}
+    for row in merged_table:
+        name = row['Names']
+        id = row['IDs']
+        if id in seen:
+            if name == seen[id]:
+                duplicates[id] = name
+
+    handle_duplicates(table, merged_table, duplicates)
+
     append_table(merged_table, table)
     Table.write(merged_table, merged_table_name, format='ascii.ipac')
+
+    username = column_data.get('Username')['Name']
+    branch,timestamp = commit_change_to_database(username)
+    time.sleep(2)
+    # Adding raw file to uploads
+    #dummy = commit_change_to_database(username, tablename=filename, workingdir='uploads/',database='upl')
+    #time.sleep(2)
+    pull_request(branch, username, timestamp)
+    #pull_request(branch, username, timestamp, database='uploads')
 
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
@@ -327,8 +375,66 @@ def set_columns(filename, fileformat=None):
                            tablefile='{fn}.html'.format(fn=outfilename))
 
 
+def commit_change_to_database(username, remote='origin', tablename='merged_table.ipac',
+                              workingdir='database/', database='database'):
+    """
+    """
+    timestamp = datetime.now().isoformat().replace(":","_")
+    branch = '{0}_{1}'.format(username, timestamp)
 
-def upload_to_github(filename):
+    check_upstream = subprocess.check_output(['git', 'config', '--get',
+                                              'remote.{remote}.url'.format(remote=remote)],
+                                             cwd=workingdir)
+    name = os.path.split(check_upstream)[1][:-5]
+    if name != database:
+        raise Exception("Error: the remote URL {0} (which is really '{2}') does not match the expected one '{1}'"
+                        .format(check_upstream, database, name))
+
+    checkout_master_result = subprocess.call(['git','checkout',
+                                              '{remote}/master'.format(remote=remote)],
+                                             cwd=workingdir)
+    
+    if checkout_master_result != 0:
+        raise Exception("Checking out the {remote}/master branch in the database failed.  "
+                        "Try 'cd {workingdir}; git checkout {remote}/master'"
+                        .format(remote=remote, workingdir=workingdir))
+
+    checkout_result = subprocess.call(['git','checkout','-b', branch,
+                                       '{remote}/master'.format(remote=remote)],
+                                      cwd=workingdir)
+    if checkout_result != 0:
+        raise Exception("Checking out a new branch in the database failed.  "
+                        "Attempted to checkout branch {0} in {1}"
+                        .format(branch, workingdir))
+
+    add_result = subprocess.call(['git','add',tablename], cwd=workingdir)
+    if add_result != 0:
+        raise Exception("Adding {tablename} to the commit failed in {cwd}."
+                        .format(tablename=tablename, cwd=workingdir))
+
+    commit_result = subprocess.call(['git','commit','-m',
+                      'Add changes to table from {0} at {1}'.format(username,
+                                                                    timestamp)],
+                     cwd=workingdir)
+    if commit_result != 0:
+        raise Exception("Committing the new branch failed")
+
+    push_result = subprocess.call(['git','push', remote, branch,], cwd=workingdir)
+    if push_result != 0:
+        raise Exception("Pushing to the remote {0} folder failed".format(workingdir))
+
+    checkout_master_result = subprocess.call(['git','checkout',
+                                              '{remote}/master'.format(remote=remote)],
+                                             cwd=workingdir)
+    if checkout_master_result != 0:
+        raise Exception("Checking out the {remote}/master branch in the database failed.  "
+                        "This will prevent future uploads from working, which is bad!!"
+                        .format(remote=remote, workingdir=workingdir))
+
+    return branch,timestamp
+
+
+def pull_request(branch, user, timestamp, database='database'):
     """
     WIP: Eventually, we want each file to be uploaded to github and submitted
     as a pull request when people submit their data
@@ -336,16 +442,10 @@ def upload_to_github(filename):
     This will be tricky: we need to have a "replace existing file" logic in
     addition to the original submission.  We also need an account + API_KEY
     etc, which may be the most challenging part.
-    """
-    with open(os.path.join(app.config['UPLOAD_FOLDER'], filename)) as f:
-        content = f.read()
-    data = {'path': 'data_files/',
-            'content': content,
-            'branch': 'master',
-            'message': 'Upload a new data file {0}'.format(filename)}
 
-    requests.post
-    pass
+    https://developer.github.com/v3/pulls/#create-a-pull-request
+    """
+
 
     S = requests.Session()
     S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
@@ -367,11 +467,12 @@ def upload_to_github(filename):
     }
 
 
-    api_url_branch = 'https://api.github.com/repos/camelot-project/database/branches/{0}'.format(branch)
+    api_url_branch = 'https://api.github.com/repos/camelot-project/{0}/branches/{1}'.format(database,branch)
     branch_exists = S.get(api_url_branch)
     branch_exists.raise_for_status()
 
-    api_url = 'https://api.github.com/repos/camelot-project/database/pulls'
+    api_url = 'https://api.github.com/repos/camelot-project/{0}/pulls'.format(database)
+    print(api_url_branch,api_url)
     response = S.post(url=api_url, data=json.dumps(data), auth=(git_user, password))
     response.raise_for_status()
     return response
@@ -386,8 +487,13 @@ def query_form(filename="merged_table.ipac"):
     
     tolerance=1.2
 
-    min_values=[np.round(min(table['SurfaceDensity'])/tolerance,4),np.round(min(table['VelocityDispersion'])/tolerance,4),np.round(min(table['Radius'])/tolerance,4)]
-    max_values=[np.round(max(table['SurfaceDensity'])*tolerance,1),np.round(max(table['VelocityDispersion'])*tolerance,1),np.round(max(table['Radius'])*tolerance,1)]
+    min_values=[np.round(min(table['SurfaceDensity'])/tolerance,4),
+                np.round(min(table['VelocityDispersion'])/tolerance,4),
+                np.round(min(table['Radius'])/tolerance,4)]
+
+    max_values=[np.round(max(table['SurfaceDensity'])*tolerance,1),
+                np.round(max(table['VelocityDispersion'])*tolerance,1),
+                np.round(max(table['Radius'])*tolerance,1)]
 
     usetable = table[use_column_names]
 
@@ -415,7 +521,7 @@ def clearOutput() :
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
 
-    for fl in glob.glob(os.path.join(app.config['TABLE_FOLDER'], TableStrBase+"*.csv")):
+    for fl in glob.glob(os.path.join(app.config['TABLE_FOLDER'], TableStrBase+"*.ipac")):
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
@@ -442,10 +548,6 @@ def query(filename, fileformat=None):
     ShowSim=('IsSimulated' in request.form and request.form['IsSimulated'] == 'IsSimulated')
     ShowGal=('IsGalactic' in request.form and request.form['IsGalactic'] == 'IsGalactic')
     ShowExgal=('IsExtragalactic' in request.form and request.form['IsExtragalactic'] == 'IsExtragalactic')
-#    print(np.type(SurfMin))
-#    print(SurfMin,SurfMax,VDispMin,VDispMax,RadMin,RadMax)
-#    print(ShowObs,ShowSim,ShowGal,ShowExgal)
-#    print(request.form)
 
     NQuery=timeString()
 
@@ -459,9 +561,11 @@ def query(filename, fileformat=None):
     VDisp = table['VelocityDispersion']
     Rad = table['Radius']
     IsSim = (table['IsSimulated'] == 'True')
-#    print(SurfDens)
     
-    temp_table = [table[h].index for h,i,j,k in zip(range(len(table)),table['SurfaceDensity'],table['VelocityDispersion'],table['Radius']) if SurfMin < i*table['SurfaceDensity'].unit < SurfMax and VDispMin < j*table['VelocityDispersion'].unit < VDispMax and RadMin < k*table['Radius'].unit < RadMax]
+    temp_table = [table[h].index for h,i,j,k in zip(range(len(table)),table['SurfaceDensity'],table['VelocityDispersion'],table['Radius']) 
+                 if  SurfMin  < i*table['SurfaceDensity'].unit     < SurfMax 
+                 and VDispMin < j*table['VelocityDispersion'].unit < VDispMax 
+                 and RadMin   < k*table['Radius'].unit             < RadMax]
     use_table = table[temp_table]
     
     if not ShowObs :
@@ -489,7 +593,7 @@ def query(filename, fileformat=None):
                          VDispMin,
                          VDispMax, RadMin, RadMax,
                          interactive=False)
-                         
+
     return render_template('show_plot.html', imagename='/'+plot_file, tablefile=tablefile)
 
 class InvalidUsage(Exception):
