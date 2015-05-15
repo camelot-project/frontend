@@ -57,7 +57,6 @@ valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
 dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic', 'Username']
 use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
 use_units = ['Msun/pc^2','km/s','pc']
-HTMLStrBase='mpld3_Output_Sigma_sigma_r_'
 FigureStrBase='Output_Sigma_sigma_r_'
 TableStrBase='Output_Table_'
 TooOld=300 # age in seconds of files to delete
@@ -335,10 +334,10 @@ def set_columns(filename, fileformat=None):
     branch,timestamp = commit_change_to_database(username)
     time.sleep(2)
     # Adding raw file to uploads
-    dummy = commit_change_to_database(username, tablename=filename, workingdir='uploads/',database='upl')
-    time.sleep(2)
+    #dummy = commit_change_to_database(username, tablename=filename, workingdir='uploads/',database='upl')
+    #time.sleep(2)
     pull_request(branch, username, timestamp)
-    pull_request(branch, username, timestamp, database='uploads')
+    #pull_request(branch, username, timestamp, database='uploads')
 
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
@@ -471,14 +470,15 @@ def query_form(filename="merged_table.ipac"):
 
     table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.ipac')
     
-    tolerance=1.1
+    tolerance=1.2
 
-    min_values=[np.round(min(table['SurfaceDensity'])/tolerance, 4),
-                np.round(min(table['VelocityDispersion'])/tolerance, 4),
-                np.round(min(table['Radius'])/tolerance, 4)]
-    max_values=[np.round(max(table['SurfaceDensity'])*tolerance, 1),
-                np.round(max(table['VelocityDispersion'])*tolerance, 1),
-                np.round(max(table['Radius'])*tolerance, 1)]
+    min_values=[np.round(min(table['SurfaceDensity'])/tolerance,4),
+                np.round(min(table['VelocityDispersion'])/tolerance,4),
+                np.round(min(table['Radius'])/tolerance,4)]
+
+    max_values=[np.round(max(table['SurfaceDensity'])*tolerance,1),
+                np.round(max(table['VelocityDispersion'])*tolerance,1),
+                np.round(max(table['Radius'])*tolerance,1)]
 
     usetable = table[use_column_names]
 
@@ -501,7 +501,7 @@ def query_form(filename="merged_table.ipac"):
 
 def clearOutput() :
     
-    for fl in glob.glob(os.path.join(app.config['PNG_PLOT_FOLDER'], FigureStrBase+"*.png")):
+    for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase+"*.png")):
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
@@ -511,7 +511,7 @@ def clearOutput() :
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
             
-    for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'], HTMLStrBase+"*.html")):
+    for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase+"*.html")):
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
@@ -581,7 +581,9 @@ def query(filename, fileformat=None):
                       if i == 'False']
         use_table.remove_rows(temp_table)
     
-    use_table.write(os.path.join(app.config['TABLE_FOLDER'], TableStrBase+NQuery+'.ipac'), format='ipac')
+    tablefile = os.path.join(app.config['TABLE_FOLDER'], TableStrBase+NQuery+'.ipac')
+    
+    use_table.write(tablefile, format='ipac')
     
     plot_file = plotData_Sigma_sigma(NQuery, use_table,
                                      os.path.join(app.config['MPLD3_FOLDER'],
