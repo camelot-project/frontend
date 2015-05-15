@@ -381,7 +381,7 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
     """
     """
     timestamp = datetime.now().isoformat().replace(":","_")
-    if branch == None:
+    if branch is None:
       branch = '{0}_{1}'.format(username, timestamp)
 
     check_upstream = subprocess.check_output(['git', 'config', '--get',
