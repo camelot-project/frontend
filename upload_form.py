@@ -348,7 +348,11 @@ def set_columns(filename, fileformat=None):
     username = column_data.get('Username')['Name']
     branch,timestamp = commit_change_to_database(username)
     time.sleep(2)
+    # Adding raw file to uploads
+    dummy = commit_change_to_database(username, tablename=filename, workingdir='uploads/',database='upl')
+    time.sleep(2)
     pull_request(branch, username, timestamp)
+    pull_request(branch, username, timestamp, database='uploads')
 
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
@@ -389,6 +393,7 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
     checkout_master_result = subprocess.call(['git','checkout',
                                               '{remote}/master'.format(remote=remote)],
                                              cwd=workingdir)
+    
     if checkout_master_result != 0:
         raise Exception("Checking out the {remote}/master branch in the database failed.  "
                         "Try 'cd {workingdir}; git checkout {remote}/master'"
@@ -429,7 +434,7 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
     return branch,timestamp
 
 
-def pull_request(branch, user, timestamp):
+def pull_request(branch, user, timestamp, database='database'):
     """
     WIP: Eventually, we want each file to be uploaded to github and submitted
     as a pull request when people submit their data
@@ -456,11 +461,12 @@ def pull_request(branch, user, timestamp):
     }
 
 
-    api_url_branch = 'https://api.github.com/repos/camelot-project/database/branches/{0}'.format(branch)
+    api_url_branch = 'https://api.github.com/repos/camelot-project/{0}/branches/{1}'.format(database,branch)
     branch_exists = S.get(api_url_branch)
     branch_exists.raise_for_status()
 
-    api_url = 'https://api.github.com/repos/camelot-project/database/pulls'
+    api_url = 'https://api.github.com/repos/camelot-project/{0}/pulls'.format(database)
+    print(api_url_branch,api_url)
     response = S.post(url=api_url, data=json.dumps(data), auth=(git_user, password))
     response.raise_for_status()
     return response
