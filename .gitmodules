@@ -3,4 +3,4 @@
 	url = https://github.com/camelot-project/database.git
 [submodule "uploads"]
 	path = uploads
-	url = https://github.com/camelot-project/uploads
+	url = https://github.com/camelot-project/uploads.git

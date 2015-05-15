@@ -351,7 +351,7 @@ def set_columns(filename, fileformat=None):
     time.sleep(2)
     response, link_pull = pull_request(branch, username, timestamp)
     # Adding raw file to uploads
-    dummy = commit_change_to_database(username, tablename=filename, workingdir='uploads/',database='upl',branch=branch)
+    dummy = commit_change_to_database(username, tablename=filename, workingdir='uploads/',database='uploads',branch=branch)
     time.sleep(2)
     pull_request(branch, username, timestamp, database='uploads')
 
