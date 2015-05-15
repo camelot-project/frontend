@@ -47,6 +47,7 @@ FigureStrBase='Output_Sigma_sigma_r_'
 TableStrBase='Output_Table_'
 TooOld=300
 
+import __builtin__
 import glob
 import random
 import time
@@ -66,12 +67,12 @@ app.config['MPLD3_FOLDER'] = MPLD3_FOLDER
 app.config['DATABASE_FOLDER'] = DATABASE_FOLDER
 app.config['PNG_PLOT_FOLDER'] = PNG_PLOT_FOLDER
 app.config['TABLE_FOLDER'] = TABLE_FOLDER
+#app.config['DEBUG']=True
 
 for path in (UPLOAD_FOLDER, MPLD3_FOLDER, DATABASE_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
     if not os.path.isdir(path):
         os.mkdir(path)
 
-# En
 
 # Allow zipping in jinja templates: http://stackoverflow.com/questions/5208252/ziplist1-list2-in-jinja2
 import jinja2
@@ -82,7 +83,7 @@ env.globals.update(zip=zip)
 @app.template_global(name='zip')
 def _zip(*args, **kwargs): #to not overwrite builtin zip in globals
     """ This function allows the use of "zip" in jinja2 templates """
-    return __builtins__.zip(*args, **kwargs)
+    return __builtin__.zip(*args, **kwargs)
 
 def allowed_file(filename):
     """
@@ -346,6 +347,37 @@ def upload_to_github(filename):
     requests.post
     pass
 
+    S = requests.Session()
+    S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
+    git_user = 'SirArthurTheSubmitter'
+    password = keyring.get_password('github', git_user)
+    if password is None:
+        password = os.getenv('GITHUB_PASSWORD')
+    if password is None:
+        raise Exception("No password specified for the submitter account.  "
+                        "Configure your server to use either keyring or the "
+                        "appropriate environmental variable")
+    #S.get('https://api.github.com/', data={'access_token':'e4942f7d7cc9468ffd0e'})
+
+    data = {
+      "title": "New data table from {user}".format(user=user),
+      "body": "Data table added by {user} at {timestamp}".format(user=user, timestamp=timestamp),
+      "head": "camelot-project:{0}".format(branch),
+      "base": "master"
+    }
+
+
+    api_url_branch = 'https://api.github.com/repos/camelot-project/database/branches/{0}'.format(branch)
+    branch_exists = S.get(api_url_branch)
+    branch_exists.raise_for_status()
+
+    api_url = 'https://api.github.com/repos/camelot-project/database/pulls'
+    response = S.post(url=api_url, data=json.dumps(data), auth=(git_user, password))
+    response.raise_for_status()
+    return response
+
+def handle_duplicates(table, merged_table, duplicates):
+    print("TODO: DO SOMETHING HERE")
 
 @app.route('/query_form')
 def query_form(filename="merged_table.ipac"):

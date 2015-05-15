@@ -1,0 +1,9 @@
+Flask==0.10
+Jinja2==2.6
+Werkzeug==0.8.3
+gunicorn==19.3
+astropy==1.0.1
+requests==2.7.0
+matplotlib==1.4.3
+keyring==3.8
+-e git+https://github.com/jakevdp/mpld3.git@b0ccb53a6bc6ba713f9e24f687b7b9df9cbaa94f#egg=mpld3-master
