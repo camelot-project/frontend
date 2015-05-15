@@ -349,11 +349,11 @@ def set_columns(filename, fileformat=None):
     username = column_data.get('Username')['Name']
     branch,timestamp = commit_change_to_database(username)
     time.sleep(2)
-    # Adding raw file to uploads
-    #dummy = commit_change_to_database(username, tablename=filename, workingdir='uploads/',database='upl')
-    #time.sleep(2)
     pull_request(branch, username, timestamp)
-    #pull_request(branch, username, timestamp, database='uploads')
+    # Adding raw file to uploads
+    dummy = commit_change_to_database(username, tablename=filename, workingdir='uploads/',database='upl',branch=branch)
+    time.sleep(2)
+    pull_request(branch, username, timestamp, database='uploads')
 
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
@@ -377,11 +377,12 @@ def set_columns(filename, fileformat=None):
 
 
 def commit_change_to_database(username, remote='origin', tablename='merged_table.ipac',
-                              workingdir='database/', database='database'):
+                              workingdir='database/', database='database', branch=None):
     """
     """
     timestamp = datetime.now().isoformat().replace(":","_")
-    branch = '{0}_{1}'.format(username, timestamp)
+    if branch == None:
+      branch = '{0}_{1}'.format(username, timestamp)
 
     check_upstream = subprocess.check_output(['git', 'config', '--get',
                                               'remote.{remote}.url'.format(remote=remote)],
@@ -473,7 +474,6 @@ def pull_request(branch, user, timestamp, database='database'):
     branch_exists.raise_for_status()
 
     api_url = 'https://api.github.com/repos/camelot-project/{0}/pulls'.format(database)
-    print(api_url_branch,api_url)
     response = S.post(url=api_url, data=json.dumps(data), auth=(git_user, password))
     response.raise_for_status()
     return response
