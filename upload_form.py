@@ -345,6 +345,7 @@ def set_columns(filename, fileformat=None):
 
     append_table(merged_table, table)
     Table.write(merged_table, merged_table_name, format='ascii.ipac')
+    
 
     username = column_data.get('Username')['Name']
     branch,timestamp = commit_change_to_database(username)
