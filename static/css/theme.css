@@ -9,6 +9,12 @@ h1 .title {
     color: white;
 }
 
+#camelot_title{
+	font-size:40px;
+	text-align:center;
+	font-style:bold;
+}	
+
 #upload_form{
 	margin-top: 140px;
 	padding-top: 24px;
@@ -50,8 +56,8 @@ h1 .title {
 }
 
 #hometext{
-	margin-top: 81px;
-	margin-bottom: 72px;
+	margin-top: 46px;
+	margin-bottom: 35px;
 }
 
 #menu{
@@ -62,3 +68,12 @@ h1 .title {
     color: black;
     background-color: white;
 }
+
+.rotate180 {
+	-webkit-transform: rotate(180deg);
+	-moz-transform: rotate(180deg);
+	-o-transform: rotate(180deg);
+	-ms-transform: rotate(180deg);
+	transform: rotate(180deg);
+}
+
