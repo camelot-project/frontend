@@ -329,15 +329,22 @@ def set_columns(filename, fileformat=None):
 
     append_table(merged_table, table)
     Table.write(merged_table, merged_table_name, format='ascii.ipac')
-
+    
     username = column_data.get('Username')['Name']
+    # Add merged data to database
     branch,timestamp = commit_change_to_database(username)
-    time.sleep(2)
     # Adding raw file to uploads
-    #dummy = commit_change_to_database(username, tablename=filename, workingdir='uploads/',database='upl')
-    #time.sleep(2)
+    branch,timestamp = commit_change_to_database(username, tablename=filename,
+                                                 workingdir='uploads/',
+                                                 database='uploads',
+                                                 branch=branch,
+                                                 timestamp=timestamp)
+    # Let's try without sleeping now that we're running the git commands
+    # synchronously (we needed this when they were asynchronous)
+    # Instead we use the github API to see if the commit is there
+    # time.sleep(1)
     pull_request(branch, username, timestamp)
-    #pull_request(branch, username, timestamp, database='uploads')
+    pull_request(branch, username, timestamp, database='uploads')
 
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
@@ -361,11 +368,15 @@ def set_columns(filename, fileformat=None):
 
 
 def commit_change_to_database(username, remote='origin', tablename='merged_table.ipac',
-                              workingdir='database/', database='database'):
+                              workingdir='database/', database='database', branch=None,
+                              timestamp=None, retry=10):
     """
     """
-    timestamp = datetime.now().isoformat().replace(":","_")
-    branch = '{0}_{1}'.format(username, timestamp)
+    if timestamp is None:
+        timestamp = datetime.now().isoformat().replace(":","_")
+
+    if branch is None:
+      branch = '{0}_{1}'.format(username, timestamp)
 
     check_upstream = subprocess.check_output(['git', 'config', '--get',
                                               'remote.{remote}.url'.format(remote=remote)],
@@ -408,6 +419,16 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
     if push_result != 0:
         raise Exception("Pushing to the remote {0} folder failed".format(workingdir))
 
+    # Check that pushing succeeded
+    api_url_branch = 'https://api.github.com/repos/camelot-project/{0}/branches/{1}'.format(database,branch)
+    for ii in range(retry):
+        branch_exists = requests.get(api_url_branch)
+        if branch_exists.ok:
+            break
+        else:
+            time.sleep(0.1)
+    branch_exists.raise_for_status()
+
     checkout_master_result = subprocess.call(['git','checkout',
                                               '{remote}/master'.format(remote=remote)],
                                              cwd=workingdir)
@@ -419,7 +440,7 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
     return branch,timestamp
 
 
-def pull_request(branch, user, timestamp, database='database'):
+def pull_request(branch, user, timestamp, database='database', retry=5):
     """
     WIP: Eventually, we want each file to be uploaded to github and submitted
     as a pull request when people submit their data
@@ -454,10 +475,15 @@ def pull_request(branch, user, timestamp, database='database'):
 
     api_url_branch = 'https://api.github.com/repos/camelot-project/{0}/branches/{1}'.format(database,branch)
     branch_exists = S.get(api_url_branch)
+    if (not branch_exists.ok):
+        for ii in range(retry):
+            branch_exists = S.get(api_url_branch)
+            if branch_exists.ok:
+                break
+
     branch_exists.raise_for_status()
 
     api_url = 'https://api.github.com/repos/camelot-project/{0}/pulls'.format(database)
-    print(api_url_branch,api_url)
     response = S.post(url=api_url, data=json.dumps(data), auth=(git_user, password))
     response.raise_for_status()
     return response
