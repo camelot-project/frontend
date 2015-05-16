@@ -272,9 +272,8 @@ def set_columns(filename, fileformat=None):
     # Rename the uploaded file to something unique, and store this name in the table
     extension = os.path.splitext(filename)[-1]
     full_filename_old = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file = open(full_filename_old)
-    unique_filename = hashlib.sha1(file.read()).hexdigest()[0:36-len(extension)] + extension
-    file.close() 
+    with open(full_filename_old) as file:
+        unique_filename = hashlib.sha1(file.read()).hexdigest()[0:36-len(extension)] + extension
     full_filename_new = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
     os.rename(full_filename_old, full_filename_new)
     add_filename_column(table, unique_filename)
