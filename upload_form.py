@@ -643,6 +643,47 @@ def query(filename, fileformat=None):
     
     return render_template('show_plot.html', imagename='/'+plot_file)
 
+@app.before_first_request
+def authenticate_with_github():
+    """
+    Authenticate using https with github after configuring git locally to store
+    credentials etc.
+    """
+    config_result_1 = subprocess.call(['git', 'config',
+                                       'credential.https://github.com.SirArthurTheSubmitter',
+                                       'SirArthurTheSubmitter'])
+    assert config_result_1 == 0
+    config_result_2 = subprocess.call(['git', 'config', 'credential.helper',
+                                       'store'])
+    assert config_result_2 == 0
+
+    import netrc
+    nrcfile = os.path.join(os.environ['HOME'], ".netrc")
+    nrc = netrc.netrc(nrcfile)
+    if not nrc.authenticators('https://github.com'):
+        with open(nrcfile, 'r') as f:
+            nrcdata = f.read()
+
+        password = keyring.get_password('github', 'SirArthurTheSubmitter')
+        if password is None:
+            password = os.getenv('GITHUB_PASSWORD')
+
+        with open(nrcfile, 'w') as f:
+            f.write(nrcdata)
+            f.write("""
+machine github.com
+  login SirArthurTheSubmitter@gmail.com
+  password {password}
+machine https://github.com
+  login SirArthurTheSubmitter@gmail.com
+  password {password}""".format(password=password))
+
+    fetch_uploads = subprocess.call(['git', 'fetch'], cwd='uploads/')
+    assert fetch_uploads == 0
+    fetch_database = subprocess.call(['git', 'fetch'], cwd='database/')
+    assert fetch_database == 0
+
+
 class InvalidUsage(Exception):
     status_code = 400
 
