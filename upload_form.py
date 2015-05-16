@@ -347,12 +347,19 @@ def set_columns(filename, fileformat=None):
     Table.write(merged_table, merged_table_name, format='ascii.ipac')
     
     username = column_data.get('Username')['Name']
+    # Add merged data to database
     branch,timestamp = commit_change_to_database(username)
-    time.sleep(2)
-    pull_request(branch, username, timestamp)
     # Adding raw file to uploads
-    dummy = commit_change_to_database(username, tablename=filename, workingdir='uploads/',database='uploads',branch=branch)
-    time.sleep(2)
+    branch,timestamp = commit_change_to_database(username, tablename=filename,
+                                                 workingdir='uploads/',
+                                                 database='uploads',
+                                                 branch=branch,
+                                                 timestamp=timestamp)
+    # Let's try without sleeping now that we're running the git commands
+    # synchronously (we needed this when they were asynchronous)
+    # Instead we use the github API to see if the commit is there
+    # time.sleep(1)
+    pull_request(branch, username, timestamp)
     pull_request(branch, username, timestamp, database='uploads')
 
     if not os.path.isdir('static/figures/'):
@@ -377,10 +384,13 @@ def set_columns(filename, fileformat=None):
 
 
 def commit_change_to_database(username, remote='origin', tablename='merged_table.ipac',
-                              workingdir='database/', database='database', branch=None):
+                              workingdir='database/', database='database', branch=None,
+                              timestamp=None):
     """
     """
-    timestamp = datetime.now().isoformat().replace(":","_")
+    if timestamp is None:
+        timestamp = datetime.now().isoformat().replace(":","_")
+
     if branch is None:
       branch = '{0}_{1}'.format(username, timestamp)
 
@@ -436,7 +446,7 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
     return branch,timestamp
 
 
-def pull_request(branch, user, timestamp, database='database'):
+def pull_request(branch, user, timestamp, database='database', retry=5):
     """
     WIP: Eventually, we want each file to be uploaded to github and submitted
     as a pull request when people submit their data
@@ -471,6 +481,12 @@ def pull_request(branch, user, timestamp, database='database'):
 
     api_url_branch = 'https://api.github.com/repos/camelot-project/{0}/branches/{1}'.format(database,branch)
     branch_exists = S.get(api_url_branch)
+    if (not branch_exists.ok):
+        for ii in range(retry):
+            branch_exists = S.get(api_url_branch)
+            if branch_exists.ok:
+                break
+
     branch_exists.raise_for_status()
 
     api_url = 'https://api.github.com/repos/camelot-project/{0}/pulls'.format(database)
