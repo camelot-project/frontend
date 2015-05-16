@@ -20,11 +20,6 @@ import datetime
 import subprocess
 import requests
 import json
-from astropy.io import fits
-from astropy.io import ascii
-from astropy import table
-from astropy.table.jsviewer import write_table_jsviewer
-from astropy import units as u
 from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     add_name_column, add_generic_ids_if_needed,
                                     add_is_sim_if_needed, fix_bad_types,
@@ -39,12 +34,17 @@ from werkzeug import secure_filename
 import difflib
 import glob
 import random
-import matplotlib
-import matplotlib.pylab as plt
 import keyring
-
-from astropy.io import registry
-from astropy.table import Table
+import __builtin__
+import glob
+import random
+import time
+import datetime
+from datetime import datetime
+from astropy.io import registry, ascii
+from astropy.table import Table, vstack
+from astropy.table.jsviewer import write_table_jsviewer
+from astropy import units as u
 
 UPLOAD_FOLDER = 'uploads/'
 DATABASE_FOLDER = 'database/'
@@ -59,20 +59,8 @@ use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
 use_units = ['Msun/pc^2','km/s','pc']
 FigureStrBase='Output_Sigma_sigma_r_'
 TableStrBase='Output_Table_'
-TooOld=300
+TooOld=300 # age in seconds of files to delete
 
-import __builtin__
-import glob
-import random
-import time
-import datetime
-from datetime import datetime
-import matplotlib
-import matplotlib.pylab as plt
-from astropy.table import vstack
-
-from astropy.io import registry
-from astropy.table import Table
 table_formats = registry.get_formats(Table)
 
 app = Flask(__name__)
@@ -169,8 +157,6 @@ def uploaded_file(filename, fileformat=None):
                            best_column_names=best_column_names,
                            fileformat=fileformat,
                           )
-    #return send_from_directory(app.config['UPLOAD_FOLDER'],
-    #                           filename)
 
 def handle_ambiguous_table(filename, exception):
     """
@@ -248,13 +234,12 @@ def set_columns(filename, fileformat=None):
         fileformat = request.args['fileformat']
 
 
-    # This function needs to know about the filename or have access to the
-    # table; how do we arrange that?
     table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename),
                        format=fileformat)
 
-    column_data = \
-        {field:{'Name':value} for field,value in request.form.items() if '_units' not in field}
+    column_data = {field:{'Name':value}
+                   for field,value in request.form.items()
+                   if '_units' not in field}
     for field,value in request.form.items():
         if '_units' in field:
             column_data[field[:-6]]['unit'] = value
@@ -287,7 +272,7 @@ def set_columns(filename, fileformat=None):
     else:
         add_is_gal_if_needed(table, True)
 
-# Detect duplicate IDs in uploaded data and bail out if found
+    # Detect duplicate IDs in uploaded data and bail out if found
     seen = {}
     for row in table:
         name = row['Names']
@@ -562,39 +547,53 @@ def query(filename, fileformat=None):
     Rad = table['Radius']
     IsSim = (table['IsSimulated'] == 'True')
     
-    temp_table = [table[h].index for h,i,j,k in zip(range(len(table)),table['SurfaceDensity'],table['VelocityDispersion'],table['Radius']) 
-                 if  SurfMin  < i*table['SurfaceDensity'].unit     < SurfMax 
-                 and VDispMin < j*table['VelocityDispersion'].unit < VDispMax 
-                 and RadMin   < k*table['Radius'].unit             < RadMax]
+    temp_table = [table[index].index for index, (surfdens, vdisp, radius) in
+                  enumerate(zip(table['SurfaceDensity'],
+                                table['VelocityDispersion'],
+                                table['Radius']))
+                  if (SurfMin < surfdens*table['SurfaceDensity'].unit < SurfMax
+                      and VDispMin < vdisp*table['VelocityDispersion'].unit < VDispMax
+                      and RadMin < radius*table['Radius'].unit < RadMax)
+                 ]
     use_table = table[temp_table]
     
     if not ShowObs :
-        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsSimulated']) if i == 'False']
+        temp_table = [use_table[h].index for h,i in
+                      zip(range(len(use_table)),use_table['IsSimulated'])
+                      if i == 'False']
         use_table.remove_rows(temp_table)
 
     if not ShowSim :
-        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsSimulated']) if i == 'True']
+        temp_table = [use_table[h].index for h,i in
+                      zip(range(len(use_table)),use_table['IsSimulated'])
+                      if i == 'True']
         use_table.remove_rows(temp_table)
         
     if not ShowGal :
-        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsGalactic']) if i == 'True']
+        temp_table = [use_table[h].index for h,i in
+                      zip(range(len(use_table)),use_table['IsGalactic'])
+                      if i == 'True']
         use_table.remove_rows(temp_table)
         
     if not ShowExgal :
-        temp_table = [use_table[h].index for h,i in zip(range(len(use_table)),use_table['IsGalactic']) if i == 'False']
+        temp_table = [use_table[h].index for h,i in
+                      zip(range(len(use_table)),use_table['IsGalactic'])
+                      if i == 'False']
         use_table.remove_rows(temp_table)
     
     tablefile = os.path.join(app.config['TABLE_FOLDER'], TableStrBase+NQuery+'.ipac')
     
     use_table.write(tablefile, format='ipac')
     
-    plot_file = plotData_Sigma_sigma(NQuery, use_table, os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase),
-                         SurfMin, SurfMax,
-                         VDispMin,
-                         VDispMax, RadMin, RadMax,
-                         interactive=False)
-
-    return render_template('show_plot.html', imagename='/'+plot_file, tablefile=tablefile)
+    plot_file = plotData_Sigma_sigma(NQuery, use_table,
+                                     os.path.join(app.config['MPLD3_FOLDER'],
+                                                  FigureStrBase), 
+                                     SurfMin, SurfMax,
+                                     VDispMin, VDispMax,
+                                     RadMin, RadMax,
+                                     interactive=False)
+    
+    return render_template('show_plot.html', imagename='/'+plot_file)
 
 class InvalidUsage(Exception):
     status_code = 400
