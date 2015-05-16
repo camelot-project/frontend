@@ -77,3 +77,14 @@ h1{
 	transform: rotate(180deg);
 }
 
+#footer{
+	height: 50px;
+	margin-top: 50px;
+	background: white;
+}
+
+body { 
+    background-image: url('/static/bg.jpg');
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
