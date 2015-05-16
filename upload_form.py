@@ -343,8 +343,13 @@ def set_columns(filename, fileformat=None):
     # synchronously (we needed this when they were asynchronous)
     # Instead we use the github API to see if the commit is there
     # time.sleep(1)
-    pull_request(branch, username, timestamp)
-    pull_request(branch, username, timestamp, database='uploads')
+    response_database, link_pull_database = pull_request(branch,
+                                                         username,
+                                                         timestamp)
+    response_uploads, link_pull_uploads = pull_request(branch,
+						       username,
+						       timestamp,
+						       database='uploads')
 
     if not os.path.isdir('static/figures/'):
         os.mkdir('static/figures')
@@ -364,7 +369,7 @@ def set_columns(filename, fileformat=None):
                          table_id=outfilename)
 
     return render_template('show_plot.html', imagename='/'+myplot,
-                           tablefile='{fn}.html'.format(fn=outfilename))
+                           tablefile='{fn}.html'.format(fn=outfilename),link_pull=link_pull)
 
 
 def commit_change_to_database(username, remote='origin', tablename='merged_table.ipac',
@@ -486,7 +491,9 @@ def pull_request(branch, user, timestamp, database='database', retry=5):
     api_url = 'https://api.github.com/repos/camelot-project/{0}/pulls'.format(database)
     response = S.post(url=api_url, data=json.dumps(data), auth=(git_user, password))
     response.raise_for_status()
-    return response
+    time.sleep(1)
+    pull_url = S.get(url=api_url).json()[-1]['html_url']
+    return response, pull_url
 
 def handle_duplicates(table, merged_table, duplicates):
     print("TODO: DO SOMETHING HERE")
