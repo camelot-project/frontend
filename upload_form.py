@@ -255,7 +255,6 @@ def set_columns(filename, fileformat=None):
     table = fix_bad_types(table)
     convert_units(table)
     add_name_column(table, column_data.get('Username')['Name'])
-    add_filename_column(table, filename)
     timestamp = datetime.now()
     add_timestamp_column(table, timestamp)
 
@@ -269,6 +268,14 @@ def set_columns(filename, fileformat=None):
         add_is_gal_if_needed(table, False)
     else:
         add_is_gal_if_needed(table, True)
+
+    # Rename the uploaded file to something unique, and store this name in the table
+    extension = os.path.splitext(filename)[-1]
+    file = open(os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    unique_filename = hashlib.sha1(file.read()).hexdigest()[0:32] + extension
+    file.close() 
+    print(unique_filename)
+    add_filename_column(table, filename)
 
     # Detect duplicate IDs in uploaded data and bail out if found
     seen = {}
