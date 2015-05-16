@@ -1,1 +1,2 @@
-web: python upload_form.py
+web: echo "DO NOTHING" 
+#python upload_form.py
