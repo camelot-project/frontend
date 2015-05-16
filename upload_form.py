@@ -16,7 +16,6 @@ from __future__ import print_function
 import os
 import inspect
 import numpy as np
-import datetime
 import subprocess
 import requests
 import json
@@ -36,8 +35,6 @@ import glob
 import random
 import keyring
 import __builtin__
-import glob
-import random
 import time
 import datetime
 from datetime import datetime
