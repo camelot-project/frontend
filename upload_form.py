@@ -369,7 +369,8 @@ def set_columns(filename, fileformat=None):
                          table_id=outfilename)
 
     return render_template('show_plot.html', imagename='/'+myplot,
-                           tablefile='{fn}.html'.format(fn=outfilename),link_pull=link_pull)
+                           tablefile='{fn}.html'.format(fn=outfilename),
+                           link_pull=link_pull_uploads)
 
 
 def commit_change_to_database(username, remote='origin', tablename='merged_table.ipac',
@@ -491,8 +492,8 @@ def pull_request(branch, user, timestamp, database='database', retry=5):
     api_url = 'https://api.github.com/repos/camelot-project/{0}/pulls'.format(database)
     response = S.post(url=api_url, data=json.dumps(data), auth=(git_user, password))
     response.raise_for_status()
-    time.sleep(1)
-    pull_url = S.get(url=api_url).json()[-1]['html_url']
+    pull_url = response.json()['html_url']
+
     return response, pull_url
 
 def handle_duplicates(table, merged_table, duplicates):
