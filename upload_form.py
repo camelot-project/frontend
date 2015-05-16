@@ -492,7 +492,7 @@ def pull_request(branch, user, timestamp, database='database', retry=5):
     api_url = 'https://api.github.com/repos/camelot-project/{0}/pulls'.format(database)
     response = S.post(url=api_url, data=json.dumps(data), auth=(git_user, password))
     response.raise_for_status()
-    pull_url = response.json()['url']
+    pull_url = response.json()['html_url']
 
     return response, pull_url
 
