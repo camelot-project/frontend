@@ -1,1 +1,1 @@
-web: gunicorn upload_form:app --log-file=-
+web: python upload_form.py
