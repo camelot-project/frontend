@@ -42,6 +42,7 @@ from astropy.io import registry, ascii
 from astropy.table import Table, vstack
 from astropy.table.jsviewer import write_table_jsviewer
 from astropy import units as u
+import hashlib
 
 UPLOAD_FOLDER = 'uploads/'
 DATABASE_FOLDER = 'database/'
