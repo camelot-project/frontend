@@ -16,7 +16,6 @@ from __future__ import print_function
 import os
 import inspect
 import numpy as np
-import datetime
 import subprocess
 import requests
 import json
@@ -36,8 +35,6 @@ import glob
 import random
 import keyring
 import __builtin__
-import glob
-import random
 import time
 import datetime
 from datetime import datetime
@@ -45,6 +42,7 @@ from astropy.io import registry, ascii
 from astropy.table import Table, vstack
 from astropy.table.jsviewer import write_table_jsviewer
 from astropy import units as u
+import hashlib
 
 UPLOAD_FOLDER = 'uploads/'
 DATABASE_FOLDER = 'database/'
@@ -53,8 +51,8 @@ PNG_PLOT_FOLDER = 'static/figures/'
 TABLE_FOLDER = 'static/tables/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
-                      'Radius', 'IsSimulated', 'IsGalactic', 'Username']
-dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic', 'Username']
+                      'Radius', 'IsSimulated', 'IsGalactic', 'Username', 'Filename']
+dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic', 'Username', 'Filename']
 use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
 use_units = ['Msun/pc^2','km/s','pc']
 FigureStrBase='Output_Sigma_sigma_r_'
@@ -257,7 +255,6 @@ def set_columns(filename, fileformat=None):
     table = fix_bad_types(table)
     convert_units(table)
     add_name_column(table, column_data.get('Username')['Name'])
-    add_filename_column(table, filename)
     timestamp = datetime.now()
     add_timestamp_column(table, timestamp)
 
@@ -271,6 +268,15 @@ def set_columns(filename, fileformat=None):
         add_is_gal_if_needed(table, False)
     else:
         add_is_gal_if_needed(table, True)
+
+    # Rename the uploaded file to something unique, and store this name in the table
+    extension = os.path.splitext(filename)[-1]
+    full_filename_old = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    with open(full_filename_old) as file:
+        unique_filename = hashlib.sha1(file.read()).hexdigest()[0:36-len(extension)] + extension
+    full_filename_new = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+    os.rename(full_filename_old, full_filename_new)
+    add_filename_column(table, unique_filename)
 
     # Detect duplicate IDs in uploaded data and bail out if found
     seen = {}
@@ -295,7 +301,9 @@ def set_columns(filename, fileformat=None):
                                               'IsSimulated':
                                               [ascii.convert_numpy('S5')],
                                               'IsGalactic':
-                                              [ascii.convert_numpy('S5')]},
+                                              [ascii.convert_numpy('S5')],
+                                              'Filename':
+                                              [ascii.convert_numpy('S36')]},
                                   format='ascii.ipac')
         if 'IsGalactic' not in merged_table.colnames:
             # Assume that anything we didn't already tag as Galactic is probably Galactic
@@ -305,13 +313,19 @@ def set_columns(filename, fileformat=None):
             # Create a fake timestamp for the previous entries if they don't already have one
             fake_timestamp = datetime.min
             add_timestamp_column(merged_table, fake_timestamp)
+
+        if 'Filename' not in merged_table.colnames:
+            # If we don't know the filename, flag it as unknown
+            add_filename_column(merged_table, 'Unknown'+' '*29)
+
     else:
     # Maximum string length of 64 for username, ID -- larger strings are silently truncated
     # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
     #       and verify that submitted data obeys these limits
         merged_table = Table(data=None, names=['Names','IDs','SurfaceDensity',
-                       'VelocityDispersion','Radius','IsSimulated', 'IsGalactic', 'Timestamp'],
-                       dtype=[('str', 64),('str', 64),'float','float','float','bool','bool',('str', 26)])
+                       'VelocityDispersion','Radius','IsSimulated', 'IsGalactic', 'Timestamp', 'Filename'],
+                       dtype=[('str', 64),('str', 64),'float','float','float','bool','bool',
+                              ('str', 26),('str', 36)])
         set_units(merged_table)
 
     table = reorder_columns(table, merged_table.colnames)
@@ -334,7 +348,7 @@ def set_columns(filename, fileformat=None):
     # Add merged data to database
     branch,timestamp = commit_change_to_database(username)
     # Adding raw file to uploads
-    branch,timestamp = commit_change_to_database(username, tablename=filename,
+    branch,timestamp = commit_change_to_database(username, tablename=unique_filename,
                                                  workingdir='uploads/',
                                                  database='uploads',
                                                  branch=branch,
