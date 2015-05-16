@@ -369,7 +369,8 @@ def set_columns(filename, fileformat=None):
                          table_id=outfilename)
 
     return render_template('show_plot.html', imagename='/'+myplot,
-                           tablefile='{fn}.html'.format(fn=outfilename),link_pull=link_pull)
+                           tablefile='{fn}.html'.format(fn=outfilename),
+                           link_pull=link_pull_uploads)
 
 
 def commit_change_to_database(username, remote='origin', tablename='merged_table.ipac',
