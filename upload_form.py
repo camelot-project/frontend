@@ -385,7 +385,7 @@ def set_columns(filename, fileformat=None):
 
 def commit_change_to_database(username, remote='origin', tablename='merged_table.ipac',
                               workingdir='database/', database='database', branch=None,
-                              timestamp=None):
+                              timestamp=None, retry=10):
     """
     """
     if timestamp is None:
@@ -434,6 +434,16 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
     push_result = subprocess.call(['git','push', remote, branch,], cwd=workingdir)
     if push_result != 0:
         raise Exception("Pushing to the remote {0} folder failed".format(workingdir))
+
+    # Check that pushing succeeded
+    api_url_branch = 'https://api.github.com/repos/camelot-project/{0}/branches/{1}'.format(database,branch)
+    for ii in range(retry):
+        branch_exists = requests.get(api_url_branch)
+        if branch_exists.ok:
+            break
+        else:
+            time.sleep(0.1)
+    branch_exists.raise_for_status()
 
     checkout_master_result = subprocess.call(['git','checkout',
                                               '{remote}/master'.format(remote=remote)],
