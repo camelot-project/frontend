@@ -50,16 +50,12 @@ $(document).ready(function(){
         <form action="{{ url_for('set_columns', filename=filename, fileformat=fileformat) }}" method="post">
             <table class="table table-striped">
                 <thead><tr><th>File Column Name</th><th>Real Column Name</th><th>Units</th></tr></thead>
-                <tbody>
-                <tr><td colspan=3>  <input type="checkbox" name="issimulated" value="IsSimulated"> Is this simulated data? </td></tr>
-                <tr><td colspan=3>  <input type="checkbox" name="isgalactic"  value="IsGalactic">  Is this Galactic data? <font color="#BDBDBD">(for simulations, check this box unless an entire galaxy is covered)</font> </td></tr>
-                <tr><td>  <input type="text" id="username" name="Username" value="" required></td> <td colspan=2>Username? </td></tr>
-                
+                <tbody>                
                 {% for column_name,best_column_name in zip(table.colnames, best_column_names) %}
                 <tr>
                     <div class="form-group">
-                    <td><p>{{ column_name }}</p></td>
-                    <td>
+                    <td id="middle"><p>{{ column_name }}</p></td>
+                    <td id="middle">
                         <select class="form-control real_column_name" name="{{column_name}}">
                             {% for real_column_name in real_column_names %}
                             {% if real_column_name == best_column_name %}
@@ -70,12 +66,16 @@ $(document).ready(function(){
                             {% endfor %}
                         </select>
                     </td>
-                    <td>
+                    <td id="middle">
                         <input class="units form-control" id="{{column_name|striptags}}_units" name="{{column_name|striptags}}_units">
                     </td>
                     </div>
                 </tr>
                 {% endfor %}
+                <tr><td colspan=3 id="middle">  <input type="checkbox" name="issimulated" value="IsSimulated"> Is this simulated data? </td></tr>
+                <tr><td colspan=3 id="middle">  <input type="checkbox" name="isgalactic"  value="IsGalactic">  Is this Galactic data? <font color="#BDBDBD">(for simulations, check this box unless an entire galaxy is covered)</font> </td></tr>
+                <tr><td colspan=3 id="middle">  <input type="text" id="username" name="Username" value="" required> FirstnameLastname of first author </td></tr>
+                <tr><td colspan=3 id="middle">  <input type="text" id="email" name="Email" value="" required> Your email address <font color="#BDBDBD">(this will be kept private)</font> </td></tr>
                 </tbody>
             </table>
             <div class="col-md-2 col-md-offset-10" id="column_submit">
