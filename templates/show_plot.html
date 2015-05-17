@@ -17,8 +17,12 @@
 <html>
   <body>
      <div id="includedContent"></div>
-     <div id="link_pull_database">Database pull request: <a href="{{link_pull_database}}">{{link_pull_database}}</a></div>
-     <div id="link_pull_uploads">Submitted file pull request: <a href="{{link_pull_uploads}}">{{link_pull_uploads}}</a></div>
+     {% if link_pull_database %}
+	<div id="link_pull_database">Database pull request: <a href="{{link_pull_database}}">{{link_pull_database}}</a></div>
+     {% endif %}
+     {% if link_pull_uploads %}
+	<div id="link_pull_uploads">Submitted file pull request: <a href="{{link_pull_uploads}}">{{link_pull_uploads}}</a></div>
+     {% endif %}
      <div class="row" align="right">
         <div class="col-md-6">
             <form class="form form-inline" action={{tablefile}} method="get">
