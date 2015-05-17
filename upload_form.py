@@ -343,7 +343,7 @@ def set_columns(filename, fileformat=None):
 
     append_table(merged_table, table)
     Table.write(merged_table, merged_table_name, format='ascii.ipac')
-    
+
     username = column_data.get('Username')['Name']
     # Add merged data to database
     branch,timestamp = commit_change_to_database(username)
@@ -411,7 +411,7 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
     checkout_master_result = subprocess.call(['git','checkout',
                                               '{remote}/master'.format(remote=remote)],
                                              cwd=workingdir)
-    
+
     if checkout_master_result != 0:
         raise Exception("Checking out the {remote}/master branch in the database failed.  "
                         "Try 'cd {workingdir}; git checkout {remote}/master'"
@@ -519,7 +519,7 @@ def handle_duplicates(table, merged_table, duplicates):
 def query_form(filename="merged_table.ipac"):
 
     table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.ipac')
-    
+
     tolerance=1.2
 
     min_values=[np.round(min(table['SurfaceDensity'])/tolerance,4),
@@ -550,7 +550,7 @@ def query_form(filename="merged_table.ipac"):
                           )
 
 def clearOutput() :
-    
+
     for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase+"*.png")):
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
@@ -560,12 +560,12 @@ def clearOutput() :
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
-            
+
     for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase+"*.html")):
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
-            
+
 def timeString():
     TimeString=datetime.now().strftime("%Y%m%d%H%M%S%f")
     return TimeString
@@ -578,7 +578,7 @@ def query(filename, fileformat=None):
     VDispMax = float(request.form['VelocityDispersion_max'])*u.Unit(request.form['VelocityDispersion_unit'])
     RadMin = float(request.form['Radius_min'])*u.Unit(request.form['Radius_unit'])
     RadMax = float(request.form['Radius_max'])*u.Unit(request.form['Radius_unit'])
-    
+
     ShowObs=('IsObserved' in request.form and request.form['IsObserved'] == 'IsObserved')
     ShowSim=('IsSimulated' in request.form and request.form['IsSimulated'] == 'IsSimulated')
     ShowGal=('IsGalactic' in request.form and request.form['IsGalactic'] == 'IsGalactic')
@@ -596,7 +596,7 @@ def query(filename, fileformat=None):
     VDisp = table['VelocityDispersion']
     Rad = table['Radius']
     IsSim = (table['IsSimulated'] == 'True')
-    
+
     temp_table = [table[index].index for index, (surfdens, vdisp, radius) in
                   enumerate(zip(table['SurfaceDensity'],
                                 table['VelocityDispersion'],
@@ -606,7 +606,7 @@ def query(filename, fileformat=None):
                       and RadMin < radius*table['Radius'].unit < RadMax)
                  ]
     use_table = table[temp_table]
-    
+
     if not ShowObs :
         temp_table = [use_table[h].index for h,i in
                       zip(range(len(use_table)),use_table['IsSimulated'])
@@ -618,31 +618,31 @@ def query(filename, fileformat=None):
                       zip(range(len(use_table)),use_table['IsSimulated'])
                       if i == 'True']
         use_table.remove_rows(temp_table)
-        
+
     if not ShowGal :
         temp_table = [use_table[h].index for h,i in
                       zip(range(len(use_table)),use_table['IsGalactic'])
                       if i == 'True']
         use_table.remove_rows(temp_table)
-        
+
     if not ShowExgal :
         temp_table = [use_table[h].index for h,i in
                       zip(range(len(use_table)),use_table['IsGalactic'])
                       if i == 'False']
         use_table.remove_rows(temp_table)
-    
+
     tablefile = os.path.join(app.config['TABLE_FOLDER'], TableStrBase+NQuery+'.ipac')
-    
+
     use_table.write(tablefile, format='ipac')
-    
+
     plot_file = plotData_Sigma_sigma(NQuery, use_table,
                                      os.path.join(app.config['MPLD3_FOLDER'],
-                                                  FigureStrBase), 
+                                                  FigureStrBase),
                                      SurfMin, SurfMax,
                                      VDispMin, VDispMax,
                                      RadMin, RadMax,
                                      interactive=False)
-    
+
     return render_template('show_plot.html', imagename='/'+plot_file)
 
 @app.before_first_request
