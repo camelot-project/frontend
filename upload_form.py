@@ -319,13 +319,18 @@ def set_columns(filename, fileformat=None):
             add_filename_column(merged_table, 'Unknown'+' '*29)
 
     else:
-    # Maximum string length of 64 for username, ID -- larger strings are silently truncated
-    # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
-    #       and verify that submitted data obeys these limits
+        # Maximum string length of 64 for username, ID -- larger strings are silently truncated
+        # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
+        #       and verify that submitted data obeys these limits
         merged_table = Table(data=None, names=['Names','IDs','SurfaceDensity',
                        'VelocityDispersion','Radius','IsSimulated', 'IsGalactic', 'Timestamp', 'Filename'],
                        dtype=[('str', 64),('str', 64),'float','float','float','bool','bool',
                               ('str', 26),('str', 36)])
+        dts = merged_table.dtype
+        merged_table.add_row(["_"*dts[ind].itemsize if dts[ind].kind=='S'
+                              else False if dts[ind].kind == 'b'
+                              else np.nan
+                              for ind in range(len(dts))])
         set_units(merged_table)
 
     table = reorder_columns(table, merged_table.colnames)
