@@ -93,4 +93,4 @@ def ipac_writer(table, outfilename, widths):
     linemaker = IpacSpecifiableWidth()
     lines = linemaker.write(table, widths)
     with open(outfilename, 'w') as f:
-        f.writelines(lines)
+        f.write("\n".join(lines))
