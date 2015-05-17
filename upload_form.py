@@ -651,9 +651,18 @@ def authenticate_with_github():
     Authenticate using https with github after configuring git locally to store
     credentials etc.
     """
+    import socket
+    import pprint
+
     print("CWD:",os.getcwd())
     print("ls: ",os.listdir('.'))
-    print(dict(os.environ), width=1)
+    pprint.pprint(dict(os.environ), width=1)
+    print(socket.gethostname())
+
+    # Only run the configuration on the heroku app
+    if socket.gethostname() != 'camelot-project.herokuapp.com':
+        return
+
     config_result_1 = subprocess.call(['git', 'config', '--global',
                                        'credential.https://github.com.SirArthurTheSubmitter',
                                        'SirArthurTheSubmitter'])
