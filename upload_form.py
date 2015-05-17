@@ -661,10 +661,6 @@ def authenticate_with_github():
 
     import netrc
     nrcfile = os.path.join(os.environ['HOME'], ".netrc")
-    if not os.path.isfile(nrcfile):
-        # "touch" it
-        with open(nrcfile, 'a'):
-            os.utime(nrcfile, None)
     nrc = netrc.netrc(nrcfile)
     if not os.path.isfile(nrcfile):
         # "touch" it
