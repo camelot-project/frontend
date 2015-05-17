@@ -14,7 +14,6 @@ from mpld3 import plugins
 import pdb
 
 
-
 matplotlib.rcParams['figure.figsize'] = (12, 8)
 
 css = """
@@ -38,6 +37,12 @@ table, th, td
   text-align: right;
 }
 """
+
+
+label_dict = \
+    {'SurfaceDensity': '\u03A3 [M\u2609 pc\u207B\u00B2]',
+     'VelocityDispersion': "\u03C3 [km s\u207B\u00B9]",
+     'Radius': '$R$ [pc]'}
 
 
 def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
@@ -112,11 +117,6 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
         IsSim = d['IsSimulated']
     else:
         IsSim = d['IsSimulated'] == 'True'
-
-    label_dict = \
-        {'SurfaceDensity': '\u03A3 [M\u2609 pc\u207B\u00B2]',
-         'VelocityDispersion': "\u03C3 [km s\u207B\u00B9]",#$^{-1}$]",
-         'Radius': '$R$ [pc]'}
 
     if show_log:
         label_dict[variables[0]] = 'log ' + label_dict[variables[0]]
