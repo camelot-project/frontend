@@ -664,10 +664,10 @@ def setup_authenticate_with_github():
     except OSError:
         pass
     pprint.pprint(dict(os.environ), width=1)
-    print(socket.gethostname())
+    print("hostname:",socket.gethostname())
 
     # Only run the configuration on the heroku app
-    if socket.gethostname() != 'camelot-project.herokuapp.com':
+    if os.getenv('HEROKU_SERVER') != 'camelot-project.herokuapp.com':
         # but do the checking no matter what
         return check_authenticate_with_github()
 
