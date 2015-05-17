@@ -579,10 +579,10 @@ def query(filename, fileformat=None):
     RadMin = float(request.form['Radius_min'])*u.Unit(request.form['Radius_unit'])
     RadMax = float(request.form['Radius_max'])*u.Unit(request.form['Radius_unit'])
     
-    ShowObs=('IsObserved' in request.form and request.form['IsObserved'] == 'IsObserved')
-    ShowSim=('IsSimulated' in request.form and request.form['IsSimulated'] == 'IsSimulated')
-    ShowGal=('IsGalactic' in request.form and request.form['IsGalactic'] == 'IsGalactic')
-    ShowExgal=('IsExtragalactic' in request.form and request.form['IsExtragalactic'] == 'IsExtragalactic')
+    ShowObs=(request.form['ObsSimBoth'] == 'IsObserved') or (request.form['ObsSimBoth'] == 'IsObsSim')
+    ShowSim=(request.form['ObsSimBoth'] == 'IsSimulated') or (request.form['ObsSimBoth'] == 'IsObsSim')
+    ShowGal=(request.form['GalExgalBoth'] == 'IsGalactic') or (request.form['GalExgalBoth'] == 'IsGalExgal')
+    ShowExgal=(request.form['GalExgalBoth'] == 'IsExtragalactic') or (request.form['GalExgalBoth'] == 'IsGalExgal')
 
     NQuery=timeString()
 
@@ -661,10 +661,6 @@ def authenticate_with_github():
 
     import netrc
     nrcfile = os.path.join(os.environ['HOME'], ".netrc")
-    if not os.path.isfile(nrcfile):
-        # "touch" it
-        with open(nrcfile, 'a'):
-            os.utime(nrcfile, None)
     nrc = netrc.netrc(nrcfile)
     if not nrc.authenticators('https://github.com'):
         with open(nrcfile, 'r') as f:
