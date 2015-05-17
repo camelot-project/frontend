@@ -39,6 +39,7 @@ import time
 import datetime
 from datetime import datetime
 from astropy.io import registry, ascii
+from ipac_writer import ipac_writer
 from astropy.table import Table, vstack
 from astropy.table.jsviewer import write_table_jsviewer
 from astropy import units as u
@@ -52,7 +53,7 @@ TABLE_FOLDER = 'static/tables/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated', 'IsGalactic', 'Username', 'Filename']
-dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic', 'Username', 'Filename']
+dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic', 'Username', 'Filename', 'Email']
 use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
 use_units = ['Msun/pc^2','km/s','pc']
 FigureStrBase='Output_Sigma_sigma_r_'
@@ -60,6 +61,8 @@ TableStrBase='Output_Table_'
 TooOld=300 # age in seconds of files to delete
 git_user = 'SirArthurTheSubmitter'
 submitter_gmail = '{0}@gmail.com'.format(git_user)
+
+table_widths = [64, 64, 20, 20, 20, 12, 12, 26, 36]
 
 table_formats = registry.get_formats(Table)
 
@@ -321,13 +324,19 @@ def set_columns(filename, fileformat=None):
             add_filename_column(merged_table, 'Unknown'+' '*29)
 
     else:
-    # Maximum string length of 64 for username, ID -- larger strings are silently truncated
-    # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
-    #       and verify that submitted data obeys these limits
+        # Maximum string length of 64 for username, ID -- larger strings are silently truncated
+        # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
+        #       and verify that submitted data obeys these limits
         merged_table = Table(data=None, names=['Names','IDs','SurfaceDensity',
                        'VelocityDispersion','Radius','IsSimulated', 'IsGalactic', 'Timestamp', 'Filename'],
                        dtype=[('str', 64),('str', 64),'float','float','float','bool','bool',
                               ('str', 26),('str', 36)])
+        dts = merged_table.dtype
+        # Hack to force fixed-width: works only on strings
+        # merged_table.add_row(["_"*dts[ind].itemsize if dts[ind].kind=='S'
+        #                       else False if dts[ind].kind == 'b'
+        #                       else np.nan
+        #                       for ind in range(len(dts))])
         set_units(merged_table)
 
     table = reorder_columns(table, merged_table.colnames)
@@ -344,7 +353,7 @@ def set_columns(filename, fileformat=None):
     handle_duplicates(table, merged_table, duplicates)
 
     append_table(merged_table, table)
-    Table.write(merged_table, merged_table_name, format='ascii.ipac')
+    ipac_writer(merged_table, merged_table_name, widths=table_widths)
     
     username = column_data.get('Username')['Name']
     # Add merged data to database
