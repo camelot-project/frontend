@@ -687,8 +687,8 @@ def setup_authenticate_with_github():
     print("ls database: ",os.listdir('database'))
 
     config_result_1 = subprocess.call(['git', 'config', '--global',
-                                       'credential.https://github.com.SirArthurTheSubmitter',
-                                       'SirArthurTheSubmitter'])
+                                       'credential.https://github.com.{user}'.format(user=git_user),
+                                       git_user])
     assert config_result_1 == 0
     config_result_2 = subprocess.call(['git', 'config', '--global', 
                                        'credential.helper',
@@ -714,7 +714,7 @@ def setup_authenticate_with_github():
         with open(nrcfile, 'r') as f:
             nrcdata = f.read()
 
-        password = keyring.get_password('github', 'SirArthurTheSubmitter')
+        password = keyring.get_password('github', git_user)
         if password is None:
             password = os.getenv('GITHUB_PASSWORD')
 
