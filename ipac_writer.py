@@ -1,4 +1,8 @@
-from astropy.io.ascii import ipac
+from warnings import warn
+from textwrap import wrap
+from astropy.io.ascii import ipac,core
+from astropy.extern import six
+from astropy.utils.exceptions import AstropyUserWarning
 
 class IpacSpecifiableWidth(ipac.Ipac):
     def write(self, table, widths=None):
