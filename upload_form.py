@@ -266,8 +266,6 @@ def set_columns(filename, fileformat=None):
     add_timestamp_column(table, timestamp)
 
     add_generic_ids_if_needed(table)
-    print("ObsSim: ",column_data.get('ObsSim'))
-    print("ExGal: ",column_data.get('ExGal'))
     if column_data.get('ObsSim')['Name'] == 'IsObserved':
         add_is_sim_if_needed(table, False)
     else:
