@@ -89,4 +89,7 @@ body {
     background-attachment: fixed;
 }
 
-.middle {vertical-align: middle;}
+#middle {
+	vertical-align: middle;
+}
+
