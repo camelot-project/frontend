@@ -58,3 +58,8 @@ docs/_build/
 target/
 
 *.DS_Store
+
+# Remove static folders
+static/figures
+static/mpld3
+static/tables
