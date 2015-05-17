@@ -330,10 +330,11 @@ def set_columns(filename, fileformat=None):
                        dtype=[('str', 64),('str', 64),'float','float','float','bool','bool',
                               ('str', 26),('str', 36)])
         dts = merged_table.dtype
-        merged_table.add_row(["_"*dts[ind].itemsize if dts[ind].kind=='S'
-                              else False if dts[ind].kind == 'b'
-                              else np.nan
-                              for ind in range(len(dts))])
+        # Hack to force fixed-width: works only on strings
+        # merged_table.add_row(["_"*dts[ind].itemsize if dts[ind].kind=='S'
+        #                       else False if dts[ind].kind == 'b'
+        #                       else np.nan
+        #                       for ind in range(len(dts))])
         set_units(merged_table)
 
     table = reorder_columns(table, merged_table.colnames)
