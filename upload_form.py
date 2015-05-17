@@ -39,6 +39,7 @@ import time
 import datetime
 from datetime import datetime
 from astropy.io import registry, ascii
+from ipac_writer import ipac_writer
 from astropy.table import Table, vstack
 from astropy.table.jsviewer import write_table_jsviewer
 from astropy import units as u
@@ -58,6 +59,8 @@ use_units = ['Msun/pc^2','km/s','pc']
 FigureStrBase='Output_Sigma_sigma_r_'
 TableStrBase='Output_Table_'
 TooOld=300 # age in seconds of files to delete
+
+table_widths = [64, 64, 16, 16, 16, 12, 12, 26, 36]
 
 table_formats = registry.get_formats(Table)
 
@@ -347,7 +350,7 @@ def set_columns(filename, fileformat=None):
     handle_duplicates(table, merged_table, duplicates)
 
     append_table(merged_table, table)
-    Table.write(merged_table, merged_table_name, format='ascii.ipac')
+    ipac_writer(merged_table, merged_table_name, widths=table_widths)
     
     username = column_data.get('Username')['Name']
     # Add merged data to database
