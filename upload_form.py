@@ -646,7 +646,7 @@ def query(filename, fileformat=None):
     return render_template('show_plot.html', imagename='/'+plot_file)
 
 @app.before_first_request
-def authenticate_with_github():
+def setup_authenticate_with_github():
     """
     Authenticate using https with github after configuring git locally to store
     credentials etc.
@@ -656,12 +656,15 @@ def authenticate_with_github():
 
     print("CWD:",os.getcwd())
     print("ls: ",os.listdir('.'))
+    print("ls uploads: ",os.listdir('uploads'))
+    print("ls database: ",os.listdir('database'))
     pprint.pprint(dict(os.environ), width=1)
     print(socket.gethostname())
 
     # Only run the configuration on the heroku app
     if socket.gethostname() != 'camelot-project.herokuapp.com':
-        return
+        # but do the checking no matter what
+        return check_authenticate_with_github()
 
     config_result_1 = subprocess.call(['git', 'config', '--global',
                                        'credential.https://github.com.SirArthurTheSubmitter',
@@ -697,10 +700,18 @@ machine https://github.com
   login SirArthurTheSubmitter@gmail.com
   password {password}""".format(password=password))
 
+    return check_authenticate_with_github()
+
+def check_authenticate_with_github():
+    """
+    Check that fetch permissions are set up for the upload and database
+    directories
+    """
     fetch_uploads = subprocess.call(['git', 'fetch'], cwd='uploads/')
     assert fetch_uploads == 0
     fetch_database = subprocess.call(['git', 'fetch'], cwd='database/')
     assert fetch_database == 0
+    print("Fetching uploads and database worked.")
 
 
 class InvalidUsage(Exception):
