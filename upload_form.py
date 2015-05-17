@@ -62,7 +62,7 @@ TooOld=300 # age in seconds of files to delete
 git_user = 'SirArthurTheSubmitter'
 submitter_gmail = '{0}@gmail.com'.format(git_user)
 
-table_widths = [64, 64, 16, 16, 16, 12, 12, 26, 36]
+table_widths = [64, 64, 20, 20, 20, 12, 12, 26, 36]
 
 table_formats = registry.get_formats(Table)
 
