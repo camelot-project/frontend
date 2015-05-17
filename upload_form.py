@@ -652,20 +652,6 @@ def setup_authenticate_with_github():
     Authenticate using https with github after configuring git locally to store
     credentials etc.
     """
-    import socket
-    import pprint
-
-    print("CWD:",os.getcwd())
-    print("ls: ",os.listdir('.'))
-    print("ls uploads: ",os.listdir('uploads'))
-    print("ls database: ",os.listdir('database'))
-    try:
-        print("ls uploads: ",os.listdir('uploads/.git'))
-        print("ls database: ",os.listdir('database/.git'))
-    except OSError:
-        pass
-    pprint.pprint(dict(os.environ), width=1)
-    print("hostname:",socket.gethostname())
 
     # Only run the configuration on the heroku app
     if os.getenv('HEROKU_SERVER') != 'camelot-project.herokuapp.com':
@@ -683,8 +669,6 @@ def setup_authenticate_with_github():
                                              'https://github.com/camelot-project/uploads.git',
                                              'uploads'])
     assert clone_result_uploads == 0
-    print("ls uploads: ",os.listdir('uploads'))
-    print("ls database: ",os.listdir('database'))
 
     config_result_1 = subprocess.call(['git', 'config', '--global',
                                        'credential.https://github.com.{user}'.format(user=git_user),
@@ -764,4 +748,7 @@ def handle_invalid_usage(error):
     return response
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT')))
+    if os.getenv('HEROKU_SERVER'):
+        app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT')))
+    else:
+        app.run(debug=True)
