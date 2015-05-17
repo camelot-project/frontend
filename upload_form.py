@@ -656,11 +656,13 @@ def authenticate_with_github():
     Authenticate using https with github after configuring git locally to store
     credentials etc.
     """
-    config_result_1 = subprocess.call(['git', 'config',
+    print("CWD:",os.getcwd())
+    config_result_1 = subprocess.call(['git', 'config', '--global',
                                        'credential.https://github.com.SirArthurTheSubmitter',
                                        'SirArthurTheSubmitter'])
     assert config_result_1 == 0
-    config_result_2 = subprocess.call(['git', 'config', 'credential.helper',
+    config_result_2 = subprocess.call(['git', 'config', '--global', 
+                                       'credential.helper',
                                        'store'])
     assert config_result_2 == 0
 
