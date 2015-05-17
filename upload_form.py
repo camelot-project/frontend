@@ -666,6 +666,18 @@ def setup_authenticate_with_github():
         # but do the checking no matter what
         return check_authenticate_with_github()
 
+    import shutil
+    shutil.rmtree('uploads')
+    shutil.rmtree('database')
+    clone_result_database = subprocess.call(['git', 'clone',
+                                             'https://github.com/camelot-project/database.git',
+                                             'database'])
+    assert clone_result_database == 0
+    clone_result_uploads = subprocess.call(['git', 'clone',
+                                             'https://github.com/camelot-project/uploads.git',
+                                             'uploads'])
+    assert clone_result_uploads == 0
+
     config_result_1 = subprocess.call(['git', 'config', '--global',
                                        'credential.https://github.com.SirArthurTheSubmitter',
                                        'SirArthurTheSubmitter'])
