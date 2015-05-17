@@ -658,8 +658,11 @@ def setup_authenticate_with_github():
     print("ls: ",os.listdir('.'))
     print("ls uploads: ",os.listdir('uploads'))
     print("ls database: ",os.listdir('database'))
-    print("ls uploads: ",os.listdir('uploads/.git'))
-    print("ls database: ",os.listdir('database/.git'))
+    try:
+        print("ls uploads: ",os.listdir('uploads/.git'))
+        print("ls database: ",os.listdir('database/.git'))
+    except OSError:
+        pass
     pprint.pprint(dict(os.environ), width=1)
     print(socket.gethostname())
 
