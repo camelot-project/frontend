@@ -266,12 +266,14 @@ def set_columns(filename, fileformat=None):
     add_timestamp_column(table, timestamp)
 
     add_generic_ids_if_needed(table)
-    if column_data.get('ObsSim') is 'IsObserved':
+    print("ObsSim: ",column_data.get('ObsSim'))
+    print("ExGal: ",column_data.get('ExGal'))
+    if column_data.get('ObsSim')['Name'] == 'IsObserved':
         add_is_sim_if_needed(table, False)
     else:
         add_is_sim_if_needed(table, True)
 
-    if column_data.get('GalExgal') is 'IsExtragalactic':
+    if column_data.get('GalExgal')['Name'] == 'IsExtragalactic':
         add_is_gal_if_needed(table, False)
     else:
         add_is_gal_if_needed(table, True)
