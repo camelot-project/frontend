@@ -58,6 +58,8 @@ use_units = ['Msun/pc^2','km/s','pc']
 FigureStrBase='Output_Sigma_sigma_r_'
 TableStrBase='Output_Table_'
 TooOld=300 # age in seconds of files to delete
+git_user = 'SirArthurTheSubmitter'
+submitter_gmail = '{0}@gmail.com'.format(git_user)
 
 table_formats = registry.get_formats(Table)
 
@@ -477,7 +479,6 @@ def pull_request(branch, user, timestamp, database='database', retry=5):
 
     S = requests.Session()
     S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
-    git_user = 'SirArthurTheSubmitter'
     password = keyring.get_password('github', git_user)
     if password is None:
         password = os.getenv('GITHUB_PASSWORD')
@@ -646,18 +647,45 @@ def query(filename, fileformat=None):
     return render_template('show_plot.html', imagename='/'+plot_file)
 
 @app.before_first_request
-def authenticate_with_github():
+def setup_authenticate_with_github():
     """
     Authenticate using https with github after configuring git locally to store
     credentials etc.
     """
-    config_result_1 = subprocess.call(['git', 'config',
-                                       'credential.https://github.com.SirArthurTheSubmitter',
-                                       'SirArthurTheSubmitter'])
+
+    # Only run the configuration on the heroku app
+    if os.getenv('HEROKU_SERVER') != 'camelot-project.herokuapp.com':
+        # but do the checking no matter what
+        return check_authenticate_with_github()
+
+    import shutil
+    shutil.rmtree('uploads')
+    shutil.rmtree('database')
+    clone_result_database = subprocess.call(['git', 'clone',
+                                             'https://github.com/camelot-project/database.git',
+                                             'database'])
+    assert clone_result_database == 0
+    clone_result_uploads = subprocess.call(['git', 'clone',
+                                             'https://github.com/camelot-project/uploads.git',
+                                             'uploads'])
+    assert clone_result_uploads == 0
+
+    config_result_1 = subprocess.call(['git', 'config', '--global',
+                                       'credential.https://github.com.{user}'.format(user=git_user),
+                                       git_user])
     assert config_result_1 == 0
-    config_result_2 = subprocess.call(['git', 'config', 'credential.helper',
+    config_result_2 = subprocess.call(['git', 'config', '--global', 
+                                       'credential.helper',
                                        'store'])
     assert config_result_2 == 0
+    config_result_3 = subprocess.call(['git', 'config', '--global', 
+                                       'user.email',
+                                       submitter_gmail])
+    assert config_result_3 == 0
+    config_result_4 = subprocess.call(['git', 'config', '--global', 
+                                       'user.name',
+                                       git_user])
+    assert config_result_4 == 0
 
     import netrc
     nrcfile = os.path.join(os.environ['HOME'], ".netrc")
@@ -670,7 +698,7 @@ def authenticate_with_github():
         with open(nrcfile, 'r') as f:
             nrcdata = f.read()
 
-        password = keyring.get_password('github', 'SirArthurTheSubmitter')
+        password = keyring.get_password('github', git_user)
         if password is None:
             password = os.getenv('GITHUB_PASSWORD')
 
@@ -678,16 +706,24 @@ def authenticate_with_github():
             f.write(nrcdata)
             f.write("""
 machine github.com
-  login SirArthurTheSubmitter@gmail.com
+  login {gmail}
   password {password}
 machine https://github.com
-  login SirArthurTheSubmitter@gmail.com
-  password {password}""".format(password=password))
+  login {gmail}
+  password {password}""".format(password=password, gmail=submitter_gmail))
 
+    return check_authenticate_with_github()
+
+def check_authenticate_with_github():
+    """
+    Check that fetch permissions are set up for the upload and database
+    directories
+    """
     fetch_uploads = subprocess.call(['git', 'fetch'], cwd='uploads/')
     assert fetch_uploads == 0
     fetch_database = subprocess.call(['git', 'fetch'], cwd='database/')
     assert fetch_database == 0
+    print("Fetching uploads and database worked.")
 
 
 class InvalidUsage(Exception):
@@ -712,4 +748,7 @@ def handle_invalid_usage(error):
     return response
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    if os.getenv('HEROKU_SERVER'):
+        app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT')))
+    else:
+        app.run(debug=True)
