@@ -58,6 +58,8 @@ use_units = ['Msun/pc^2','km/s','pc']
 FigureStrBase='Output_Sigma_sigma_r_'
 TableStrBase='Output_Table_'
 TooOld=300 # age in seconds of files to delete
+git_user = 'SirArthurTheSubmitter'
+submitter_gmail = '{0}@gmail.com'.format(git_user)
 
 table_formats = registry.get_formats(Table)
 
@@ -477,7 +479,6 @@ def pull_request(branch, user, timestamp, database='database', retry=5):
 
     S = requests.Session()
     S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
-    git_user = 'SirArthurTheSubmitter'
     password = keyring.get_password('github', git_user)
     if password is None:
         password = os.getenv('GITHUB_PASSWORD')
@@ -693,6 +694,14 @@ def setup_authenticate_with_github():
                                        'credential.helper',
                                        'store'])
     assert config_result_2 == 0
+    config_result_3 = subprocess.call(['git', 'config', '--global', 
+                                       'user.email',
+                                       submitter_gmail])
+    assert config_result_3 == 0
+    config_result_4 = subprocess.call(['git', 'config', '--global', 
+                                       'user.name',
+                                       git_user])
+    assert config_result_4 == 0
 
     import netrc
     nrcfile = os.path.join(os.environ['HOME'], ".netrc")
@@ -713,11 +722,11 @@ def setup_authenticate_with_github():
             f.write(nrcdata)
             f.write("""
 machine github.com
-  login SirArthurTheSubmitter@gmail.com
+  login {gmail}
   password {password}
 machine https://github.com
-  login SirArthurTheSubmitter@gmail.com
-  password {password}""".format(password=password))
+  login {gmail}
+  password {password}""".format(password=password, gmail=submitter_gmail))
 
     return check_authenticate_with_github()
 
