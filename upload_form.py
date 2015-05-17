@@ -658,6 +658,8 @@ def setup_authenticate_with_github():
     print("ls: ",os.listdir('.'))
     print("ls uploads: ",os.listdir('uploads'))
     print("ls database: ",os.listdir('database'))
+    print("ls uploads: ",os.listdir('uploads/.git'))
+    print("ls database: ",os.listdir('database/.git'))
     pprint.pprint(dict(os.environ), width=1)
     print(socket.gethostname())
 
@@ -677,6 +679,8 @@ def setup_authenticate_with_github():
                                              'https://github.com/camelot-project/uploads.git',
                                              'uploads'])
     assert clone_result_uploads == 0
+    print("ls uploads: ",os.listdir('uploads'))
+    print("ls database: ",os.listdir('database'))
 
     config_result_1 = subprocess.call(['git', 'config', '--global',
                                        'credential.https://github.com.SirArthurTheSubmitter',
