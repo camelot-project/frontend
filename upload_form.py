@@ -652,6 +652,7 @@ def authenticate_with_github():
     credentials etc.
     """
     print("CWD:",os.getcwd())
+    print("ls: ",os.listdir('.'))
     config_result_1 = subprocess.call(['git', 'config', '--global',
                                        'credential.https://github.com.SirArthurTheSubmitter',
                                        'SirArthurTheSubmitter'])
