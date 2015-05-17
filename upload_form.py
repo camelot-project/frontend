@@ -53,7 +53,9 @@ TABLE_FOLDER = 'static/tables/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated', 'IsGalactic', 'Username', 'Filename']
-dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic', 'Username', 'Filename', 'Email']
+dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic',
+                              'Username', 'Filename', 'Email', 'ObsSim',
+                              'GalExgal']
 use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
 use_units = ['Msun/pc^2','km/s','pc']
 FigureStrBase='Output_Sigma_sigma_r_'
@@ -264,12 +266,12 @@ def set_columns(filename, fileformat=None):
     add_timestamp_column(table, timestamp)
 
     add_generic_ids_if_needed(table)
-    if column_data.get('issimulated') is None:
+    if column_data.get('ObsSim') is 'IsObserved':
         add_is_sim_if_needed(table, False)
     else:
         add_is_sim_if_needed(table, True)
 
-    if column_data.get('isgalactic') is None:
+    if column_data.get('GalExgal') is 'IsExtragalactic':
         add_is_gal_if_needed(table, False)
     else:
         add_is_gal_if_needed(table, True)
@@ -283,7 +285,7 @@ def set_columns(filename, fileformat=None):
     os.rename(full_filename_old, full_filename_new)
     add_filename_column(table, unique_filename)
 
-    handle_email(column_data.get('email')['Name'], unique_filename)
+    handle_email(column_data.get('Email')['Name'], unique_filename)
 
     # Detect duplicate IDs in uploaded data and bail out if found
     seen = {}
