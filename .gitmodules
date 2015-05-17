@@ -1,6 +1,6 @@
 [submodule "database"]
 	path = database
-	url = https://github.com/camelot-project/database.git
+	url = git@github.com/camelot-project/database.git
 [submodule "uploads"]
 	path = uploads
-	url = https://github.com/camelot-project/uploads.git
+	url = git@github.com/camelot-project/uploads.git

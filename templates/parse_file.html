@@ -54,8 +54,8 @@ $(document).ready(function(){
                 {% for column_name,best_column_name in zip(table.colnames, best_column_names) %}
                 <tr>
                     <div class="form-group">
-                    <td id="middle"><p>{{ column_name }}</p></td>
-                    <td id="middle">
+                    <td class="middle"><p>{{ column_name }}</p></td>
+                    <td class="middle">
                         <select class="form-control real_column_name" name="{{column_name}}">
                             {% for real_column_name in real_column_names %}
                             {% if real_column_name == best_column_name %}
@@ -66,16 +66,16 @@ $(document).ready(function(){
                             {% endfor %}
                         </select>
                     </td>
-                    <td id="middle">
+                    <td class="middle">
                         <input class="units form-control" id="{{column_name|striptags}}_units" name="{{column_name|striptags}}_units">
                     </td>
                     </div>
                 </tr>
                 {% endfor %}
-                <tr><td id="middle">  <input type="radio" name="ObsSim" value="IsObserved"> Observations </td>
-                    <td colspan=2 id="middle">  <input type="radio" name="ObsSim" value="IsSimulated"> Simulations </td></tr>
-                <tr><td id="middle">  <input type="radio" name="GalExgal" value="IsGalactic"> Galactic </td>
-                    <td colspan=2 id="middle">  <input type="radio" name="GalExgal" value="IsExtragalactic"> Extragalactic </td></tr>
+                <tr><td class="middle">  <input type="radio" name="ObsSim" value="IsObserved"> Observations </td>
+                    <td colspan=2 class="middle">  <input type="radio" name="ObsSim" value="IsSimulated"> Simulations </td></tr>
+                <tr><td class="middle">  <input type="radio" name="GalExgal" value="IsGalactic"> Galactic </td>
+                    <td colspan=2 class="middle">  <input type="radio" name="GalExgal" value="IsExtragalactic"> Extragalactic </td></tr>
                 <tr><td colspan=3 id="middle"> <font color="#BDBDBD">(for simulations, choose Galactic unless an entire galaxy is covered)</font> </td></tr>
                 <tr><td colspan=3 id="middle">  <input type="text" id="username" name="Username" value="" required> FirstnameLastname of first author </td></tr>
                 <tr><td colspan=3 id="middle">  <input type="text" id="email" name="Email" value="" required> Your email address <font color="#BDBDBD">(this will be kept private)</font> </td></tr>
