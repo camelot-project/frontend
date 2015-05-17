@@ -89,7 +89,7 @@ body {
     background-attachment: fixed;
 }
 
-#middle {
+.table>tbody>tr>td.middle, td.middle {
 	vertical-align: middle;
 }
 

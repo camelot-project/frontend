@@ -283,6 +283,8 @@ def set_columns(filename, fileformat=None):
     os.rename(full_filename_old, full_filename_new)
     add_filename_column(table, unique_filename)
 
+    handle_email(column_data.get('email')['Name'], unique_filename)
+
     # Detect duplicate IDs in uploaded data and bail out if found
     seen = {}
     for row in table:
@@ -733,6 +735,16 @@ def check_authenticate_with_github():
     fetch_database = subprocess.call(['git', 'fetch'], cwd='database/')
     assert fetch_database == 0
     print("Fetching uploads and database worked.")
+
+def handle_email(email, filename):
+    form_url = 'https://docs.google.com/forms/d/1nzdc8jOMlwZEYqdJSvNo6B60gNrUZ9trrhUeYRtUM8g/formResponse'
+
+    S = requests.Session()
+    S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
+
+    response = S.post(form_url, params={'entry.151369084': email,
+                                        'entry.1302661889': filename})
+    response.raise_for_status()
 
 
 class InvalidUsage(Exception):
