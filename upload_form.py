@@ -264,8 +264,12 @@ def set_columns(filename, fileformat=None):
         fileformat = request.args['fileformat']
 
     log.debug("Reading table {0}".format(filename))
-    table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename),
-                       format=fileformat)
+    try:
+        table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename),
+                           format=fileformat)
+    except Exception as ex:
+        return render_template('error.html', error=str(ex),
+                               traceback=traceback.format_exc(ex))
 
     log.debug("Parsing column data.")
     log.debug("form: {0}".format(request.form))
