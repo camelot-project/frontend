@@ -271,15 +271,18 @@ def set_columns(filename, fileformat=None):
     column_data = {field:{'Name':value}
                    for field,value in request.form.items()
                    if '_units' not in field}
+    log.debug("Looping through form items.")
     for field,value in request.form.items():
         if '_units' in field:
             column_data[field[:-6]]['unit'] = value
 
+    log.debug("Looping through column_data.")
     units_data = {}
     for key, pair in column_data.items():
         if key not in dimensionless_column_names and pair['Name'] not in dimensionless_column_names:
             units_data[pair['Name']] = pair['unit']
 
+    log.debug("Created mapping.")
     mapping = {filename: [column_data, units_data]}
 
     log.debug("Further table handling.")
