@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{{ super() }}    
+<title>ERROR!<title>
+{% endblock %}
+
+
+{% if error %}
+    <div class="alert alert-warning alert-dismissible">
+      <strong>Error!</strong> {{ error}}
+    </div>
+{% endif %}
+

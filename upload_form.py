@@ -290,7 +290,10 @@ def set_columns(filename, fileformat=None):
     rename_columns(table, {k: v['Name'] for k,v in column_data.items()})
     set_units(table, units_data)
     table = fix_bad_types(table)
-    convert_units(table)
+    try:
+        convert_units(table)
+    except Exception as ex:
+        return render_template('error.html', error=str(ex))
     add_name_column(table, column_data.get('Username')['Name'])
     if 'ADS_ID' not in table.colnames:
         table.add_column(table.Column(name='ADS_ID', data=[request.form['adsid']]*len(table)))
