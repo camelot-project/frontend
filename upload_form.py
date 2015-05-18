@@ -262,8 +262,10 @@ def set_columns(filename, fileformat=None):
     table = fix_bad_types(table)
     convert_units(table)
     add_name_column(table, column_data.get('Username')['Name'])
-    table.add_column(table.Column(name='ADS_ID', data=[request.form['adsid']]*len(table)))
-    table.add_column(table.Column(name='DOI_or_URL', data=[request.form['doi']]*len(table)))
+    if 'ADS_ID' not in table.colnames:
+        table.add_column(table.Column(name='ADS_ID', data=[request.form['adsid']]*len(table)))
+    if 'DOI_or_URL' not in table.colnames:
+        table.add_column(table.Column(name='DOI_or_URL', data=[request.form['doi']]*len(table)))
     timestamp = datetime.now()
     add_timestamp_column(table, timestamp)
 
