@@ -1,3 +1,4 @@
+from __future__ import print_function
 import keyring
 import json
 import re
@@ -35,7 +36,8 @@ def delete_excess_branches(repository, username='SirArthurTheSubmitter', organiz
             print("Leaving unchanged pull {0} with title {1}".format(pullnumber, result['title']))
             raise Exception("This state should not be reachable if the API worked right ang gave us only closed PRs")
 
-def close_pull_request(repository, pr_id, username='SirArthurTheSubmitter', organization='camelot-project'):
+def close_pull_request(repository, pr_id, username='SirArthurTheSubmitter', organization='camelot-project',
+                       delete_branch=True):
     S = requests.Session()
     S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
 
@@ -44,5 +46,21 @@ def close_pull_request(repository, pr_id, username='SirArthurTheSubmitter', orga
     git_user = username
     password = keyring.get_password('github', git_user)
 
-    S.post('https://api.github.com/repos/camelot-project/database/pulls/{0}'.format(pr_id),
-           data=json.dumps({'state':'closed'}), auth=(git_user, password))
+    r = S.post('https://api.github.com/repos/camelot-project/{repository}/pulls/{0}'.format(pr_id, repository=repository),
+               data=json.dumps({'state':'closed'}), auth=(git_user, password))
+    #print("PR closing: {0} resulted in {1}".format(pr_id, r.status_code))
+    r.raise_for_status()
+
+    response = S.get('https://api.github.com/repos/camelot-project/{repository}/pulls/{0}'.format(pr_id,
+                                                                                                  repository=repository),
+                     auth=(git_user, password))
+    result = json.loads(response.content)
+
+    if 'head' in result:
+        ref = result['head']['ref']
+        print("Pruning pull {0} with title {1} and refid {2}".format(pr_id, result['title'], ref))
+        r = S.delete('https://api.github.com/repos/{organization}/{repository}/git/refs/heads/{ref}'.format(ref=ref, **kwargs),
+                     auth=(git_user, password))
+        print("Status code: ",r.status_code,".  204 means 'success', 422 means 'probably already deleted'")
+    else:
+        print("PR #{0} not found".format(pr_id))
