@@ -425,6 +425,7 @@ def set_columns(filename, fileformat=None):
 
     errormessage = None
     if "NO BRANCH" in (branch_database, branch_uploads):
+        log.debug("No changes detected.  Not a new branch.")
         link_pull_database = None
         link_pull_uploads = None
         errormessage = "This file has already been included in the database."
@@ -433,7 +434,7 @@ def set_columns(filename, fileformat=None):
         # synchronously (we needed this when they were asynchronous)
         # Instead we use the github API to see if the commit is there
         # time.sleep(1)
-        print("Creating pull requests")
+        log.debug("Creating pull requests")
         response_database, link_pull_database = pull_request(branch_database,
                                                              username,
                                                              timestamp)
@@ -442,11 +443,13 @@ def set_columns(filename, fileformat=None):
                                                            timestamp,
                                                            database='uploads')
 
+    log.debug("Creating plot.")
     outfilename = os.path.splitext(filename)[0]
     myplot = plotData_Sigma_sigma(timeString(), table,
                                   os.path.join(app.config['MPLD3_FOLDER'],
                                                outfilename))
 
+    log.debug("Creating table.")
     tablecss = "table,th,td,tr,tbody {border: 1px solid black; border-collapse: collapse;}"
     write_table_jsviewer(table,
                          os.path.join(TABLE_FOLDER, '{fn}.html'.format(fn=outfilename)),
