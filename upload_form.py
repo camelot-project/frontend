@@ -77,10 +77,18 @@ app.config['TABLE_FOLDER'] = TABLE_FOLDER
 #app.config['DEBUG']=True
 
 for path in (UPLOAD_FOLDER, MPLD3_FOLDER, DATABASE_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
+    try:
+        print("ls {0}".format(path))
+        os.listdir(path)
+        print("Path {0} does too exist!".format(path))
+    except OSError:
+        print("Path {0} does not exist.".format(path))
     if not os.path.isdir(path):
         # these should not exist and should definitely not be files
         if os.path.isfile(path):
+            print("Deleting regular file {0}".format(path))
             os.remove(path)
+        print("Making directory {0}".format(path))
         os.mkdir(path)
 
 
