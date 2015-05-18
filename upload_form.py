@@ -55,7 +55,7 @@ valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated', 'IsGalactic', 'Username', 'Filename']
 dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic',
                               'Username', 'Filename', 'Email', 'ObsSim',
-                              'GalExgal', "ADS_ID", "DOI_or_URL"]
+                              'GalExgal', "ADS_ID", "DOI_or_URL", 'doi', 'adsid']
 use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
 use_units = ['Msun/pc^2','km/s','pc']
 FigureStrBase='Output_Sigma_sigma_r_'
@@ -262,8 +262,8 @@ def set_columns(filename, fileformat=None):
     table = fix_bad_types(table)
     convert_units(table)
     add_name_column(table, column_data.get('Username')['Name'])
-    tbl.add_column(table.Column(name='ADS_ID', data=[request.form['adsid']]*len(tbl)))
-    tbl.add_column(table.Column(name='DOI_or_URL', data=[request.form['doi']]*len(tbl)))
+    table.add_column(table.Column(name='ADS_ID', data=[request.form['adsid']]*len(table)))
+    table.add_column(table.Column(name='DOI_or_URL', data=[request.form['doi']]*len(table)))
     timestamp = datetime.now()
     add_timestamp_column(table, timestamp)
 
