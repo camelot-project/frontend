@@ -48,9 +48,14 @@ def close_pull_request(repository, pr_id, username='SirArthurTheSubmitter', orga
     S.post('https://api.github.com/repos/camelot-project/database/pulls/{0}'.format(pr_id),
            data=json.dumps({'state':'closed'}), auth=(git_user, password))
 
-    result = S.get('https://api.github.com/repos/camelot-project/database/pulls/{0}'.format(pr_id))
+    response = S.get('https://api.github.com/repos/camelot-project/database/pulls/{0}'.format(pr_id))
+    result = json.loads(response.content)
 
-    ref = result['head']['ref']
-    print("Pruning pull {0} with title {1} and refid {2}".format(pr_id, result['title'], ref))
-    r = S.delete('https://api.github.com/repos/{organization}/{repository}/git/refs/heads/{ref}'.format(ref=ref, **kwargs),
-                 auth=(git_user, password))
+    if 'head' in result:
+        ref = result['head']['ref']
+        print("Pruning pull {0} with title {1} and refid {2}".format(pr_id, result['title'], ref))
+        r = S.delete('https://api.github.com/repos/{organization}/{repository}/git/refs/heads/{ref}'.format(ref=ref, **kwargs),
+                     auth=(git_user, password))
+        print("Status code: ",r.status_code,".  204 means 'success', 422 means 'probably already deleted'")
+    else:
+        print("PR #{0} not found".format(pr_id))
