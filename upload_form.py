@@ -417,7 +417,7 @@ def set_columns(filename, fileformat=None):
     branch_uploads,timestamp = commit_change_to_database(username, tablename=unique_filename,
                                                  workingdir='uploads/',
                                                  database='uploads',
-                                                 branch=branch,
+                                                 branch=branch_database,
                                                  timestamp=timestamp)
 
     errormessage = None
@@ -431,10 +431,10 @@ def set_columns(filename, fileformat=None):
         # Instead we use the github API to see if the commit is there
         # time.sleep(1)
         print("Creating pull requests")
-        response_database, link_pull_database = pull_request(branch,
+        response_database, link_pull_database = pull_request(branch_database,
                                                              username,
                                                              timestamp)
-        response_uploads, link_pull_uploads = pull_request(branch,
+        response_uploads, link_pull_uploads = pull_request(branch_database,
                                                            username,
                                                            timestamp,
                                                            database='uploads')
