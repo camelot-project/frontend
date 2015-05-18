@@ -47,6 +47,7 @@ from astropy import log
 if os.getenv('DEBUG'):
     log.setLevel(10)
 import hashlib
+import traceback
 
 UPLOAD_FOLDER = 'uploads/'
 DATABASE_FOLDER = 'database/'
@@ -293,7 +294,7 @@ def set_columns(filename, fileformat=None):
     try:
         convert_units(table)
     except Exception as ex:
-        return render_template('error.html', error=str(ex))
+        return render_template('error.html', error=str(ex), traceback=traceback.format_exc(ex))
     add_name_column(table, column_data.get('Username')['Name'])
     if 'ADS_ID' not in table.colnames:
         table.add_column(table.Column(name='ADS_ID', data=[request.form['adsid']]*len(table)))

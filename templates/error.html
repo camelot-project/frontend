@@ -2,13 +2,20 @@
 
 {% block head %}
 {{ super() }}    
-<title>ERROR!<title>
+<title>ERROR!</title>
 {% endblock %}
 
+{% block body %}
+{{ super() }}
+<div class=whitebg> There has been a server-side error: </div>
 
 {% if error %}
     <div class="alert alert-warning alert-dismissible">
-      <strong>Error!</strong> {{ error}}
+      {{error}}
+    </div>
+    <div class=whitebg>
+        {{traceback}}
     </div>
 {% endif %}
 
+{% endblock %}
