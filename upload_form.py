@@ -55,7 +55,7 @@ valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated', 'IsGalactic', 'Username', 'Filename']
 dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic',
                               'Username', 'Filename', 'Email', 'ObsSim',
-                              'GalExgal']
+                              'GalExgal', "ADS_ID", "DOI_or_URL", 'doi', 'adsid']
 use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
 use_units = ['Msun/pc^2','km/s','pc']
 FigureStrBase='Output_Sigma_sigma_r_'
@@ -64,7 +64,7 @@ TooOld=300 # age in seconds of files to delete
 git_user = 'SirArthurTheSubmitter'
 submitter_gmail = '{0}@gmail.com'.format(git_user)
 
-table_widths = [64, 64, 20, 20, 20, 12, 12, 26, 36]
+table_widths = [64, 64, 20, 20, 20, 12, 12, 26, 36, 20, 64]
 
 table_formats = registry.get_formats(Table)
 
@@ -78,6 +78,9 @@ app.config['TABLE_FOLDER'] = TABLE_FOLDER
 
 for path in (UPLOAD_FOLDER, MPLD3_FOLDER, DATABASE_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
     if not os.path.isdir(path):
+        # these should not exist and should definitely not be files
+        if os.path.isfile(path):
+            os.remove(path)
         os.mkdir(path)
 
 
@@ -262,6 +265,10 @@ def set_columns(filename, fileformat=None):
     table = fix_bad_types(table)
     convert_units(table)
     add_name_column(table, column_data.get('Username')['Name'])
+    if 'ADS_ID' not in table.colnames:
+        table.add_column(table.Column(name='ADS_ID', data=[request.form['adsid']]*len(table)))
+    if 'DOI_or_URL' not in table.colnames:
+        table.add_column(table.Column(name='DOI_or_URL', data=[request.form['doi']]*len(table)))
     timestamp = datetime.now()
     add_timestamp_column(table, timestamp)
 
@@ -284,8 +291,9 @@ def set_columns(filename, fileformat=None):
     full_filename_new = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
     os.rename(full_filename_old, full_filename_new)
     add_filename_column(table, unique_filename)
+    print("Table column names after add_filename_column: ",table.colnames)
 
-    handle_email(column_data.get('Email')['Name'], unique_filename)
+    handle_email(request.form['Email'], unique_filename)
 
     # Detect duplicate IDs in uploaded data and bail out if found
     seen = {}
@@ -327,14 +335,23 @@ def set_columns(filename, fileformat=None):
             # If we don't know the filename, flag it as unknown
             add_filename_column(merged_table, 'Unknown'+' '*29)
 
+        if 'ADS_ID' not in merged_table.colnames:
+            # If we don't know the filename, flag it as unknown
+            merged_table.add_column(table.Column(name='ADS_ID', data=['Unknown'+' '*13]*len(merged_table)))
+
+        if 'DOI_or_URL' not in merged_table.colnames:
+            # If we don't know the filename, flag it as unknown
+            merged_table.add_column(table.Column(name='DOI_or_URL', data=['Unknown'+' '*57]*len(merged_table)))
+
     else:
         # Maximum string length of 64 for username, ID -- larger strings are silently truncated
         # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
         #       and verify that submitted data obeys these limits
         merged_table = Table(data=None, names=['Names','IDs','SurfaceDensity',
-                       'VelocityDispersion','Radius','IsSimulated', 'IsGalactic', 'Timestamp', 'Filename'],
+                       'VelocityDispersion','Radius','IsSimulated', 'IsGalactic', 'Timestamp', 'Filename',
+                                              'ADS_ID', 'DOI_or_URL'],
                        dtype=[('str', 64),('str', 64),'float','float','float','bool','bool',
-                              ('str', 26),('str', 36)])
+                              ('str', 26),('str', 36), ('str',20), ('str',64)])
         dts = merged_table.dtype
         # Hack to force fixed-width: works only on strings
         # merged_table.add_row(["_"*dts[ind].itemsize if dts[ind].kind=='S'
@@ -344,6 +361,8 @@ def set_columns(filename, fileformat=None):
         set_units(merged_table)
 
     table = reorder_columns(table, merged_table.colnames)
+    print("Table column names after reorder_columns: ",table.colnames)
+    print("Merged table column names after reorder_columns: ",merged_table.colnames)
 
     # Detect whether any username, ID pairs match entries already in the merged table
     duplicates = {}
@@ -536,10 +555,14 @@ def query_form(filename="merged_table.ipac"):
     
     tolerance=1.2
 
-    min_values=[np.round(min(table['SurfaceDensity'])/tolerance,4),
-                np.round(min(table['VelocityDispersion'])/tolerance,4),
-                np.round(min(table['Radius'])/tolerance,4)]
+    sd = np.ma.masked_where(table['SurfaceDensity']==0, table['SurfaceDensity'])
+    vd = np.ma.masked_where(table['VelocityDispersion']==0, table['VelocityDispersion'])
+    rd = np.ma.masked_where(table['Radius']==0, table['Radius'])
 
+    min_values=[np.round(min(sd)/tolerance,4),
+                np.round(min(vd)/tolerance,4),
+                np.round(min(rd)/tolerance,4)]
+    
     max_values=[np.round(max(table['SurfaceDensity'])*tolerance,1),
                 np.round(max(table['VelocityDispersion'])*tolerance,1),
                 np.round(max(table['Radius'])*tolerance,1)]
@@ -702,11 +725,12 @@ def setup_authenticate_with_github():
 
     import netrc
     nrcfile = os.path.join(os.environ['HOME'], ".netrc")
-    nrc = netrc.netrc(nrcfile)
     if not os.path.isfile(nrcfile):
         # "touch" it
         with open(nrcfile, 'a'):
             os.utime(nrcfile, None)
+
+    nrc = netrc.netrc(nrcfile)
     if not nrc.authenticators('https://github.com'):
         with open(nrcfile, 'r') as f:
             nrcdata = f.read()
@@ -724,6 +748,9 @@ machine github.com
 machine https://github.com
   login {gmail}
   password {password}""".format(password=password, gmail=submitter_gmail))
+
+    nrc = netrc.netrc(nrcfile)
+    print(nrc)
 
     return check_authenticate_with_github()
 
