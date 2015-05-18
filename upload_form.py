@@ -609,10 +609,14 @@ def query_form(filename="merged_table.ipac"):
     
     tolerance=1.2
 
-    min_values=[np.round(min(table['SurfaceDensity'])/tolerance,4),
-                np.round(min(table['VelocityDispersion'])/tolerance,4),
-                np.round(min(table['Radius'])/tolerance,4)]
+    sd = np.ma.masked_where(table['SurfaceDensity']==0, table['SurfaceDensity'])
+    vd = np.ma.masked_where(table['VelocityDispersion']==0, table['VelocityDispersion'])
+    rd = np.ma.masked_where(table['Radius']==0, table['Radius'])
 
+    min_values=[np.round(min(sd)/tolerance,4),
+                np.round(min(vd)/tolerance,4),
+                np.round(min(rd)/tolerance,4)]
+    
     max_values=[np.round(max(table['SurfaceDensity'])*tolerance,1),
                 np.round(max(table['VelocityDispersion'])*tolerance,1),
                 np.round(max(table['Radius'])*tolerance,1)]
