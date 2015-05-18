@@ -237,6 +237,7 @@ def set_columns(filename, fileformat=None):
     ingestion work.
 
     """
+    print("Beginning set_columns.")
 
     if fileformat is None and 'fileformat' in request.args:
         fileformat = request.args['fileformat']
