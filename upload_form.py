@@ -288,6 +288,7 @@ def set_columns(filename, fileformat=None):
     full_filename_new = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
     os.rename(full_filename_old, full_filename_new)
     add_filename_column(table, unique_filename)
+    print("Table column names after add_filename_column: ",table.colnames)
 
     handle_email(request.form['Email'], unique_filename)
 
@@ -356,6 +357,8 @@ def set_columns(filename, fileformat=None):
         set_units(merged_table)
 
     table = reorder_columns(table, merged_table.colnames)
+    print("Table column names after reorder_columns: ",table.colnames)
+    print("Merged table column names after reorder_columns: ",merged_table.colnames)
 
     # Detect whether any username, ID pairs match entries already in the merged table
     duplicates = {}
