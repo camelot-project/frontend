@@ -712,11 +712,12 @@ def setup_authenticate_with_github():
 
     import netrc
     nrcfile = os.path.join(os.environ['HOME'], ".netrc")
-    nrc = netrc.netrc(nrcfile)
     if not os.path.isfile(nrcfile):
         # "touch" it
         with open(nrcfile, 'a'):
             os.utime(nrcfile, None)
+
+    nrc = netrc.netrc(nrcfile)
     if not nrc.authenticators('https://github.com'):
         with open(nrcfile, 'r') as f:
             nrcdata = f.read()
@@ -734,6 +735,9 @@ machine github.com
 machine https://github.com
   login {gmail}
   password {password}""".format(password=password, gmail=submitter_gmail))
+
+    nrc = netrc.netrc(nrcfile)
+    print(nrc)
 
     return check_authenticate_with_github()
 

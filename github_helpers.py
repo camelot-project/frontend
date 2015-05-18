@@ -35,7 +35,8 @@ def delete_excess_branches(repository, username='SirArthurTheSubmitter', organiz
             print("Leaving unchanged pull {0} with title {1}".format(pullnumber, result['title']))
             raise Exception("This state should not be reachable if the API worked right ang gave us only closed PRs")
 
-def close_pull_request(repository, pr_id, username='SirArthurTheSubmitter', organization='camelot-project'):
+def close_pull_request(repository, pr_id, username='SirArthurTheSubmitter', organization='camelot-project',
+                       delete_branch=True):
     S = requests.Session()
     S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
 
@@ -46,3 +47,10 @@ def close_pull_request(repository, pr_id, username='SirArthurTheSubmitter', orga
 
     S.post('https://api.github.com/repos/camelot-project/database/pulls/{0}'.format(pr_id),
            data=json.dumps({'state':'closed'}), auth=(git_user, password))
+
+    result = S.get('https://api.github.com/repos/camelot-project/database/pulls/{0}'.format(pr_id))
+
+    ref = result['head']['ref']
+    print("Pruning pull {0} with title {1} and refid {2}".format(pr_id, result['title'], ref))
+    r = S.delete('https://api.github.com/repos/{organization}/{repository}/git/refs/heads/{ref}'.format(ref=ref, **kwargs),
+                 auth=(git_user, password))
