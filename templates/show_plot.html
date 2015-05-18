@@ -13,6 +13,11 @@
 {{ super() }}
 <h1 class="title">CAMELOT Query output</h1>
 <div class="row">
+{% if errormessage %}
+<div class="errormessage">
+    {{ errormessage }}
+</div>
+{% endif %}
 
 <html>
   <body>

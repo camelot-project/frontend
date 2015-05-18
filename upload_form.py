@@ -412,25 +412,32 @@ def set_columns(filename, fileformat=None):
 
     print("Committing changes")
     # Add merged data to database
-    branch,timestamp = commit_change_to_database(username)
+    branch_database,timestamp = commit_change_to_database(username)
     # Adding raw file to uploads
-    branch,timestamp = commit_change_to_database(username, tablename=unique_filename,
+    branch_uploads,timestamp = commit_change_to_database(username, tablename=unique_filename,
                                                  workingdir='uploads/',
                                                  database='uploads',
                                                  branch=branch,
                                                  timestamp=timestamp)
-    # Let's try without sleeping now that we're running the git commands
-    # synchronously (we needed this when they were asynchronous)
-    # Instead we use the github API to see if the commit is there
-    # time.sleep(1)
-    print("Creating pull requests")
-    response_database, link_pull_database = pull_request(branch,
-                                                         username,
-                                                         timestamp)
-    response_uploads, link_pull_uploads = pull_request(branch,
-						       username,
-						       timestamp,
-						       database='uploads')
+
+    errormessage = None
+    if "NO BRANCH" in (branch_database, branch_uploads):
+        link_pull_database = None
+        link_pull_uploads = None
+        errormessage = "This file has already been included in the database."
+    else:
+        # Let's try without sleeping now that we're running the git commands
+        # synchronously (we needed this when they were asynchronous)
+        # Instead we use the github API to see if the commit is there
+        # time.sleep(1)
+        print("Creating pull requests")
+        response_database, link_pull_database = pull_request(branch,
+                                                             username,
+                                                             timestamp)
+        response_uploads, link_pull_uploads = pull_request(branch,
+                                                           username,
+                                                           timestamp,
+                                                           database='uploads')
 
     outfilename = os.path.splitext(filename)[0]
     myplot = plotData_Sigma_sigma(timeString(), table,
@@ -448,6 +455,7 @@ def set_columns(filename, fileformat=None):
                            tablefile='{fn}.html'.format(fn=outfilename),
                            link_pull_uploads=link_pull_uploads,
                            link_pull_database=link_pull_database,
+                           errormessage=errormessage,
                           )
 
 
@@ -495,6 +503,13 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
         raise Exception("Adding {tablename} to the commit failed in {cwd}."
                         .format(tablename=tablename, cwd=workingdir))
 
+    diff_result = subprocess.call(['git','diff',], cwd=workingdir)
+    # if there is no difference, it is not possible to commit
+    if diff_result == '':
+        checkout_master(remote, workingdir)
+        return "NO BRANCH", timestamp
+
+
     commit_result = subprocess.call(['git','commit','-m',
                       'Add changes to table from {0} at {1}'.format(username,
                                                                     timestamp)],
@@ -516,6 +531,11 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
             time.sleep(0.1)
     branch_exists.raise_for_status()
 
+    checkout_master(remote, workingdir)
+
+    return branch,timestamp
+
+def checkout_master(remote, workingdir):
     checkout_master_result = subprocess.call(['git','checkout',
                                               '{remote}/master'.format(remote=remote)],
                                              cwd=workingdir)
@@ -523,9 +543,6 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
         raise Exception("Checking out the {remote}/master branch in the database failed.  "
                         "This will prevent future uploads from working, which is bad!!"
                         .format(remote=remote, workingdir=workingdir))
-
-    return branch,timestamp
-
 
 def pull_request(branch, user, timestamp, database='database', retry=5):
     """
