@@ -55,7 +55,7 @@ valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated', 'IsGalactic', 'Username', 'Filename']
 dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic',
                               'Username', 'Filename', 'Email', 'ObsSim',
-                              'GalExgal']
+                              'GalExgal', "ADS_ID", "DOI_or_URL"]
 use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
 use_units = ['Msun/pc^2','km/s','pc']
 FigureStrBase='Output_Sigma_sigma_r_'
@@ -64,7 +64,7 @@ TooOld=300 # age in seconds of files to delete
 git_user = 'SirArthurTheSubmitter'
 submitter_gmail = '{0}@gmail.com'.format(git_user)
 
-table_widths = [64, 64, 20, 20, 20, 12, 12, 26, 36]
+table_widths = [64, 64, 20, 20, 20, 12, 12, 26, 36, 20, 64]
 
 table_formats = registry.get_formats(Table)
 
@@ -262,6 +262,8 @@ def set_columns(filename, fileformat=None):
     table = fix_bad_types(table)
     convert_units(table)
     add_name_column(table, column_data.get('Username')['Name'])
+    tbl.add_column(table.Column(name='ADS_ID', data=[request.form['adsid']]*len(tbl)))
+    tbl.add_column(table.Column(name='DOI_or_URL', data=[request.form['doi']]*len(tbl)))
     timestamp = datetime.now()
     add_timestamp_column(table, timestamp)
 
@@ -285,7 +287,7 @@ def set_columns(filename, fileformat=None):
     os.rename(full_filename_old, full_filename_new)
     add_filename_column(table, unique_filename)
 
-    handle_email(column_data.get('Email')['Name'], unique_filename)
+    handle_email(request.form['Email'], unique_filename)
 
     # Detect duplicate IDs in uploaded data and bail out if found
     seen = {}
