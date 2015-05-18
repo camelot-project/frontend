@@ -345,9 +345,10 @@ def set_columns(filename, fileformat=None):
         # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
         #       and verify that submitted data obeys these limits
         merged_table = Table(data=None, names=['Names','IDs','SurfaceDensity',
-                       'VelocityDispersion','Radius','IsSimulated', 'IsGalactic', 'Timestamp', 'Filename'],
+                       'VelocityDispersion','Radius','IsSimulated', 'IsGalactic', 'Timestamp', 'Filename',
+                                              'ADS_ID', 'DOI_or_URL'],
                        dtype=[('str', 64),('str', 64),'float','float','float','bool','bool',
-                              ('str', 26),('str', 36)])
+                              ('str', 26),('str', 36), ('str',20), ('str',64)])
         dts = merged_table.dtype
         # Hack to force fixed-width: works only on strings
         # merged_table.add_row(["_"*dts[ind].itemsize if dts[ind].kind=='S'
