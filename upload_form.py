@@ -49,7 +49,7 @@ UPLOAD_FOLDER = 'uploads/'
 DATABASE_FOLDER = 'database/'
 MPLD3_FOLDER = 'static/mpld3/'
 PNG_PLOT_FOLDER = 'static/figures/'
-TABLE_FOLDER = 'static/tables/'
+TABLE_FOLDER = 'static/jstables/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated', 'IsGalactic', 'Username', 'Filename']
@@ -76,20 +76,29 @@ app.config['PNG_PLOT_FOLDER'] = PNG_PLOT_FOLDER
 app.config['TABLE_FOLDER'] = TABLE_FOLDER
 #app.config['DEBUG']=True
 
-for path in (UPLOAD_FOLDER, MPLD3_FOLDER, DATABASE_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
+# this might be subject to a race condition?  How?!
+for path in (MPLD3_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
     try:
         print("ls {0}".format(path))
         os.listdir(path)
         print("Path {0} does too exist!".format(path))
     except OSError:
         print("Path {0} does not exist.".format(path))
-    if not os.path.isdir(path):
+    while not os.path.isdir(path):
         # these should not exist and should definitely not be files
         if os.path.isfile(path):
             print("Deleting regular file {0}".format(path))
-            os.remove(path)
+            try:
+                os.remove(path)
+            except OSError as ex:
+                print("Failed to remove {0}: {1}".format(path, ex))
+                continue
         print("Making directory {0}".format(path))
-        os.mkdir(path)
+        try:
+            os.mkdir(path)
+        except OSError as ex:
+            print("Failed to create {0}: {1}".format(path, ex))
+            continue
 
 
 # Allow zipping in jinja templates: http://stackoverflow.com/questions/5208252/ziplist1-list2-in-jinja2
@@ -414,11 +423,6 @@ def set_columns(filename, fileformat=None):
 						       timestamp,
 						       database='uploads')
 
-    if not os.path.isdir('static/figures/'):
-        os.mkdir('static/figures')
-    if not os.path.isdir('static/jstables/'):
-        os.mkdir('static/jstables')
-
     outfilename = os.path.splitext(filename)[0]
     myplot = plotData_Sigma_sigma(timeString(), table,
                                   os.path.join(app.config['MPLD3_FOLDER'],
@@ -426,7 +430,7 @@ def set_columns(filename, fileformat=None):
 
     tablecss = "table,th,td,tr,tbody {border: 1px solid black; border-collapse: collapse;}"
     write_table_jsviewer(table,
-                         'static/jstables/{fn}.html'.format(fn=outfilename),
+                         os.path.join(TABLE_FOLDER, '{fn}.html'.format(fn=outfilename)),
                          css=tablecss,
                          jskwargs={'use_local_files':False},
                          table_id=outfilename)
