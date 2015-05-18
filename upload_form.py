@@ -379,6 +379,10 @@ def set_columns(filename, fileformat=None):
     ipac_writer(merged_table, merged_table_name, widths=table_widths)
     
     username = column_data.get('Username')['Name']
+
+    print("Re-fetching the databases.")
+    check_authenticate_with_github()
+
     print("Committing changes")
     # Add merged data to database
     branch,timestamp = commit_change_to_database(username)
@@ -443,6 +447,9 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
     if name != database:
         raise Exception("Error: the remote URL {0} (which is really '{2}') does not match the expected one '{1}'"
                         .format(check_upstream, database, name))
+
+    branch_result = subprocess.call(['git','branch', '-a'], cwd=workingdir)
+    print("git branch -a: ",branch_result)
 
     checkout_master_result = subprocess.call(['git','checkout',
                                               '{remote}/master'.format(remote=remote)],
