@@ -329,6 +329,14 @@ def set_columns(filename, fileformat=None):
             # If we don't know the filename, flag it as unknown
             add_filename_column(merged_table, 'Unknown'+' '*29)
 
+        if 'ADS_ID' not in merged_table.colnames:
+            # If we don't know the filename, flag it as unknown
+            merged_table.add_column(table.Column(name='ADS_ID', data=['Unknown'+' '*13]*len(merged_table)))
+
+        if 'DOI_or_URL' not in merged_table.colnames:
+            # If we don't know the filename, flag it as unknown
+            merged_table.add_column(table.Column(name='DOI_or_URL', data=['Unknown'+' '*57]*len(merged_table)))
+
     else:
         # Maximum string length of 64 for username, ID -- larger strings are silently truncated
         # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
