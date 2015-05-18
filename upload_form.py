@@ -78,6 +78,9 @@ app.config['TABLE_FOLDER'] = TABLE_FOLDER
 
 for path in (UPLOAD_FOLDER, MPLD3_FOLDER, DATABASE_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
     if not os.path.isdir(path):
+        # these should not exist and should definitely not be files
+        if os.path.isfile(path):
+            os.remove(path)
         os.mkdir(path)
 
 
