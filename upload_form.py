@@ -43,6 +43,9 @@ from ipac_writer import ipac_writer
 from astropy.table import Table, vstack
 from astropy.table.jsviewer import write_table_jsviewer
 from astropy import units as u
+from astropy import log
+if os.getenv('DEBUG'):
+    log.setLevel(10)
 import hashlib
 
 UPLOAD_FOLDER = 'uploads/'
@@ -79,25 +82,25 @@ app.config['TABLE_FOLDER'] = TABLE_FOLDER
 # this might be subject to a race condition?  How?!
 for path in (MPLD3_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
     try:
-        print("ls {0}".format(path))
+        log.debug("ls {0}".format(path))
         os.listdir(path)
-        print("Path {0} does too exist!".format(path))
+        log.debug("Path {0} does too exist!".format(path))
     except OSError:
-        print("Path {0} does not exist.".format(path))
+        log.debug("Path {0} does not exist.".format(path))
     while not os.path.isdir(path):
         # these should not exist and should definitely not be files
         if os.path.isfile(path):
-            print("Deleting regular file {0}".format(path))
+            log.debug("Deleting regular file {0}".format(path))
             try:
                 os.remove(path)
             except OSError as ex:
-                print("Failed to remove {0}: {1}".format(path, ex))
+                log.debug("Failed to remove {0}: {1}".format(path, ex))
                 continue
-        print("Making directory {0}".format(path))
+        log.debug("Making directory {0}".format(path))
         try:
             os.mkdir(path)
         except OSError as ex:
-            print("Failed to create {0}: {1}".format(path, ex))
+            log.debug("Failed to create {0}: {1}".format(path, ex))
             continue
 
 
@@ -254,15 +257,17 @@ def set_columns(filename, fileformat=None):
     ingestion work.
 
     """
-    print("Beginning set_columns.")
+    log.debug("Beginning set_columns.")
 
     if fileformat is None and 'fileformat' in request.args:
         fileformat = request.args['fileformat']
 
-
+    log.debug("Reading table {0}".format(filename))
     table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename),
                        format=fileformat)
 
+    log.debug("Parsing column data.")
+    log.debug("form: {0}".format(request.form))
     column_data = {field:{'Name':value}
                    for field,value in request.form.items()
                    if '_units' not in field}
@@ -277,6 +282,7 @@ def set_columns(filename, fileformat=None):
 
     mapping = {filename: [column_data, units_data]}
 
+    log.debug("Further table handling.")
     # Parse the table file, step-by-step
     rename_columns(table, {k: v['Name'] for k,v in column_data.items()})
     set_units(table, units_data)
@@ -309,7 +315,7 @@ def set_columns(filename, fileformat=None):
     full_filename_new = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
     os.rename(full_filename_old, full_filename_new)
     add_filename_column(table, unique_filename)
-    print("Table column names after add_filename_column: ",table.colnames)
+    log.debug("Table column names after add_filename_column: ",table.colnames)
 
     handle_email(request.form['Email'], unique_filename)
 
