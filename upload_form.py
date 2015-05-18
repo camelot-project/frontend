@@ -379,6 +379,7 @@ def set_columns(filename, fileformat=None):
     ipac_writer(merged_table, merged_table_name, widths=table_widths)
     
     username = column_data.get('Username')['Name']
+    print("Committing changes")
     # Add merged data to database
     branch,timestamp = commit_change_to_database(username)
     # Adding raw file to uploads
@@ -391,6 +392,7 @@ def set_columns(filename, fileformat=None):
     # synchronously (we needed this when they were asynchronous)
     # Instead we use the github API to see if the commit is there
     # time.sleep(1)
+    print("Creating pull requests")
     response_database, link_pull_database = pull_request(branch,
                                                          username,
                                                          timestamp)
