@@ -824,6 +824,35 @@ def check_authenticate_with_github():
     assert fetch_database == 0
     print("Fetching uploads and database worked.")
 
+@app.route('/update_database')
+def update_database():
+    """
+    Pull the latest database/master
+    """
+    fetch_database = subprocess.call(['git', 'fetch'], cwd='database/')
+    assert fetch_database == 0
+    pull_database = subprocess.call(['git', 'pull', 'origin', 'master'], cwd='database/')
+    assert pull_database == 0
+
+    S = requests.Session()
+    S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
+
+    apiroot = 'https://api.github.com/'
+    api_pulls = '{apiroot}repos/camelot-project/database/pulls'.format(apiroot=apiroot)
+    pulls_result = S.get(api_pulls, params={'state':'closed'})
+    pulls_result.raise_for_status()
+
+    api_commits = '{apiroot}repos/camelot-project/database/commits'.format(apiroot=apiroot)
+    commits_result = S.get(api_commits)
+    commits_result.raise_for_status()
+
+    data = json.loads(pulls_result.content)
+    data_commits = json.loads(commits_result.content)
+
+    return render_template("updated_database.html",
+                           last_pull=data_commits[0]['commit']['message'],
+                           last_pull_number=data[0]['number'])
+
 def handle_email(email, filename):
     form_url = 'https://docs.google.com/forms/d/1nzdc8jOMlwZEYqdJSvNo6B60gNrUZ9trrhUeYRtUM8g/formResponse'
 
