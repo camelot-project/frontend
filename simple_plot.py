@@ -119,8 +119,9 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
         IsSim = d['IsSimulated'] == 'True'
 
     if show_log:
-        label_dict[variables[0]] = 'log ' + label_dict[variables[0]]
-        label_dict[variables[1]] = 'log ' + label_dict[variables[1]]
+	if not label_dict[variables[0]].startswith('log'):
+	  label_dict[variables[0]] = 'log ' + label_dict[variables[0]]
+	  label_dict[variables[1]] = 'log ' + label_dict[variables[1]]
 
     # selects surface density points wthin the limits
     Use_x_ax = (x_ax > xMin) & (x_ax < xMax)
