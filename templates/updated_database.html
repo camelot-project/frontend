@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{{ super() }}    
+<title>Database has been updated</title>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+{% block body %}
+{{ super() }}
+<h1 class="title">Database has been updated</h1>
+<div class="row">
+{% if errormessage %}
+<div class="errormessage">
+    {{ errormessage }}
+</div>
+{% endif %}
+
+<html>
+  <body>
+  The latest database merge is {{last_pull_number}} with message {{last_pull}}.
+  </body>
+</html>
+
+{% endblock %}
