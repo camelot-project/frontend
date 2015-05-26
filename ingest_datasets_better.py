@@ -2,6 +2,8 @@ import numpy as np
 from astropy import table
 from astropy.table import Table,Column
 from astropy import units as u
+import re
+import string
 
 def fix_logical(t):
     """
@@ -39,6 +41,16 @@ def rename_columns(tbl, mapping = {'name':'Names', 'id':'IDs',
                 tbl.remove_column(k)
             elif k != v:
                 tbl.rename_column(k,v)
+
+def fix_bad_colnames(tbl):
+    """
+    Remove bad characters in column names
+    """
+    badchars = re.compile("[^A-Za-z0-9_]")
+    for k in tbl.colnames:
+        if badchars.search(k):
+            tbl.rename_column(k, badchars.sub("", k))
+            print("Renamed {0} to {1}".format(k, badchars.sub("", k)))
 
 def fix_bad_types(tbl):
     """
