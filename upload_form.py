@@ -275,6 +275,9 @@ def set_columns(filename, fileformat=None):
         return render_template('error.html', error=str(ex),
                                traceback=traceback.format_exc(ex))
 
+    # Have to fix the column reading twice
+    fix_bad_colnames(table)
+
     log.debug("Parsing column data.")
     log.debug("form: {0}".format(request.form))
     column_data = {field:{'Name':value}
@@ -888,6 +891,14 @@ def handle_invalid_usage(error):
     response = jsonify(error.to_dict())
     response.status_code = error.status_code
     return response
+
+@app.route('/version')
+def version():
+    # WIP: does not work because heroku's app is not a git repo
+    git_id = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+    git_database_id = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd='database/')
+
+    return git_id, git_database_id
 
 if __name__ == '__main__':
     if os.getenv('HEROKU_SERVER'):
