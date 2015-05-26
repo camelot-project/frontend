@@ -25,7 +25,8 @@ from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     add_filename_column, add_timestamp_column,
                                     reorder_columns, append_table,
                                     ignore_duplicates, update_duplicates,
-                                    add_is_gal_if_needed, add_is_gal_column)
+                                    add_is_gal_if_needed, add_is_gal_column,
+                                    fix_bad_colnames)
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
 from simple_plot import plotData, plotData_Sigma_sigma
@@ -180,6 +181,9 @@ def uploaded_file(filename, fileformat=None):
 
     best_column_names = [best_matches[colname] if colname in best_matches else 'Ignore'
                          for colname in table.colnames]
+
+    # column names can't have non-letters in them or javascript fails
+    fix_bad_colnames(table)
 
     return render_template("parse_file.html", table=table, filename=filename,
                            real_column_names=valid_column_names,
