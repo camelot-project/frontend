@@ -427,13 +427,18 @@ def set_columns(filename, fileformat=None):
 
     print("Committing changes")
     # Add merged data to database
-    branch_database,timestamp = commit_change_to_database(username)
-    # Adding raw file to uploads
-    branch_uploads,timestamp = commit_change_to_database(username, tablename=unique_filename,
-                                                 workingdir='uploads/',
-                                                 database='uploads',
-                                                 branch=branch_database,
-                                                 timestamp=timestamp)
+    try:
+        branch_database,timestamp = commit_change_to_database(username)
+        # Adding raw file to uploads
+        branch_uploads,timestamp = commit_change_to_database(username, tablename=unique_filename,
+                                                     workingdir='uploads/',
+                                                     database='uploads',
+                                                     branch=branch_database,
+                                                     timestamp=timestamp)
+    except Exception as ex:
+        return render_template('error.html', error=str(ex),
+                               traceback=traceback.format_exc(ex))
+
 
     errormessage = None
     if "NO BRANCH" in (branch_database, branch_uploads):
@@ -521,11 +526,13 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
         raise Exception("Adding {tablename} to the commit failed in {cwd}."
                         .format(tablename=tablename, cwd=workingdir))
 
-    diff_result = subprocess.call(['git','diff',], cwd=workingdir)
+    diff_result = subprocess.check_output(['git','diff',], cwd=workingdir)
     # if there is no difference, it is not possible to commit
     if diff_result == '':
         checkout_master(remote, workingdir)
-        return "NO BRANCH", timestamp
+        raise Exception("No difference was detected between the input branch "
+                        "of {0} and the master.  Possibly the submitted data "
+                        "file contains no data.".format(workingdir))
 
 
     commit_result = subprocess.call(['git','commit','-m',
