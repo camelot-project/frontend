@@ -440,25 +440,14 @@ def set_columns(filename, fileformat=None):
                                traceback=traceback.format_exc(ex))
 
 
-    errormessage = None
-    if "NO BRANCH" in (branch_database, branch_uploads):
-        log.debug("No changes detected.  Not a new branch.")
-        link_pull_database = None
-        link_pull_uploads = None
-        errormessage = "This file has already been included in the database."
-    else:
-        # Let's try without sleeping now that we're running the git commands
-        # synchronously (we needed this when they were asynchronous)
-        # Instead we use the github API to see if the commit is there
-        # time.sleep(1)
-        log.debug("Creating pull requests")
-        response_database, link_pull_database = pull_request(branch_database,
-                                                             username,
-                                                             timestamp)
-        response_uploads, link_pull_uploads = pull_request(branch_database,
-                                                           username,
-                                                           timestamp,
-                                                           database='uploads')
+    log.debug("Creating pull requests")
+    response_database, link_pull_database = pull_request(branch_database,
+                                                         username,
+                                                         timestamp)
+    response_uploads, link_pull_uploads = pull_request(branch_database,
+                                                       username,
+                                                       timestamp,
+                                                       database='uploads')
 
     log.debug("Creating plot.")
     outfilename = os.path.splitext(filename)[0]
@@ -478,7 +467,6 @@ def set_columns(filename, fileformat=None):
                            tablefile='{fn}.html'.format(fn=outfilename),
                            link_pull_uploads=link_pull_uploads,
                            link_pull_database=link_pull_database,
-                           errormessage=errormessage,
                           )
 
 
