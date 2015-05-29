@@ -97,3 +97,10 @@ body {
     background-color: white;
 }
 
+.green {
+    color: #00CC00;
+}
+.red {
+    color: #CC0000;
+    font-weight: bold;
+}

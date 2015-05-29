@@ -21,7 +21,16 @@
 
 <html>
   <body>
-  The latest database merge is {{last_pull_number}} with message {{last_pull}}.
+  {% if commit_disagree_message %}
+  <br> <div class={{cls}}> {{commit_disagree_message}} </div>
+  {% endif %}
+  <br><br>
+  The latest database merge is {{last_pull_number}} with message:
+  <br> {{last_pull}}
+  <br> The current database commit on this instance of the camelot server is:
+  <br> {{commit_hash}} with the name {{commit_name}}
+  <br> The current database commit on github is:
+  <br> <a href="{{last_commit_url}}">{{last_commit_hash}}</a>
   </body>
 </html>
 
