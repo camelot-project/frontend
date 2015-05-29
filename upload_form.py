@@ -745,6 +745,10 @@ def query(filename, fileformat=None):
                            tablefile=tablefile,
                           )
 
+@app.route('/query/static/jstables/<path:path>')
+def send_js(path):
+    return send_from_directory('static/jstables/', path)
+
 @app.before_first_request
 def setup_authenticate_with_github():
     """
