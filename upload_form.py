@@ -440,14 +440,18 @@ def set_columns(filename, fileformat=None):
                                traceback=traceback.format_exc(ex))
 
 
-    log.debug("Creating pull requests")
-    response_database, link_pull_database = pull_request(branch_database,
-                                                         username,
-                                                         timestamp)
-    response_uploads, link_pull_uploads = pull_request(branch_database,
-                                                       username,
-                                                       timestamp,
-                                                       database='uploads')
+    try:
+        log.debug("Creating pull requests")
+        response_database, link_pull_database = pull_request(branch_database,
+                                                             username,
+                                                             timestamp)
+        response_uploads, link_pull_uploads = pull_request(branch_database,
+                                                           username,
+                                                           timestamp,
+                                                           database='uploads')
+    except Exception as ex:
+        return render_template('error.html', error=str(ex),
+                               traceback=traceback.format_exc(ex))
 
     log.debug("Creating plot.")
     outfilename = os.path.splitext(filename)[0]
@@ -843,6 +847,18 @@ def update_database():
     assert pull_database == 0
     commit_hash = subprocess.check_output(['git','rev-parse','HEAD'], cwd='database/').strip()
     commit_name = subprocess.check_output(['git','rev-parse','--abbrev-ref','HEAD'], cwd='database/').strip()
+
+    uncommitted_files = subprocess.call(['git','diff-files','--quiet'], cwd='database/')
+    if uncommitted_files:
+        log.debug("Found uncommitted file changes.")
+        reset = subprocess.call(['git','reset','--hard','HEAD'], cwd='database/')
+        assert reset == 0
+
+    uncommited_staged_changes = subprocess.call(['git','diff-index','--quiet','--cached','HEAD'], cwd='database/')
+    if uncommited_staged_changes:
+        log.debug("Found uncommitted, staged changes.")
+        reset = subprocess.call(['git','reset','--hard','HEAD'], cwd='database/')
+        assert reset == 0
 
     S = requests.Session()
     S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
