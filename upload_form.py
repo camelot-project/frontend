@@ -436,6 +436,8 @@ def set_columns(filename, fileformat=None):
                                                      branch=branch_database,
                                                      timestamp=timestamp)
     except Exception as ex:
+        cleanup_git_directory('uploads/', allow_fail=False)
+        cleanup_git_directory('database/', allow_fail=False)
         return render_template('error.html', error=str(ex),
                                traceback=traceback.format_exc(ex))
 
@@ -450,6 +452,8 @@ def set_columns(filename, fileformat=None):
                                                            timestamp,
                                                            database='uploads')
     except Exception as ex:
+        cleanup_git_directory('uploads/', allow_fail=False)
+        cleanup_git_directory('database/', allow_fail=False)
         return render_template('error.html', error=str(ex),
                                traceback=traceback.format_exc(ex))
 
@@ -836,19 +840,27 @@ def check_authenticate_with_github():
     assert fetch_database == 0
     print("Fetching uploads and database worked.")
 
-def cleanup_git_directory(directory='database/'):
+def cleanup_git_directory(directory='database/', delete_untracked=False,
+                          allow_fail=True):
 
     uncommitted_files = subprocess.call(['git','diff-files','--quiet'], cwd=directory)
     if uncommitted_files:
         log.debug("Found uncommitted file changes in {0}.".format(directory))
         reset = subprocess.call(['git','reset','--hard','HEAD'], cwd=directory)
-        assert reset == 0
+        if allow_fail:
+            assert reset == 0
+
+        if delete_untracked:
+            untracked_deleted = subprocess.call(['git','clean','-f'], cwd=directory)
+            if allow_fail:
+                assert untracked_deleted == 0
 
     uncommited_staged_changes = subprocess.call(['git','diff-index','--quiet','--cached','HEAD'], cwd=directory)
     if uncommited_staged_changes:
         log.debug("Found uncommitted, staged changes in {0}.".format(directory))
         reset = subprocess.call(['git','reset','--hard','HEAD'], cwd=directory)
-        assert reset == 0
+        if allow_fail:
+            assert reset == 0
 
 @app.route('/update_database')
 def update_database():
