@@ -835,6 +835,8 @@ def update_database():
     assert fetch_database == 0
     pull_database = subprocess.call(['git', 'pull', 'origin', 'master'], cwd='database/')
     assert pull_database == 0
+    commit_hash = subprocess.check_output(['git','rev-parse','HEAD'], cwd='database/').strip()
+    commit_name = subprocess.check_output(['git','rev-parse','--abbrev-ref','HEAD'], cwd='database/').strip()
 
     S = requests.Session()
     S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
@@ -851,9 +853,38 @@ def update_database():
     data = json.loads(pulls_result.content)
     data_commits = json.loads(commits_result.content)
 
+    api_last_commit_url = data_commits[0]['commit']['url']
+    api_last_commit_info = S.get(api_last_commit_url)
+    data_last_commit = json.loads(api_last_commit_info.content)
+    last_commit_url = data_last_commit['html_url']
+
+    last_commit_hash = data_last_commit['sha']
+
+    if last_commit_hash != commit_hash:
+        commit_disagree_message = (
+                                   "The hashes github: {0} and server: {1} "
+                                   "don't match; the " 
+                                   "server database is not up to date with the "
+                                   "github database.  This is a significant "
+                                   "error and should be reported."
+                                   .format(last_commit_hash, commit_hash))
+        cls = 'red'
+    else:
+        commit_disagree_message = (
+                                   "The server version of the database matches "
+                                   "that on github.  All is well!")
+        cls = 'green'
+
     return render_template("updated_database.html",
                            last_pull=data_commits[0]['commit']['message'],
-                           last_pull_number=data[0]['number'])
+                           last_commit_url=last_commit_url,
+                           last_commit_hash=last_commit_hash,
+                           last_pull_number=data[0]['number'],
+                           commit_hash=commit_hash,
+                           commit_name=commit_name,
+                           commit_disagree_message=commit_disagree_message,
+                           cls=cls,
+                          )
 
 def handle_email(email, filename):
     form_url = 'https://docs.google.com/forms/d/1nzdc8jOMlwZEYqdJSvNo6B60gNrUZ9trrhUeYRtUM8g/formResponse'
