@@ -436,18 +436,26 @@ def set_columns(filename, fileformat=None):
                                                      branch=branch_database,
                                                      timestamp=timestamp)
     except Exception as ex:
+        cleanup_git_directory('uploads/', allow_fail=False)
+        cleanup_git_directory('database/', allow_fail=False)
         return render_template('error.html', error=str(ex),
                                traceback=traceback.format_exc(ex))
 
 
-    log.debug("Creating pull requests")
-    response_database, link_pull_database = pull_request(branch_database,
-                                                         username,
-                                                         timestamp)
-    response_uploads, link_pull_uploads = pull_request(branch_database,
-                                                       username,
-                                                       timestamp,
-                                                       database='uploads')
+    try:
+        log.debug("Creating pull requests")
+        response_database, link_pull_database = pull_request(branch_database,
+                                                             username,
+                                                             timestamp)
+        response_uploads, link_pull_uploads = pull_request(branch_database,
+                                                           username,
+                                                           timestamp,
+                                                           database='uploads')
+    except Exception as ex:
+        cleanup_git_directory('uploads/', allow_fail=False)
+        cleanup_git_directory('database/', allow_fail=False)
+        return render_template('error.html', error=str(ex),
+                               traceback=traceback.format_exc(ex))
 
     log.debug("Creating plot.")
     outfilename = os.path.splitext(filename)[0]
@@ -832,6 +840,28 @@ def check_authenticate_with_github():
     assert fetch_database == 0
     print("Fetching uploads and database worked.")
 
+def cleanup_git_directory(directory='database/', delete_untracked=False,
+                          allow_fail=True):
+
+    uncommitted_files = subprocess.call(['git','diff-files','--quiet'], cwd=directory)
+    if uncommitted_files:
+        log.debug("Found uncommitted file changes in {0}.".format(directory))
+        reset = subprocess.call(['git','reset','--hard','HEAD'], cwd=directory)
+        if allow_fail:
+            assert reset == 0
+
+        if delete_untracked:
+            untracked_deleted = subprocess.call(['git','clean','-f'], cwd=directory)
+            if allow_fail:
+                assert untracked_deleted == 0
+
+    uncommited_staged_changes = subprocess.call(['git','diff-index','--quiet','--cached','HEAD'], cwd=directory)
+    if uncommited_staged_changes:
+        log.debug("Found uncommitted, staged changes in {0}.".format(directory))
+        reset = subprocess.call(['git','reset','--hard','HEAD'], cwd=directory)
+        if allow_fail:
+            assert reset == 0
+
 @app.route('/update_database')
 def update_database():
     """
@@ -843,6 +873,9 @@ def update_database():
     assert pull_database == 0
     commit_hash = subprocess.check_output(['git','rev-parse','HEAD'], cwd='database/').strip()
     commit_name = subprocess.check_output(['git','rev-parse','--abbrev-ref','HEAD'], cwd='database/').strip()
+
+    cleanup_git_directory('database/')
+    cleanup_git_directory('uploads/')
 
     S = requests.Session()
     S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
