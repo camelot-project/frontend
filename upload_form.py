@@ -741,7 +741,9 @@ def query(filename, fileformat=None):
                                      RadMin, RadMax,
                                      interactive=False)
     
-    return render_template('show_plot.html', imagename='/'+plot_file)
+    return render_template('show_plot.html', imagename='/'+plot_file,
+                           tablefile=tablefile,
+                          )
 
 @app.before_first_request
 def setup_authenticate_with_github():
