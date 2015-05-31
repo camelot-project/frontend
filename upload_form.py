@@ -418,26 +418,49 @@ def set_columns(filename, fileformat=None):
     handle_duplicates(table, merged_table, duplicates)
 
     append_table(merged_table, table)
-    ipac_writer(merged_table, merged_table_name, widths=table_widths)
-    
+
     username = column_data.get('Username')['Name']
 
+    # go to appropriate branches in the database gits
     print("Re-fetching the databases.")
-    check_authenticate_with_github()
+    try:
+        check_authenticate_with_github()
+        branch_database, timestamp = setup_submodule(username,
+                                                     workingdir='database/',
+                                                     database='database')
+        branch_uploads, timestamp = setup_submodule(username,
+                                                    workingdir='uploads/',
+                                                    database='uploads',
+                                                    timestamp=timestamp,
+                                                    branch=branch_database,
+                                                   )
+    except Exception as ex:
+        return render_template('error.html', error=str(ex),
+                               traceback=traceback.format_exc(ex))
 
+    # write the modified table
+    ipac_writer(merged_table, merged_table_name, widths=table_widths)
+    
     print("Committing changes")
     # Add merged data to database
     try:
-        branch_database,timestamp = commit_change_to_database(username)
+        branch_database,timestamp = commit_change_to_database(username,
+                                                              branch=branch_database,
+                                                              timestamp=timestamp)
+    except Exception as ex:
+        cleanup_git_directory('database/', allow_fail=False)
+        return render_template('error.html', error=str(ex),
+                               traceback=traceback.format_exc(ex))
+    try:
         # Adding raw file to uploads
-        branch_uploads,timestamp = commit_change_to_database(username, tablename=unique_filename,
-                                                     workingdir='uploads/',
-                                                     database='uploads',
-                                                     branch=branch_database,
-                                                     timestamp=timestamp)
+        branch_uploads,timestamp = commit_change_to_database(username,
+                                                             tablename=unique_filename,
+                                                             workingdir='uploads/',
+                                                             database='uploads',
+                                                             branch=branch_database,
+                                                             timestamp=timestamp)
     except Exception as ex:
         cleanup_git_directory('uploads/', allow_fail=False)
-        cleanup_git_directory('database/', allow_fail=False)
         return render_template('error.html', error=str(ex),
                                traceback=traceback.format_exc(ex))
 
@@ -478,16 +501,15 @@ def set_columns(filename, fileformat=None):
                           )
 
 
-def commit_change_to_database(username, remote='origin', tablename='merged_table.ipac',
-                              workingdir='database/', database='database', branch=None,
-                              timestamp=None, retry=10):
+def setup_submodule(username, remote='origin', workingdir='database/',
+                    database='database', branch=None, timestamp=None):
     """
     """
     if timestamp is None:
         timestamp = datetime.now().isoformat().replace(":","_")
 
     if branch is None:
-      branch = '{0}_{1}'.format(username, timestamp)
+        branch = '{0}_{1}'.format(username, timestamp)
 
     check_upstream = subprocess.check_output(['git', 'config', '--get',
                                               'remote.{remote}.url'.format(remote=remote)],
@@ -517,19 +539,44 @@ def commit_change_to_database(username, remote='origin', tablename='merged_table
                         "Attempted to checkout branch {0} in {1}"
                         .format(branch, workingdir))
 
+    return branch, timestamp
+
+def commit_change_to_database(username, remote='origin',
+                              tablename='merged_table.ipac',
+                              workingdir='database/', database='database',
+                              branch=None, timestamp=None, retry=10):
+    """
+    """
+    if timestamp is None:
+        timestamp = datetime.now().isoformat().replace(":","_")
+
+    if branch is None:
+        branch = '{0}_{1}'.format(username, timestamp)
+
+    check_upstream = subprocess.check_output(['git', 'config', '--get',
+                                              'remote.{remote}.url'.format(remote=remote)],
+                                             cwd=workingdir)
+    name = os.path.split(check_upstream)[1][:-5]
+    if name != database:
+        raise Exception("Error: the remote URL {0} (which is really '{2}') does not match the expected one '{1}'"
+                        .format(check_upstream, database, name))
+
     add_result = subprocess.call(['git','add',tablename], cwd=workingdir)
     if add_result != 0:
         raise Exception("Adding {tablename} to the commit failed in {cwd}."
                         .format(tablename=tablename, cwd=workingdir))
 
-    diff_result = subprocess.check_output(['git','diff',], cwd=workingdir)
+    print("Staged diff")
+    # diff checking with --cached includes staged files
+    diff_result = subprocess.check_output(['git','diff', '--cached'],
+                                          cwd=workingdir)
     # if there is no difference, it is not possible to commit
     if diff_result == '':
         checkout_master(remote, workingdir)
         raise Exception("No difference was detected between the input branch "
-                        "of {0} and the master.  Possibly the submitted data "
+                        "of {0} ard the master after staging."
+                        "  Possibly the submitted data "
                         "file contains no data.".format(workingdir))
-
 
     commit_result = subprocess.call(['git','commit','-m',
                       'Add changes to table from {0} at {1}'.format(username,
@@ -615,7 +662,7 @@ def pull_request(branch, user, timestamp, database='database', retry=5):
     return response, pull_url
 
 def handle_duplicates(table, merged_table, duplicates):
-    print("TODO: DO SOMETHING HERE")
+    print("TODO: DO SOMETHING HERE (handle duplicates)")
 
 @app.route('/query_form')
 def query_form(filename="merged_table.ipac"):
