@@ -172,7 +172,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     if min_marker_width < 1:
         min_marker_width *= min_axis_size
 
-    marker_conversion = min_marker_width / \
+    marker_conversion = max_marker_width / \
         (np.log10(z_ax.max())-np.log10(z_ax.min()))
 
     marker_sizes = (marker_conversion *
