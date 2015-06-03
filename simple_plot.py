@@ -140,6 +140,14 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     # NOTE this does NOT work with mpld3
     # ax.loglog()
 
+    # Set plot limits. Needed for conversion of pixel units to plot units.
+    if show_log:
+        ax.set_xlim(np.log10(xMin.value), np.log10(xMax.value))
+        ax.set_ylim(np.log10(yMin.value), np.log10(yMax.value))
+    else:
+        ax.set_xlim(xMin.value, xMax.value)
+        ax.set_ylim(yMin.value, yMax.value)
+
     scatters = []
 
     markers = ['o', 's']
@@ -248,13 +256,6 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     for xf, yf, rad in zip(xfake, yfake, radius):
         ax.text(xf + 0.05, yf-0.01, str(rad) + ' ' + str(zMin.unit),
                 transform=ax.transAxes)
-
-    if show_log:
-        ax.set_xlim(np.log10(xMin.value), np.log10(xMax.value))
-        ax.set_ylim(np.log10(yMin.value), np.log10(yMax.value))
-    else:
-        ax.set_xlim(xMin.value, xMax.value)
-        ax.set_ylim(yMin.value, yMax.value)
 
     html = mpld3.fig_to_html(figure)
     with open(FigureStrBase+NQuery+'.html', 'w') as f:
