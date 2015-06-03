@@ -271,7 +271,11 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     # TODO: change position based on user input
     xfake = [0.1, 0.1, 0.1, 0.1]
     yfake = [0.80, 0.85, 0.9, 0.95]
-    radius = np.array([1e-1, 1e0, 1e1, 1e2])  # *u.pc #(zMin + zMax)*0.5
+    radius = np.array([1e-1, 1e0, 1e1, 1e2])
+
+    fake_marker_sizes = (marker_conversion *
+                         (np.log10(radius)-np.log10(z_ax.min())) +
+                         min_marker_width)**2
 
     # xfake = [xax_limits[0] + xax_limits[0]*2.,
     #          xax_limits[0] + xax_limits[0]*2.,
@@ -281,7 +285,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     #          yax_limits[1] - yax_limits[1]*0.6]
 
     ax.scatter(np.array(xfake), np.array(yfake), marker='+',
-               s=(np.log(np.array(radius))-np.log(zMin.value)+0.5)**3.,
+               s=fake_marker_sizes,
                transform=ax.transAxes,
                facecolors='g')
     for xf, yf, rad in zip(xfake, yfake, radius):
