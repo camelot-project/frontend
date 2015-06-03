@@ -155,7 +155,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
             # Change to logs on next commit
             scatter = \
                 ax.scatter(plot_x[ObsPlot], plot_y[ObsPlot], marker=markers[0],
-                           s=(np.log(np.array(z_ax[ObsPlot]))-np.log(zMin.value)+0.5)**3.,
+                           s=(np.log(np.array(z_ax[ObsPlot]))-np.log(zMin.value)+2.0)**3.,
                            color=color, alpha=0.5, edgecolors='k')
 
             scatters.append(scatter)
@@ -183,7 +183,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
             # Change to logs on next commit
             scatter = \
                 ax.scatter(plot_x[SimPlot], plot_y[SimPlot], marker=markers[1],
-                           s=(np.log(np.array(z_ax[SimPlot]))-np.log(zMin.value)+0.5)**3.,
+                           s=(np.log(np.array(z_ax[SimPlot]))-np.log(zMin.value)+2.0)**3.,
                            color=color, alpha=0.5, edgecolors='k')
 
             scatters.append(scatter)
@@ -231,7 +231,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     # TODO: write a function with this section
     # TODO: change position based on user input
     xfake = [0.1, 0.1, 0.1, 0.1]
-    yfake = [0.80, 0.85, 0.9, 0.95]
+    yfake = [0.80, 0.85, 0.90, 0.96]
     radius = np.array([1e-1, 1e0, 1e1, 1e2])  # *u.pc #(zMin + zMax)*0.5
 
     # xfake = [xax_limits[0] + xax_limits[0]*2.,
@@ -242,7 +242,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     #          yax_limits[1] - yax_limits[1]*0.6]
 
     ax.scatter(np.array(xfake), np.array(yfake), marker='+',
-               s=(np.log(np.array(radius))-np.log(zMin.value)+0.5)**3.,
+               s=(np.log(np.array(radius))-np.log(zMin.value)+2.0)**3.,
                transform=ax.transAxes,
                facecolors='g')
     for xf, yf, rad in zip(xfake, yfake, radius):
