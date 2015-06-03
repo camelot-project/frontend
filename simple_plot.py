@@ -40,8 +40,8 @@ table, th, td
 
 
 label_dict = \
-    {'SurfaceDensity': '\u03A3 [M\u2609 pc\u207B\u00B2]',
-     'VelocityDispersion': "\u03C3 [km s\u207B\u00B9]",
+    {'SurfaceDensity': 'SurfDens', #'\u03A3 [M\u2609 pc\u207B\u00B2]',
+     'VelocityDispersion': 'VelDisp', #"\u03C3 [km s\u207B\u00B9]",
      'Radius': '$R$ [pc]'}
 
 
@@ -75,7 +75,8 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
 
 
 def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
-             yMin, yMax, zMin, zMax, interactive=False, show_log=True):
+             yMin, yMax, zMin, zMax, interactive=False, show_log=True,
+             min_marker_width=3, max_marker_width=0.05):
     """
     This is where documentation needs to be added
 
@@ -91,6 +92,15 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     yMax
     zMin
     zMax
+    min_marker_width : int or float, optional
+        Sets the pixel width of the smallest marker to be plotted. If <1,
+        it is interpreted to be a fraction of the total pixels along the
+        shortest axis.
+    max_marker_width : int or float, optional
+        Sets the pixel width of the smallest marker to be plotted. If <1,
+        it is interpreted to be a fraction of the total pixels along the
+        shortest axis.
+
     """
 
     figure = matplotlib.figure.Figure()
@@ -119,9 +129,9 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
         IsSim = d['IsSimulated'] == 'True'
 
     if show_log:
-	if not label_dict[variables[0]].startswith('log'):
-	  label_dict[variables[0]] = 'log ' + label_dict[variables[0]]
-	  label_dict[variables[1]] = 'log ' + label_dict[variables[1]]
+        if not label_dict[variables[0]].startswith('log'):
+            label_dict[variables[0]] = 'log ' + label_dict[variables[0]]
+            label_dict[variables[1]] = 'log ' + label_dict[variables[1]]
 
     # selects surface density points wthin the limits
     Use_x_ax = (x_ax > xMin) & (x_ax < xMax)
@@ -148,6 +158,27 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
         ax.set_xlim(xMin.value, xMax.value)
         ax.set_ylim(yMin.value, yMax.value)
 
+    # Set marker sizes based on a minimum and maximum pixel size, then scale
+    # the rest between.
+
+    bbox = \
+        ax.get_window_extent().transformed(figure.dpi_scale_trans.inverted())
+
+    min_axis_size = min(bbox.width, bbox.height) * figure.dpi
+
+    if max_marker_width < 1:
+        max_marker_width *= min_axis_size
+
+    if min_marker_width < 1:
+        min_marker_width *= min_axis_size
+
+    marker_conversion = min_marker_width / \
+        (np.log10(z_ax.max())-np.log10(z_ax.min()))
+
+    marker_sizes = (marker_conversion *
+                    (np.log10(np.array(z_ax))-np.log10(z_ax.min())) +
+                    min_marker_width)**2
+
     scatters = []
 
     markers = ['o', 's']
@@ -163,7 +194,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
             # Change to logs on next commit
             scatter = \
                 ax.scatter(plot_x[ObsPlot], plot_y[ObsPlot], marker=markers[0],
-                           s=(np.log(np.array(z_ax[ObsPlot]))-np.log(zMin.value)+0.5)**3.,
+                           s=marker_sizes[ObsPlot],
                            color=color, alpha=0.5, edgecolors='k')
 
             scatters.append(scatter)
@@ -191,7 +222,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
             # Change to logs on next commit
             scatter = \
                 ax.scatter(plot_x[SimPlot], plot_y[SimPlot], marker=markers[1],
-                           s=(np.log(np.array(z_ax[SimPlot]))-np.log(zMin.value)+0.5)**3.,
+                           s=marker_sizes[SimPlot],
                            color=color, alpha=0.5, edgecolors='k')
 
             scatters.append(scatter)
@@ -261,7 +292,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     with open(FigureStrBase+NQuery+'.html', 'w') as f:
        f.write(html)
 
-    figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
+    # figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
     # figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
 
     if interactive:
