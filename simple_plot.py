@@ -230,9 +230,9 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
 
     # TODO: write a function with this section
     # TODO: change position based on user input
-    xfake = [0.1, 0.1, 0.1]
-    yfake = [0.85, 0.9, 0.95]
-    radius = np.array([1e-1, 1e0, 1e1])  # *u.pc #(zMin + zMax)*0.5
+    xfake = [0.1, 0.1, 0.1, 0.1]
+    yfake = [0.80, 0.85, 0.9, 0.95]
+    radius = np.array([1e-1, 1e0, 1e1, 1e2])  # *u.pc #(zMin + zMax)*0.5
 
     # xfake = [xax_limits[0] + xax_limits[0]*2.,
     #          xax_limits[0] + xax_limits[0]*2.,
