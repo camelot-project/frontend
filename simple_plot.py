@@ -40,8 +40,8 @@ table, th, td
 
 
 label_dict = \
-    {'SurfaceDensity': 'SurfDens', #'\u03A3 [M\u2609 pc\u207B\u00B2]',
-     'VelocityDispersion': 'VelDisp', #"\u03C3 [km s\u207B\u00B9]",
+    {'SurfaceDensity': '\u03A3 [M\u2609 pc\u207B\u00B2]',
+     'VelocityDispersion': "\u03C3 [km s\u207B\u00B9]",
      'Radius': '$R$ [pc]'}
 
 
@@ -296,7 +296,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     with open(FigureStrBase+NQuery+'.html', 'w') as f:
        f.write(html)
 
-    # figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
+    figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
     # figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
 
     if interactive:
