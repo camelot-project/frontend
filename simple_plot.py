@@ -269,12 +269,19 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
 
     # TODO: write a function with this section
     # TODO: change position based on user input
-    xfake = [0.1, 0.1, 0.1, 0.1]
-    yfake = [0.80, 0.85, 0.9, 0.95]
-    radius = np.array([1e-1, 1e0, 1e1, 1e2])
+
+    # Try floor and ceil. Pick the one closest to the max/min.
+
+    max_z = round_to_pow_10(z_ax[Use].max())
+    min_z = round_to_pow_10(z_ax[Use].min())
+    mid_z = round_to_pow_10((max_z + min_z) / 2., log=False)
+    fake_z_marker_size = np.array([max_z, mid_z, min_z])
+
+    xfake = [0.1] * fake_z_marker_size.shape[0]
+    yfake = [0.95 - 0.05*x for x in range(fake_z_marker_size.shape[0])]
 
     fake_marker_sizes = (marker_conversion *
-                         (np.log10(radius)-np.log10(z_ax[Use].min())) +
+                         (fake_z_marker_size-np.log10(z_ax[Use].min())) +
                          min_marker_width)**2
 
     # xfake = [xax_limits[0] + xax_limits[0]*2.,
@@ -288,8 +295,8 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
                s=fake_marker_sizes,
                transform=ax.transAxes,
                facecolors='g')
-    for xf, yf, rad in zip(xfake, yfake, radius):
-        ax.text(xf + 0.05, yf-0.01, str(rad) + ' ' + str(zMin.unit),
+    for xf, yf, rad in zip(xfake, yfake, fake_z_marker_size):
+        ax.text(xf + 0.05, yf-0.01, str(10**rad) + ' ' + str(zMin.unit),
                 transform=ax.transAxes)
 
     html = mpld3.fig_to_html(figure)
@@ -307,3 +314,24 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
         mpld3.show()
 
     return FigureStrBase+NQuery+'.html'
+
+
+def round_to_pow_10(value, log=True):
+    '''
+    Use ceil and floor on a given value and return the value which is the
+    closest.
+    '''
+
+    if log:
+        log_value = np.log10(value)
+    else:
+        log_value = value
+
+    ceil = np.ceil(log_value)
+
+    floor = np.floor(log_value)
+
+    if np.abs(ceil - log_value) < np.abs(log_value - floor):
+        return ceil
+    else:
+        return floor
