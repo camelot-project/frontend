@@ -262,16 +262,9 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
                                                         alpha_unsel=0,
                                                         alpha_sel=0.5))
 
-    # adding fake points to show the size
-    axes_limits = ax.axis()
-    xax_limits = axes_limits[:2]
-    yax_limits = axes_limits[2:]
-
-    # TODO: write a function with this section
-    # TODO: change position based on user input
+    # Adding fake points to show the size
 
     # Try floor and ceil. Pick the one closest to the max/min.
-
     max_z = round_to_pow_10(z_ax[Use].max())
     min_z = round_to_pow_10(z_ax[Use].min())
     mid_z = round_to_pow_10((max_z + min_z) / 2., log=False)
@@ -296,8 +289,6 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
 
     xfake = [0.1] * fake_z_marker_width.shape[0]
     yfake = [0.95 - sep_ax_frac*x for x in range(fake_z_marker_width.shape[0])]
-
-
 
     # xfake = [xax_limits[0] + xax_limits[0]*2.,
     #          xax_limits[0] + xax_limits[0]*2.,
