@@ -275,7 +275,12 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     max_z = round_to_pow_10(z_ax[Use].max())
     min_z = round_to_pow_10(z_ax[Use].min())
     mid_z = round_to_pow_10((max_z + min_z) / 2., log=False)
-    fake_z_marker_size = np.array([max_z, mid_z, min_z])
+    if mid_z == max_z:
+        fake_z_marker_size = np.array([max_z])
+    elif mid_z == max_z or mid_z == min_z:
+        fake_z_marker_size = np.array([max_z, min_z])
+    else:
+        fake_z_marker_size = np.array([max_z, mid_z, min_z])
 
     xfake = [0.1] * fake_z_marker_size.shape[0]
     yfake = [0.95 - 0.05*x for x in range(fake_z_marker_size.shape[0])]
