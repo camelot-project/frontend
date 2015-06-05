@@ -40,8 +40,8 @@ table, th, td
 
 
 label_dict = \
-    {'SurfaceDensity': '\u03A3 [M\u2609 pc\u207B\u00B2]',
-     'VelocityDispersion': "\u03C3 [km s\u207B\u00B9]",
+    {'SurfaceDensity': 'SurfDens', #'\u03A3 [M\u2609 pc\u207B\u00B2]',
+     'VelocityDispersion': 'VelDisp', #"\u03C3 [km s\u207B\u00B9]",
      'Radius': '$R$ [pc]'}
 
 
@@ -173,10 +173,10 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
         min_marker_width *= min_axis_size
 
     marker_conversion = max_marker_width / \
-        (np.log10(z_ax.max())-np.log10(z_ax.min()))
+        (np.log10(z_ax[Use].max())-np.log10(z_ax[Use].min()))
 
     marker_sizes = (marker_conversion *
-                    (np.log10(np.array(z_ax))-np.log10(z_ax.min())) +
+                    (np.log10(np.array(z_ax))-np.log10(z_ax[Use].min())) +
                     min_marker_width)**2
 
     scatters = []
@@ -274,7 +274,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     radius = np.array([1e-1, 1e0, 1e1, 1e2])
 
     fake_marker_sizes = (marker_conversion *
-                         (np.log10(radius)-np.log10(z_ax.min())) +
+                         (np.log10(radius)-np.log10(z_ax[Use].min())) +
                          min_marker_width)**2
 
     # xfake = [xax_limits[0] + xax_limits[0]*2.,
