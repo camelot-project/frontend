@@ -276,18 +276,28 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     min_z = round_to_pow_10(z_ax[Use].min())
     mid_z = round_to_pow_10((max_z + min_z) / 2., log=False)
     if mid_z == max_z:
-        fake_z_marker_size = np.array([max_z])
+        fake_z_marker_width = np.array([max_z])
     elif mid_z == max_z or mid_z == min_z:
-        fake_z_marker_size = np.array([max_z, min_z])
+        fake_z_marker_width = np.array([max_z, min_z])
     else:
-        fake_z_marker_size = np.array([max_z, mid_z, min_z])
-
-    xfake = [0.1] * fake_z_marker_size.shape[0]
-    yfake = [0.95 - 0.05*x for x in range(fake_z_marker_size.shape[0])]
+        fake_z_marker_width = np.array([max_z, mid_z, min_z])
 
     fake_marker_sizes = (marker_conversion *
-                         (fake_z_marker_size-np.log10(z_ax[Use].min())) +
+                         (fake_z_marker_width-np.log10(z_ax[Use].min())) +
                          min_marker_width)**2
+
+    # Set the axis fraction to plot the points at. Adjust if the largest
+    # will overlap with the next.
+    sep_ax_frac = 0.05
+
+    if np.sqrt(fake_marker_sizes[0])/float(min_axis_size) > 0.05:
+        sep_ax_frac = np.sqrt(fake_marker_sizes[0])/float(min_axis_size) \
+            + 0.005
+
+    xfake = [0.1] * fake_z_marker_width.shape[0]
+    yfake = [0.95 - sep_ax_frac*x for x in range(fake_z_marker_width.shape[0])]
+
+
 
     # xfake = [xax_limits[0] + xax_limits[0]*2.,
     #          xax_limits[0] + xax_limits[0]*2.,
@@ -300,7 +310,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
                s=fake_marker_sizes,
                transform=ax.transAxes,
                facecolors='g')
-    for xf, yf, rad in zip(xfake, yfake, fake_z_marker_size):
+    for xf, yf, rad in zip(xfake, yfake, fake_z_marker_width):
         ax.text(xf + 0.05, yf-0.01, str(10**rad) + ' ' + str(zMin.unit),
                 transform=ax.transAxes)
 
