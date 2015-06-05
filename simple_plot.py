@@ -40,8 +40,8 @@ table, th, td
 
 
 label_dict = \
-    {'SurfaceDensity': 'SurfDens', #'\u03A3 [M\u2609 pc\u207B\u00B2]',
-     'VelocityDispersion': 'VelDisp', #"\u03C3 [km s\u207B\u00B9]",
+    {'SurfaceDensity': '\u03A3 [M\u2609 pc\u207B\u00B2]',
+     'VelocityDispersion': "\u03C3 [km s\u207B\u00B9]",
      'Radius': '$R$ [pc]'}
 
 
@@ -150,14 +150,6 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     # NOTE this does NOT work with mpld3
     # ax.loglog()
 
-    # Set plot limits. Needed for conversion of pixel units to plot units.
-    if show_log:
-        ax.set_xlim(np.log10(xMin.value), np.log10(xMax.value))
-        ax.set_ylim(np.log10(yMin.value), np.log10(yMax.value))
-    else:
-        ax.set_xlim(xMin.value, xMax.value)
-        ax.set_ylim(yMin.value, yMax.value)
-
     # Set marker sizes based on a minimum and maximum pixel size, then scale
     # the rest between.
 
@@ -175,9 +167,11 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     marker_conversion = max_marker_width / \
         (np.log10(z_ax[Use].max())-np.log10(z_ax[Use].min()))
 
-    marker_sizes = (marker_conversion *
-                    (np.log10(np.array(z_ax))-np.log10(z_ax[Use].min())) +
-                    min_marker_width)**2
+    marker_widths = (marker_conversion *
+                     (np.log10(np.array(z_ax))-np.log10(z_ax[Use].min())) +
+                     min_marker_width)
+
+    marker_sizes = marker_widths**2
 
     scatters = []
 
@@ -248,6 +242,20 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
 
     ax.set_xlabel(label_dict[variables[0]], fontsize=16)
     ax.set_ylabel(label_dict[variables[1]], fontsize=16)
+
+    # Set plot limits. Needed for conversion of pixel units to plot units.
+
+    # Pad the maximum marker width on.
+    inv = ax.transData.inverted()
+    pad_x, pad_y = inv.transform((marker_widths.max(), marker_widths.max())) - \
+        inv.transform((0.0, 0.0))
+
+    if show_log:
+        ax.set_xlim(np.log10(xMin.value)-pad_x, np.log10(xMax.value)+pad_x)
+        ax.set_ylim(np.log10(yMin.value)-pad_y, np.log10(yMax.value)+pad_y)
+    else:
+        ax.set_xlim(xMin.value - pad_x, xMax.value + pad_x)
+        ax.set_ylim(yMin.value - pad_y, yMax.value + pad_y)
 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
