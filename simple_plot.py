@@ -75,7 +75,8 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
 
 
 def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
-             yMin, yMax, zMin, zMax, interactive=False, show_log=True):
+             yMin, yMax, zMin, zMax, interactive=False, show_log=True,
+             min_marker_width=3, max_marker_width=0.05):
     """
     This is where documentation needs to be added
 
@@ -91,6 +92,15 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     yMax
     zMin
     zMax
+    min_marker_width : int or float, optional
+        Sets the pixel width of the smallest marker to be plotted. If <1,
+        it is interpreted to be a fraction of the total pixels along the
+        shortest axis.
+    max_marker_width : int or float, optional
+        Sets the pixel width of the smallest marker to be plotted. If <1,
+        it is interpreted to be a fraction of the total pixels along the
+        shortest axis.
+
     """
 
     figure = matplotlib.figure.Figure()
@@ -119,9 +129,9 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
         IsSim = d['IsSimulated'] == 'True'
 
     if show_log:
-	if not label_dict[variables[0]].startswith('log'):
-	  label_dict[variables[0]] = 'log ' + label_dict[variables[0]]
-	  label_dict[variables[1]] = 'log ' + label_dict[variables[1]]
+        if not label_dict[variables[0]].startswith('log'):
+            label_dict[variables[0]] = 'log ' + label_dict[variables[0]]
+            label_dict[variables[1]] = 'log ' + label_dict[variables[1]]
 
     # selects surface density points wthin the limits
     Use_x_ax = (x_ax > xMin) & (x_ax < xMax)
@@ -140,6 +150,29 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     # NOTE this does NOT work with mpld3
     # ax.loglog()
 
+    # Set marker sizes based on a minimum and maximum pixel size, then scale
+    # the rest between.
+
+    bbox = \
+        ax.get_window_extent().transformed(figure.dpi_scale_trans.inverted())
+
+    min_axis_size = min(bbox.width, bbox.height) * figure.dpi
+
+    if max_marker_width < 1:
+        max_marker_width *= min_axis_size
+
+    if min_marker_width < 1:
+        min_marker_width *= min_axis_size
+
+    marker_conversion = max_marker_width / \
+        (np.log10(z_ax[Use].max())-np.log10(z_ax[Use].min()))
+
+    marker_widths = (marker_conversion *
+                     (np.log10(np.array(z_ax))-np.log10(z_ax[Use].min())) +
+                     min_marker_width)
+
+    marker_sizes = marker_widths**2
+
     scatters = []
 
     markers = ['o', 's']
@@ -155,7 +188,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
             # Change to logs on next commit
             scatter = \
                 ax.scatter(plot_x[ObsPlot], plot_y[ObsPlot], marker=markers[0],
-                           s=(np.log(np.array(z_ax[ObsPlot]))-np.log(zMin.value)+0.5)**3.,
+                           s=marker_sizes[ObsPlot],
                            color=color, alpha=0.5, edgecolors='k')
 
             scatters.append(scatter)
@@ -183,7 +216,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
             # Change to logs on next commit
             scatter = \
                 ax.scatter(plot_x[SimPlot], plot_y[SimPlot], marker=markers[1],
-                           s=(np.log(np.array(z_ax[SimPlot]))-np.log(zMin.value)+0.5)**3.,
+                           s=marker_sizes[SimPlot],
                            color=color, alpha=0.5, edgecolors='k')
 
             scatters.append(scatter)
@@ -210,6 +243,20 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     ax.set_xlabel(label_dict[variables[0]], fontsize=16)
     ax.set_ylabel(label_dict[variables[1]], fontsize=16)
 
+    # Set plot limits. Needed for conversion of pixel units to plot units.
+
+    # Pad the maximum marker width on.
+    inv = ax.transData.inverted()
+    pad_x, pad_y = inv.transform((marker_widths.max(), marker_widths.max())) - \
+        inv.transform((0.0, 0.0))
+
+    if show_log:
+        ax.set_xlim(np.log10(xMin.value)-pad_x, np.log10(xMax.value)+pad_x)
+        ax.set_ylim(np.log10(yMin.value)-pad_y, np.log10(yMax.value)+pad_y)
+    else:
+        ax.set_xlim(xMin.value - pad_x, xMax.value + pad_x)
+        ax.set_ylim(yMin.value - pad_y, yMax.value + pad_y)
+
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
 
@@ -223,16 +270,33 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
                                                         alpha_unsel=0,
                                                         alpha_sel=0.5))
 
-    # adding fake points to show the size
-    axes_limits = ax.axis()
-    xax_limits = axes_limits[:2]
-    yax_limits = axes_limits[2:]
+    # Adding fake points to show the size
 
-    # TODO: write a function with this section
-    # TODO: change position based on user input
-    xfake = [0.1, 0.1, 0.1]
-    yfake = [0.85, 0.9, 0.95]
-    radius = np.array([1e-1, 1e0, 1e1])  # *u.pc #(zMin + zMax)*0.5
+    # Try floor and ceil. Pick the one closest to the max/min.
+    max_z = round_to_pow_10(z_ax[Use].max())
+    min_z = round_to_pow_10(z_ax[Use].min())
+    mid_z = round_to_pow_10((max_z + min_z) / 2., log=False)
+    if mid_z == max_z:
+        fake_z_marker_width = np.array([max_z])
+    elif mid_z == max_z or mid_z == min_z:
+        fake_z_marker_width = np.array([max_z, min_z])
+    else:
+        fake_z_marker_width = np.array([max_z, mid_z, min_z])
+
+    fake_marker_sizes = (marker_conversion *
+                         (fake_z_marker_width-np.log10(z_ax[Use].min())) +
+                         min_marker_width)**2
+
+    # Set the axis fraction to plot the points at. Adjust if the largest
+    # will overlap with the next.
+    sep_ax_frac = 0.05
+
+    if np.sqrt(fake_marker_sizes[0])/float(min_axis_size) > 0.05:
+        sep_ax_frac = np.sqrt(fake_marker_sizes[0])/float(min_axis_size) \
+            + 0.005
+
+    xfake = [0.1] * fake_z_marker_width.shape[0]
+    yfake = [0.95 - sep_ax_frac*x for x in range(fake_z_marker_width.shape[0])]
 
     # xfake = [xax_limits[0] + xax_limits[0]*2.,
     #          xax_limits[0] + xax_limits[0]*2.,
@@ -242,19 +306,12 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     #          yax_limits[1] - yax_limits[1]*0.6]
 
     ax.scatter(np.array(xfake), np.array(yfake), marker='+',
-               s=(np.log(np.array(radius))-np.log(zMin.value)+0.5)**3.,
+               s=fake_marker_sizes,
                transform=ax.transAxes,
                facecolors='g')
-    for xf, yf, rad in zip(xfake, yfake, radius):
-        ax.text(xf + 0.05, yf-0.01, str(rad) + ' ' + str(zMin.unit),
+    for xf, yf, rad in zip(xfake, yfake, fake_z_marker_width):
+        ax.text(xf + 0.05, yf-0.01, str(10**rad) + ' ' + str(zMin.unit),
                 transform=ax.transAxes)
-
-    if show_log:
-        ax.set_xlim(np.log10(xMin.value), np.log10(xMax.value))
-        ax.set_ylim(np.log10(yMin.value), np.log10(yMax.value))
-    else:
-        ax.set_xlim(xMin.value, xMax.value)
-        ax.set_ylim(yMin.value, yMax.value)
 
     html = mpld3.fig_to_html(figure)
     with open(FigureStrBase+NQuery+'.html', 'w') as f:
@@ -271,3 +328,24 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
         mpld3.show()
 
     return FigureStrBase+NQuery+'.html'
+
+
+def round_to_pow_10(value, log=True):
+    '''
+    Use ceil and floor on a given value and return the value which is the
+    closest.
+    '''
+
+    if log:
+        log_value = np.log10(value)
+    else:
+        log_value = value
+
+    ceil = np.ceil(log_value)
+
+    floor = np.floor(log_value)
+
+    if np.abs(ceil - log_value) < np.abs(log_value - floor):
+        return ceil
+    else:
+        return floor
