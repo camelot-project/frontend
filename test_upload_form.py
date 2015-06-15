@@ -1,3 +1,4 @@
+import os
 import json
 import ast
 import requests
@@ -44,7 +45,7 @@ def test_upload_file(filename='benoitcommercon.csv',
                data=dictdata)
     r3.raise_for_status()
 
-    soup = BeautifulSoup(r.content)
+    soup = BeautifulSoup(r3.content)
     dbpull = [os.path.split(x.attrs['href'])[-1]
               for x in soup.find_all('a',href=True)
               if 'database/pull' in str(x)][0]

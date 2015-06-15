@@ -13,6 +13,7 @@ debugging, but try to remove them when you're done.
 
 """
 from __future__ import print_function
+import re
 import os
 import inspect
 import numpy as np
@@ -551,7 +552,8 @@ def commit_change_to_database(username, remote='origin',
         timestamp = datetime.now().isoformat().replace(":","_")
 
     if branch is None:
-        branch = '{0}_{1}'.format(username, timestamp)
+        re.compile('[A-Za-z0-9]_')
+        branch = '{0}_{1}'.format(re.sub("", username), timestamp)
 
     check_upstream = subprocess.check_output(['git', 'config', '--get',
                                               'remote.{remote}.url'.format(remote=remote)],
@@ -801,8 +803,9 @@ def query(filename, fileformat=None):
                           )
 
 @app.route('/query/static/jstables/<path:path>')
+@app.route('/static/jstables/<path:path>')
 def send_js(path):
-    return send_from_directory('static/jstables/', path)
+    return send_from_directory('/static/jstables/', path)
 
 @app.before_first_request
 def setup_authenticate_with_github():
