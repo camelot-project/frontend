@@ -36,12 +36,13 @@ def delete_excess_branches(repository, username='SirArthurTheSubmitter', organiz
             print("Leaving unchanged pull {0} with title {1}".format(pullnumber, result['title']))
             raise Exception("This state should not be reachable if the API worked right ang gave us only closed PRs")
 
-def close_pull_request(repository, pr_id, username='SirArthurTheSubmitter', organization='camelot-project',
-                       delete_branch=True):
+def close_pull_request(repository, pr_id, username='SirArthurTheSubmitter',
+                       organization='camelot-project', delete_branch=True):
     S = requests.Session()
     S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
 
-    kwargs = {'username': username, 'organization':organization, 'repository':repository}
+    kwargs = {'username': username, 'organization':organization,
+              'repository':repository}
 
     git_user = username
     password = keyring.get_password('github', git_user)
@@ -64,3 +65,5 @@ def close_pull_request(repository, pr_id, username='SirArthurTheSubmitter', orga
         print("Status code: ",r.status_code,".  204 means 'success', 422 means 'probably already deleted'")
     else:
         print("PR #{0} not found".format(pr_id))
+
+    return r.status_code
