@@ -10,4 +10,4 @@ or [pull requests](https://github.com/camelot-project/frontend/pulls).
 
 If you would like to contact us via a different route, you can e-mail
 [sirarthurthesubmitter@gmail.com](mailto:sirarthurthesubmitter@gmail.com)
-or any of the contributers directly.
+or any of the contributors directly.
