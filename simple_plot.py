@@ -40,8 +40,8 @@ table, th, td
 
 
 label_dict = \
-    {'SurfaceDensity': '\u03A3 [M\u2609 pc\u207B\u00B2]',
-     'VelocityDispersion': "\u03C3 [km s\u207B\u00B9]",
+    {'SurfaceDensity': 'Surf', #'\u03A3 [M\u2609 pc\u207B\u00B2]',
+     'VelocityDispersion': 'VelDisp', #"\u03C3 [km s\u207B\u00B9]",
      'Radius': '$R$ [pc]'}
 
 
@@ -74,9 +74,11 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
                     interactive=interactive)
 
 
-def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
-             yMin, yMax, zMin, zMax, interactive=False, show_log=True,
-             min_marker_width=3, max_marker_width=0.05):
+def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
+             variables=('SurfaceDensity', 'VelocityDispersion', 'Radius'),
+             xMin=None, xMax=None, yMin=None, yMax=None, zMin=None, zMax=None,
+             interactive=False, show_log=True, min_marker_width=3,
+             max_marker_width=0.05):
     """
     This is where documentation needs to be added
 
@@ -123,6 +125,23 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     x_ax = d[variables[0]]
     y_ax = d[variables[1]]
     z_ax = d[variables[2]]
+
+    # Check if limits are given
+    if xMin is None:
+        xMin = x_ax.min()
+    if xMax is None:
+        xMax = x_ax.max()
+
+    if yMin is None:
+        yMin = y_ax.min()
+    if yMax is None:
+        yMax = y_ax.max()
+
+    if zMin is None:
+        zMin = z_ax.min()
+    if zMax is None:
+        zMax = z_ax.max()
+
     if d['IsSimulated'].dtype == 'bool':
         IsSim = d['IsSimulated']
     else:
@@ -133,7 +152,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
             label_dict[variables[0]] = 'log ' + label_dict[variables[0]]
             label_dict[variables[1]] = 'log ' + label_dict[variables[1]]
 
-    # selects surface density points wthin the limits
+    # Select points wthin the limits
     Use_x_ax = (x_ax > xMin) & (x_ax < xMax)
     Use_y_ax = (y_ax > yMin) & (y_ax < yMax)
     Use_z_ax = (z_ax > zMin) & (z_ax < zMax)
@@ -327,7 +346,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
 
         mpld3.show()
 
-    return FigureStrBase+NQuery+'.html'
+    return FigureStrBase+NQuery+'.html', FigureStrBase+NQuery+".png"
 
 
 def round_to_pow_10(value, log=True):
