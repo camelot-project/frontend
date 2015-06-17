@@ -153,7 +153,7 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
             label_dict[xvariable] = 'log ' + label_dict[xvariable]
             label_dict[yvariable] = 'log ' + label_dict[yvariable]
 
-    # Select points wthin the limits
+    # Select points within the limits
     Use_x_ax = (x_ax > xMin) & (x_ax < xMax)
     Use_y_ax = (y_ax > yMin) & (y_ax < yMax)
     Use_z_ax = (z_ax > zMin) & (z_ax < zMax)
