@@ -441,7 +441,7 @@ def set_columns(filename, fileformat=None):
 
     # write the modified table
     ipac_writer(merged_table, merged_table_name, widths=table_widths)
-    
+
     print("Committing changes")
     # Add merged data to database
     try:
@@ -483,9 +483,10 @@ def set_columns(filename, fileformat=None):
 
     log.debug("Creating plot.")
     outfilename = os.path.splitext(filename)[0]
-    myplot = plotData_Sigma_sigma(timeString(), table,
-                                  os.path.join(app.config['MPLD3_FOLDER'],
-                                               outfilename))
+    myplot_html, myplot_png = \
+        plotData_Sigma_sigma(timeString(), table, outfilename,
+                             html_dir=app.config['MPLD3_FOLDER'],
+                             png_dir=app.config['PNG_PLOT_FOLDER'])
 
     log.debug("Creating table.")
     tablecss = "table,th,td,tr,tbody {border: 1px solid black; border-collapse: collapse;}"
@@ -495,7 +496,8 @@ def set_columns(filename, fileformat=None):
                          jskwargs={'use_local_files':False},
                          table_id=outfilename)
 
-    return render_template('show_plot.html', imagename='/'+myplot,
+    return render_template('show_plot.html', imagename='/'+myplot_html,
+                           png_imagename="/"+myplot_png,
                            tablefile='{fn}.html'.format(fn=outfilename),
                            link_pull_uploads=link_pull_uploads,
                            link_pull_database=link_pull_database,
@@ -526,7 +528,7 @@ def setup_submodule(username, remote='origin', workingdir='database/',
     checkout_master_result = subprocess.call(['git','checkout',
                                               '{remote}/master'.format(remote=remote)],
                                              cwd=workingdir)
-    
+
     if checkout_master_result != 0:
         raise Exception("Checking out the {remote}/master branch in the database failed.  "
                         "Try 'cd {workingdir}; git checkout {remote}/master'"
@@ -670,7 +672,7 @@ def handle_duplicates(table, merged_table, duplicates):
 def query_form(filename="merged_table.ipac"):
 
     table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.ipac')
-    
+
     tolerance=1.2
 
     sd = np.ma.masked_where(table['SurfaceDensity']==0, table['SurfaceDensity'])
@@ -680,7 +682,7 @@ def query_form(filename="merged_table.ipac"):
     min_values=[np.round(min(sd)/tolerance,4),
                 np.round(min(vd)/tolerance,4),
                 np.round(min(rd)/tolerance,4)]
-    
+
     max_values=[np.round(max(table['SurfaceDensity'])*tolerance,1),
                 np.round(max(table['VelocityDispersion'])*tolerance,1),
                 np.round(max(table['Radius'])*tolerance,1)]
@@ -705,7 +707,7 @@ def query_form(filename="merged_table.ipac"):
                           )
 
 def clearOutput() :
-    
+
     for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase+"*.png")):
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
@@ -715,12 +717,12 @@ def clearOutput() :
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
-            
+
     for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase+"*.html")):
         now = time.time()
         if os.stat(fl).st_mtime < now - TooOld :
             os.remove(fl)
-            
+
 def timeString():
     TimeString=datetime.now().strftime("%Y%m%d%H%M%S%f")
     return TimeString
@@ -733,7 +735,7 @@ def query(filename, fileformat=None):
     VDispMax = float(request.form['VelocityDispersion_max'])*u.Unit(request.form['VelocityDispersion_unit'])
     RadMin = float(request.form['Radius_min'])*u.Unit(request.form['Radius_unit'])
     RadMax = float(request.form['Radius_max'])*u.Unit(request.form['Radius_unit'])
-    
+
     ShowObs=(request.form['ObsSimBoth'] == 'IsObserved') or (request.form['ObsSimBoth'] == 'IsObsSim')
     ShowSim=(request.form['ObsSimBoth'] == 'IsSimulated') or (request.form['ObsSimBoth'] == 'IsObsSim')
     ShowGal=(request.form['GalExgalBoth'] == 'IsGalactic') or (request.form['GalExgalBoth'] == 'IsGalExgal')
@@ -751,7 +753,7 @@ def query(filename, fileformat=None):
     VDisp = table['VelocityDispersion']
     Rad = table['Radius']
     IsSim = (table['IsSimulated'] == 'True')
-    
+
     temp_table = [table[index].index for index, (surfdens, vdisp, radius) in
                   enumerate(zip(table['SurfaceDensity'],
                                 table['VelocityDispersion'],
@@ -761,7 +763,7 @@ def query(filename, fileformat=None):
                       and RadMin < radius*table['Radius'].unit < RadMax)
                  ]
     use_table = table[temp_table]
-    
+
     if not ShowObs :
         temp_table = [use_table[h].index for h,i in
                       zip(range(len(use_table)),use_table['IsSimulated'])
@@ -773,34 +775,34 @@ def query(filename, fileformat=None):
                       zip(range(len(use_table)),use_table['IsSimulated'])
                       if i == 'True']
         use_table.remove_rows(temp_table)
-        
+
     if not ShowGal :
         temp_table = [use_table[h].index for h,i in
                       zip(range(len(use_table)),use_table['IsGalactic'])
                       if i == 'True']
         use_table.remove_rows(temp_table)
-        
+
     if not ShowExgal :
         temp_table = [use_table[h].index for h,i in
                       zip(range(len(use_table)),use_table['IsGalactic'])
                       if i == 'False']
         use_table.remove_rows(temp_table)
-    
+
     tablefile = os.path.join(app.config['TABLE_FOLDER'], TableStrBase+NQuery+'.ipac')
-    
+
     use_table.write(tablefile, format='ipac')
-    
-    plot_file = plotData_Sigma_sigma(NQuery, use_table,
-                                     os.path.join(app.config['MPLD3_FOLDER'],
-                                                  FigureStrBase), 
-                                     SurfMin, SurfMax,
-                                     VDispMin, VDispMax,
-                                     RadMin, RadMax,
-                                     interactive=False)
-    
-    return render_template('show_plot.html', imagename='/'+plot_file,
-                           tablefile=tablefile,
-                          )
+
+    myplot_html, myplot_png = \
+        plotData_Sigma_sigma(NQuery, use_table, FigureStrBase,
+                             SurfMin=SurfMin, SurfMax=SurfMax,
+                             VDispMin=VDispMin, VDispMax=VDispMax,
+                             RadMin=RadMin, RadMax=RadMax,
+                             html_dir=app.config['MPLD3_FOLDER'],
+                             png_dir=app.config['PNG_PLOT_FOLDER'])
+
+    return render_template('show_plot.html', imagename='/'+myplot_html,
+                           png_imagename="/"+myplot_png,
+                           tablefile=tablefile)
 
 @app.route('/query/static/jstables/<path:path>')
 @app.route('/static/jstables/<path:path>')
@@ -835,15 +837,15 @@ def setup_authenticate_with_github():
                                        'credential.https://github.com.{user}'.format(user=git_user),
                                        git_user])
     assert config_result_1 == 0
-    config_result_2 = subprocess.call(['git', 'config', '--global', 
+    config_result_2 = subprocess.call(['git', 'config', '--global',
                                        'credential.helper',
                                        'store'])
     assert config_result_2 == 0
-    config_result_3 = subprocess.call(['git', 'config', '--global', 
+    config_result_3 = subprocess.call(['git', 'config', '--global',
                                        'user.email',
                                        submitter_gmail])
     assert config_result_3 == 0
-    config_result_4 = subprocess.call(['git', 'config', '--global', 
+    config_result_4 = subprocess.call(['git', 'config', '--global',
                                        'user.name',
                                        git_user])
     assert config_result_4 == 0
@@ -952,7 +954,7 @@ def update_database():
     if last_commit_hash != commit_hash:
         commit_disagree_message = (
                                    "The hashes github: {0} and server: {1} "
-                                   "don't match; the " 
+                                   "don't match; the "
                                    "server database is not up to date with the "
                                    "github database.  This is a significant "
                                    "error and should be reported."
