@@ -40,8 +40,8 @@ table, th, td
 
 
 label_dict = \
-    {'SurfaceDensity': '\u03A3 [M\u2609 pc\u207B\u00B2]',
-     'VelocityDispersion': "\u03C3 [km s\u207B\u00B9]",
+    {'SurfaceDensity': 'Surf', #'\u03A3 [M\u2609 pc\u207B\u00B2]',
+     'VelocityDispersion': 'VelDisp', #"\u03C3 [km s\u207B\u00B9]",
      'Radius': '$R$ [pc]'}
 
 
@@ -62,9 +62,9 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
     RadMax
     """
     return plotData(NQuery, table, FigureStrBase,
-                    variables=('SurfaceDensity',
-                               'VelocityDispersion',
-                               'Radius'),
+                    xvariable="SurfaceDensity",
+                    yvariable="VelocityDispersion",
+                    zvariable="Radius",
                     xMin=SurfMin,
                     xMax=SurfMax,
                     yMin=VDispMin,
@@ -75,7 +75,8 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
 
 
 def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
-             variables=('SurfaceDensity', 'VelocityDispersion', 'Radius'),
+             xvariable='SurfaceDensity', yvariable='VelocityDispersion',
+             zvariable='Radius',
              xMin=None, xMax=None, yMin=None, yMax=None, zMin=None, zMax=None,
              interactive=False, show_log=True, min_marker_width=3,
              max_marker_width=0.05):
@@ -122,9 +123,9 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
     d = input_table
     Author = d['Names']
     Run = d['IDs']
-    x_ax = d[variables[0]]
-    y_ax = d[variables[1]]
-    z_ax = d[variables[2]]
+    x_ax = d[xvariable]
+    y_ax = d[yvariable]
+    z_ax = d[zvariable]
 
     # Check if limits are given
     if xMin is None:
@@ -148,9 +149,9 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
         IsSim = d['IsSimulated'] == 'True'
 
     if show_log:
-        if not label_dict[variables[0]].startswith('log'):
-            label_dict[variables[0]] = 'log ' + label_dict[variables[0]]
-            label_dict[variables[1]] = 'log ' + label_dict[variables[1]]
+        if not label_dict[xvariable].startswith('log'):
+            label_dict[xvariable] = 'log ' + label_dict[xvariable]
+            label_dict[yvariable] = 'log ' + label_dict[yvariable]
 
     # Select points wthin the limits
     Use_x_ax = (x_ax > xMin) & (x_ax < xMax)
@@ -259,8 +260,8 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
                                                voffset=10, hoffset=10, css=css)
             plugins.connect(figure, tooltip)
 
-    ax.set_xlabel(label_dict[variables[0]], fontsize=16)
-    ax.set_ylabel(label_dict[variables[1]], fontsize=16)
+    ax.set_xlabel(label_dict[xvariable], fontsize=16)
+    ax.set_ylabel(label_dict[yvariable], fontsize=16)
 
     # Set plot limits. Needed for conversion of pixel units to plot units.
 
