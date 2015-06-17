@@ -341,14 +341,14 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
     if png_dir is None:
         png_dir = ""
 
-    html_dir = html_dir.rstrip("/") + "/"
-    png_dir = png_dir.rstrip("/") + "/"
+    html_file = os.path.join(html_dir, FigureStrBase+NQuery+'.html')
+    png_file = os.path.join(png_dir, FigureStrBase+NQuery+".png")
 
     html = mpld3.fig_to_html(figure)
-    with open(html_dir+FigureStrBase+NQuery+'.html', 'w') as f:
+    with open(html_file, 'w') as f:
        f.write(html)
 
-    figure.savefig(png_dir+FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
+    figure.savefig(png_file, bbox_inches='tight', dpi=150)
     # figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
 
     if interactive:
@@ -357,9 +357,6 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
         # plt.show()
 
         mpld3.show()
-
-    html_file = html_dir+FigureStrBase+NQuery+'.html'
-    png_file = png_dir+FigureStrBase+NQuery+".png"
 
     return html_file, png_file
 
