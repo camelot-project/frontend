@@ -346,7 +346,16 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
 
         mpld3.show()
 
-    return FigureStrBase+NQuery+'.html', FigureStrBase+NQuery+".png"
+    if html_dir is None:
+        html_dir = "/"
+
+    if png_dir is None:
+        png_dir = "/"
+
+    html_file = html_dir+FigureStrBase+NQuery+'.html'
+    png_file = png_dir+FigureStrBase+NQuery+".png"
+
+    return html_file, png_file
 
 
 def round_to_pow_10(value, log=True):
