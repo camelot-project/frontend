@@ -336,10 +336,10 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
     # Saving the plots
 
     if html_dir is None:
-        html_dir = "/"
+        html_dir = ""
 
     if png_dir is None:
-        png_dir = "/"
+        png_dir = ""
 
     html_dir = html_dir.rstrip("/") + "/"
     png_dir = png_dir.rstrip("/") + "/"
