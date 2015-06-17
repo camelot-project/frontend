@@ -52,7 +52,7 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
                          VDispMax=3e2*u.km/u.s,
                          RadMin=1e-2*u.pc,
                          RadMax=1e3*u.pc,
-                         interactive=False):
+                         **kwargs):
     """
     SurfMin
     SurfMax
@@ -71,7 +71,7 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
                     yMax=VDispMax,
                     zMin=RadMin,
                     zMax=RadMax,
-                    interactive=interactive)
+                    **kwargs)
 
 
 def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
