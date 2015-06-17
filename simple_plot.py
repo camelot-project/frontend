@@ -52,7 +52,7 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
                          VDispMax=3e2*u.km/u.s,
                          RadMin=1e-2*u.pc,
                          RadMax=1e3*u.pc,
-                         interactive=False):
+                         **kwargs):
     """
     SurfMin
     SurfMax
@@ -62,21 +62,24 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
     RadMax
     """
     return plotData(NQuery, table, FigureStrBase,
-                    variables=('SurfaceDensity',
-                               'VelocityDispersion',
-                               'Radius'),
+                    xvariable="SurfaceDensity",
+                    yvariable="VelocityDispersion",
+                    zvariable="Radius",
                     xMin=SurfMin,
                     xMax=SurfMax,
                     yMin=VDispMin,
                     yMax=VDispMax,
                     zMin=RadMin,
                     zMax=RadMax,
-                    interactive=interactive)
+                    **kwargs)
 
 
-def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
-             yMin, yMax, zMin, zMax, interactive=False, show_log=True,
-             min_marker_width=3, max_marker_width=0.05):
+def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
+             xvariable='SurfaceDensity', yvariable='VelocityDispersion',
+             zvariable='Radius',
+             xMin=None, xMax=None, yMin=None, yMax=None, zMin=None, zMax=None,
+             interactive=False, show_log=True, min_marker_width=3,
+             max_marker_width=0.05):
     """
     This is where documentation needs to be added
 
@@ -120,20 +123,37 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
     d = input_table
     Author = d['Names']
     Run = d['IDs']
-    x_ax = d[variables[0]]
-    y_ax = d[variables[1]]
-    z_ax = d[variables[2]]
+    x_ax = d[xvariable]
+    y_ax = d[yvariable]
+    z_ax = d[zvariable]
+
+    # Check if limits are given
+    if xMin is None:
+        xMin = x_ax.min()
+    if xMax is None:
+        xMax = x_ax.max()
+
+    if yMin is None:
+        yMin = y_ax.min()
+    if yMax is None:
+        yMax = y_ax.max()
+
+    if zMin is None:
+        zMin = z_ax.min()
+    if zMax is None:
+        zMax = z_ax.max()
+
     if d['IsSimulated'].dtype == 'bool':
         IsSim = d['IsSimulated']
     else:
         IsSim = d['IsSimulated'] == 'True'
 
     if show_log:
-        if not label_dict[variables[0]].startswith('log'):
-            label_dict[variables[0]] = 'log ' + label_dict[variables[0]]
-            label_dict[variables[1]] = 'log ' + label_dict[variables[1]]
+        if not label_dict[xvariable].startswith('log'):
+            label_dict[xvariable] = 'log ' + label_dict[xvariable]
+            label_dict[yvariable] = 'log ' + label_dict[yvariable]
 
-    # selects surface density points wthin the limits
+    # Select points within the limits
     Use_x_ax = (x_ax > xMin) & (x_ax < xMax)
     Use_y_ax = (y_ax > yMin) & (y_ax < yMax)
     Use_z_ax = (z_ax > zMin) & (z_ax < zMax)
@@ -240,8 +260,8 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
                                                voffset=10, hoffset=10, css=css)
             plugins.connect(figure, tooltip)
 
-    ax.set_xlabel(label_dict[variables[0]], fontsize=16)
-    ax.set_ylabel(label_dict[variables[1]], fontsize=16)
+    ax.set_xlabel(label_dict[xvariable], fontsize=16)
+    ax.set_ylabel(label_dict[yvariable], fontsize=16)
 
     # Set plot limits. Needed for conversion of pixel units to plot units.
 
@@ -313,11 +333,22 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
         ax.text(xf + 0.05, yf-0.01, str(10**rad) + ' ' + str(zMin.unit),
                 transform=ax.transAxes)
 
+    # Saving the plots
+
+    if html_dir is None:
+        html_dir = ""
+
+    if png_dir is None:
+        png_dir = ""
+
+    html_file = os.path.join(html_dir, FigureStrBase+NQuery+'.html')
+    png_file = os.path.join(png_dir, FigureStrBase+NQuery+".png")
+
     html = mpld3.fig_to_html(figure)
-    with open(FigureStrBase+NQuery+'.html', 'w') as f:
+    with open(html_file, 'w') as f:
        f.write(html)
 
-    figure.savefig(FigureStrBase+NQuery+'.png',bbox_inches='tight',dpi=150)
+    figure.savefig(png_file, bbox_inches='tight', dpi=150)
     # figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
 
     if interactive:
@@ -327,7 +358,7 @@ def plotData(NQuery, input_table, FigureStrBase, variables, xMin, xMax,
 
         mpld3.show()
 
-    return FigureStrBase+NQuery+'.html'
+    return html_file, png_file
 
 
 def round_to_pow_10(value, log=True):

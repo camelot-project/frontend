@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block head %}
-{{ super() }}    
+{{ super() }}
 <title>CAMELOT Plot</title>
 {% endblock %}
 
@@ -23,10 +23,10 @@
   <body>
      <div id="includedContent"></div>
      {% if link_pull_database %}
-	<div id="link_pull_database">Database pull request: <a href="{{link_pull_database}}">{{link_pull_database}}</a></div>
+    <div id="link_pull_database">Database pull request: <a href="{{link_pull_database}}">{{link_pull_database}}</a></div>
      {% endif %}
      {% if link_pull_uploads %}
-	<div id="link_pull_uploads">Submitted file pull request: <a href="{{link_pull_uploads}}">{{link_pull_uploads}}</a></div>
+    <div id="link_pull_uploads">Submitted file pull request: <a href="{{link_pull_uploads}}">{{link_pull_uploads}}</a></div>
      {% endif %}
      <div class="row" align="right">
         <div class="col-md-6">
@@ -34,7 +34,18 @@
                 <div class="form-group">
                     <div class="input-group">
                     <button class="btn btn-success" type="submit">Download query results</button> in IPAC format.
-                    </div>    
+                    </div>
+                </div>
+            </form>
+        </div>
+     </div>
+     <div class="row" align="right">
+        <div class="col-md-6">
+            <form class="form form-inline" action={{png_imagename}} method="get">
+                <div class="form-group">
+                    <div class="input-group">
+                    <button class="btn btn-success" type="submit">Download plot</button> as a PNG.
+                    </div>
                 </div>
             </form>
         </div>
@@ -67,7 +78,7 @@
 
 <script>
 $(function(){
-        $("#includedTable").load("/static/jstables/{{tablefile}}?" + (new Date).getTime()); 
+        $("#includedTable").load("/static/jstables/{{tablefile}}?" + (new Date).getTime());
 });
 </script>
 
