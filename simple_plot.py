@@ -40,8 +40,8 @@ table, th, td
 
 
 label_dict = \
-    {'SurfaceDensity': 'Surf', #'\u03A3 [M\u2609 pc\u207B\u00B2]',
-     'VelocityDispersion': 'VelDisp', #"\u03C3 [km s\u207B\u00B9]",
+    {'SurfaceDensity': '\u03A3 [M\u2609 pc\u207B\u00B2]',
+     'VelocityDispersion': "\u03C3 [km s\u207B\u00B9]",
      'Radius': '$R$ [pc]'}
 
 
