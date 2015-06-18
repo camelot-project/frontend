@@ -46,7 +46,7 @@ label_dict_html = \
 
 label_dict_png = \
     {'SurfaceDensity': u'$\Sigma$ [M$_{\odot}$ pc$^{-2}$]',
-     'VelocityDispersion': u"\sigma [km s$^{-1}$]",
+     'VelocityDispersion': u"$\sigma$ [km s$^{-1}$]",
      'Radius': u'$R$ [pc]'}
 
 
@@ -217,7 +217,8 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
             scatter = \
                 ax.scatter(plot_x[ObsPlot], plot_y[ObsPlot], marker=markers[0],
                            s=marker_sizes[ObsPlot],
-                           color=color, alpha=0.5, edgecolors='k')
+                           color=color, alpha=0.5, edgecolors='k',
+                           label=iAu)
 
             scatters.append(scatter)
 
@@ -245,7 +246,8 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
             scatter = \
                 ax.scatter(plot_x[SimPlot], plot_y[SimPlot], marker=markers[1],
                            s=marker_sizes[SimPlot],
-                           color=color, alpha=0.5, edgecolors='k')
+                           color=color, alpha=0.5, edgecolors='k',
+                           label=iAu)
 
             scatters.append(scatter)
 
@@ -295,8 +297,8 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
         plugins.connect(figure,
                         plugins.InteractiveLegendPlugin(scatters,
                                                         UniqueAuthor,
-                                                        alpha_unsel=0.0,
-                                                        alpha_over=0.5))
+                                                        alpha_unsel=0.0))#,
+                                                        # alpha_over=0.5))
 
     # Adding fake points to show the size
 
@@ -356,19 +358,29 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
     with open(html_file, 'w') as f:
        f.write(html)
 
-    # Use latex labels for the mpl outputted plot
-    ax.set_xlabel(label_dict_png[xvariable], fontsize=16)
-    ax.set_ylabel(label_dict_png[yvariable], fontsize=16)
-
-    figure.savefig(png_file, bbox_inches='tight', dpi=150)
-    # figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
-
     if interactive:
         # from matplotlib import pyplot as plt
         # plt.ion()
         # plt.show()
 
         mpld3.show()
+
+    # Clear out the plugins
+    plugins.clear(figure)
+
+    # Use latex labels for the mpl outputted plot
+    ax.set_xlabel(label_dict_png[xvariable], fontsize=16)
+    ax.set_ylabel(label_dict_png[yvariable], fontsize=16)
+
+    # Shrink current axis by 20%
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+
+    # Put a legend to the right of the current axis
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+    figure.savefig(png_file, bbox_inches='tight', dpi=150)
+    # figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
 
     return html_file, png_file
 
