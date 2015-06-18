@@ -39,10 +39,15 @@ table, th, td
 """
 
 
-label_dict = \
+label_dict_html = \
     {'SurfaceDensity': '\u03A3 [M\u2609 pc\u207B\u00B2]',
      'VelocityDispersion': "\u03C3 [km s\u207B\u00B9]",
      'Radius': '$R$ [pc]'}
+
+label_dict_png = \
+    {'SurfaceDensity': u'$\Sigma$ [M$_{\odot}$ pc$^{-2}$]',
+     'VelocityDispersion': u"\sigma [km s$^{-1}$]",
+     'Radius': u'$R$ [pc]'}
 
 
 def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
@@ -149,9 +154,12 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
         IsSim = d['IsSimulated'] == 'True'
 
     if show_log:
-        if not label_dict[xvariable].startswith('log'):
-            label_dict[xvariable] = 'log ' + label_dict[xvariable]
-            label_dict[yvariable] = 'log ' + label_dict[yvariable]
+        if not label_dict_html[xvariable].startswith('log'):
+            label_dict_html[xvariable] = 'log ' + label_dict_html[xvariable]
+            label_dict_html[yvariable] = 'log ' + label_dict_html[yvariable]
+        if not label_dict_png[xvariable].startswith('log'):
+            label_dict_png[xvariable] = 'log ' + label_dict_png[xvariable]
+            label_dict_png[yvariable] = 'log ' + label_dict_png[yvariable]
 
     # Select points within the limits
     Use_x_ax = (x_ax > xMin) & (x_ax < xMax)
@@ -260,8 +268,8 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
                                                voffset=10, hoffset=10, css=css)
             plugins.connect(figure, tooltip)
 
-    ax.set_xlabel(label_dict[xvariable], fontsize=16)
-    ax.set_ylabel(label_dict[yvariable], fontsize=16)
+    ax.set_xlabel(label_dict_html[xvariable], fontsize=16)
+    ax.set_ylabel(label_dict_html[yvariable], fontsize=16)
 
     # Set plot limits. Needed for conversion of pixel units to plot units.
 
@@ -347,6 +355,10 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
     html = mpld3.fig_to_html(figure)
     with open(html_file, 'w') as f:
        f.write(html)
+
+    # Use latex labels for the mpl outputted plot
+    ax.set_xlabel(label_dict_png[xvariable], fontsize=16)
+    ax.set_ylabel(label_dict_png[yvariable], fontsize=16)
 
     figure.savefig(png_file, bbox_inches='tight', dpi=150)
     # figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
