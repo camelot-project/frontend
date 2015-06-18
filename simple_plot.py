@@ -297,8 +297,8 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
         plugins.connect(figure,
                         plugins.InteractiveLegendPlugin(scatters,
                                                         UniqueAuthor,
-                                                        alpha_unsel=0.0))#,
-                                                        # alpha_over=0.5))
+                                                        alpha_unsel=0.0,
+                                                        alpha_over=0.5))
 
     # Adding fake points to show the size
 
