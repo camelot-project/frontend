@@ -377,7 +377,8 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
 
     # Put a legend to the right of the current axis
-    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    legend = ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    legend.draw_frame(False)
 
     figure.savefig(png_file, bbox_inches='tight', dpi=150)
     # figure.savefig(FigureStrBase+NQuery+'.pdf',bbox_inches='tight',dpi=150)
