@@ -800,6 +800,13 @@ def query(filename, fileformat=None):
                              html_dir=app.config['MPLD3_FOLDER'],
                              png_dir=app.config['PNG_PLOT_FOLDER'])
 
+    # It is possible to create an empty query
+    if myplot_html is None or myplot_png is None:
+        return render_template('error.html',
+                               error="No data were found matching your query.",
+                               traceback="",
+                              )
+
     return render_template('show_plot.html', imagename='/'+myplot_html,
                            png_imagename="/"+myplot_png,
                            tablefile=tablefile)

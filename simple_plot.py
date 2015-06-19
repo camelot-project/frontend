@@ -168,6 +168,9 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
     # intersects the three subsets defined above
     Use = Use_x_ax & Use_y_ax & Use_z_ax
 
+    if np.count_nonzero(Use) == 0:
+        return None,None
+
     UniqueAuthor = list(set(Author[Use]))
     NUniqueAuthor = len(UniqueAuthor)
 
