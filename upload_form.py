@@ -191,16 +191,16 @@ def uploaded_file(filename, fileformat=None):
     tab_metadata={'Author':'','ADS_ID':'','DOI or URL':'','Submitter':'',
                   'IsObserved':False,'IsSimulated':False,
                   'IsGalactic':False,'IsExtragalactic':False}
-    mydict = {'author': 'Author',
-              'ads': 'ADS_ID', 'asd_id': 'ADS_ID',
-              'doi': 'DOI or URL', 'url': 'DOI or URL',
-              'email': 'Submitter', 'submitter': 'Submitter',
-              'isobserved': 'IsObserved', 'issimulated': 'IsSimulated',
-              'isgalactic': 'IsGalactic', 'isextragalactic': 'IsExtragalactic'}
+    metadata_name_mapping = {'author': 'Author',
+                             'ads': 'ADS_ID', 'asd_id': 'ADS_ID',
+                             'doi': 'DOI or URL', 'url': 'DOI or URL',
+                             'email': 'Submitter', 'submitter': 'Submitter',
+                             'isobserved': 'IsObserved', 'issimulated': 'IsSimulated',
+                             'isgalactic': 'IsGalactic', 'isextragalactic': 'IsExtragalactic'}
     if len(table.meta) > 0:
         for name, keyword in table.meta['keywords'].items():
-            if name.lower() in mydict:
-                outkey = mydict[name.lower()]
+            if name.lower() in metadata_name_mapping:
+                outkey = metadata_name_mapping[name.lower()]
                 tab_metadata[outkey] = keyword['value']
 
     return render_template("parse_file.html", table=table, filename=filename,
