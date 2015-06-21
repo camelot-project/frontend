@@ -38,9 +38,18 @@ $(document).ready(function(){
 
 <h1 class="title">CAMELOT Upload form</h1>
 <div class="row">
-    <div class="col-md-6 col-md-offset-4" id="upload_form">
+    <div class="col-md-22 col-md-offset-1" id="upload_form">
         <div id="upload_header">Upload a new data table file</div>
-        <div> Later steps will have you specify the column units etc. </div>
+        <br>
+        <div> The file reader uses the astropy.table module and a variety of file formats are accepted
+              (simple ascii, csv, IPAC tables format, etc...). Four columns are required providing
+              IDs, SurfaceDensity, VelocityDispersion, and Radius. Units for the physical quantities
+              and metadata to identify the provider of the data are required and can be fully or
+              partially read from the table (if the chosen format supports them) or will be entered
+              manually in the next form. </div>
+        <div> An example of compatible IPAC table format with units and
+              metadata is shown below.</div>
+        <br>
         <form class="form form-inline" action="upload" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <div class="input-group">
@@ -50,6 +59,21 @@ $(document).ready(function(){
                 </div>    
             </div>
         </form>
+        <br>
+        <div>Example file in IPAC table format, with units and metadata (these are not mandatory in the file)</div>
+        <br>
+        <samp>\DOI = "10.1051/0004-6361/201014177"<br>
+              \ADS = "2010A&A...520A..50S"<br>
+              \author = GinaSantangelo<br>
+              \email = king.arthur@camelot-project.org<br>
+              \IsObserved = True<br>
+              \IsGalactic = True<br>
+              |  ID | Radius | SurfaceDensity | VelocityDispersion |<br>
+              |char | float  | float          | float              |<br>
+              |     |  pc    |  g/cm^2        |  km/s              |<br>
+                co1   3.0      0.10            7.3                 <br>
+                co2   4.1      0.08            5.5                 <br>
+                ...                 </samp>
     </div>
 </div>
 <div id='footer'></div>
