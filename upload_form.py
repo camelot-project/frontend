@@ -186,9 +186,34 @@ def uploaded_file(filename, fileformat=None):
     # column names can't have non-letters in them or javascript fails
     fix_bad_colnames(table)
 
+    column_units=[table[cln].unit for cln in table.colnames]
+    tab_metadata={'Author':'','ADS_ID':'','DOI or URL':'','Submitter':'',
+                  'IsObserved':False,'IsSimulated':False,
+                  'IsGalactic':False,'IsExtragalactic':False}
+    if len(table.meta) > 0:
+        for name, keyword in table.meta['keywords'].items():
+            if name.lower() == 'Author'.lower():
+                tab_metadata['Author']=keyword['value']
+            if (name.lower() == 'ADS_ID'.lower()) or (name.lower() == 'ADS'.lower()):
+                tab_metadata['ADS_ID']=keyword['value']
+            if (name.lower() == 'DOI'.lower()) or (name.lower() == 'URL'.lower()):
+                tab_metadata['DOI or URL']=keyword['value']
+            if (name.lower() == 'email'.lower()) or (name.lower() == 'submitter'.lower()):
+                tab_metadata['Submitter']=keyword['value']
+            if (name.lower() == 'IsObserved'.lower()):
+                tab_metadata['IsObserved']=keyword['value']
+            if (name.lower() == 'IsSimulated'.lower()):
+                tab_metadata['IsSimulated']=keyword['value']
+            if (name.lower() == 'IsExtragalactic'.lower()):
+                tab_metadata['IsExtragalactic']=keyword['value']
+            if (name.lower() == 'IsGalactic'.lower()):
+                tab_metadata['IsGalactic']=keyword['value']
+
     return render_template("parse_file.html", table=table, filename=filename,
                            real_column_names=valid_column_names,
                            best_column_names=best_column_names,
+                           default_units=column_units,
+                           tab_metadata=tab_metadata,
                            fileformat=fileformat,
                           )
 

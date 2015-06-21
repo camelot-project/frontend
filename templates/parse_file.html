@@ -51,7 +51,7 @@ $(document).ready(function(){
             <table class="table table-striped">
                 <thead><tr><th>File Column Name</th><th>Real Column Name</th><th><font color="red">*</font>Units</th></tr></thead>
                 <tbody>                
-                {% for column_name,best_column_name in zip(table.colnames, best_column_names) %}
+                {% for column_name,best_column_name,default_unit in zip(table.colnames, best_column_names, default_units) %}
                 <tr>
                     <div class="form-group">
                     <td class="middle"><p>{{ column_name }}</p></td>
@@ -67,7 +67,7 @@ $(document).ready(function(){
                         </select>
                     </td>
                     <td class="middle">
-                        <input class="units form-control" id="{{column_name|striptags}}_units" name="{{column_name|striptags}}_units">
+                        <input class="units form-control" id="{{column_name|striptags}}_units" name="{{column_name|striptags}}_units" value="{{default_unit}}">
                     </td>
                     </div>
                 </tr>
@@ -75,17 +75,17 @@ $(document).ready(function(){
                 </tbody>
                 <thead><tr><th colspan=3><font color="red">*</font>Type of dataset</th></tr></thead>
                 <tbody>
-                <tr><td class="middle">  <input type="radio" name="ObsSim" value="IsObserved"> Observations </td>
-                    <td colspan=2 class="middle"> <input type="radio" name="ObsSim" value="IsSimulated"> Simulations </td></tr>
-                <tr><td class="middle">  <input type="radio" name="GalExgal" value="IsGalactic"> Galactic </td>
-                    <td colspan=2 class="middle"> <input type="radio" name="GalExgal" value="IsExtragalactic"> Extragalactic </td></tr>
+                <tr><td class="middle">  <input type="radio" name="ObsSim" value="IsObserved"{% if tab_metadata['IsObserved'] %} checked{% endif %}> Observations </td>
+                    <td colspan=2 class="middle"> <input type="radio" name="ObsSim" value="IsSimulated"{% if tab_metadata['IsSimulated'] %} checked{% endif %}> Simulations </td></tr>
+                <tr><td class="middle">  <input type="radio" name="GalExgal" value="IsGalactic"{% if tab_metadata['IsGalactic'] %} checked{% endif %}> Galactic </td>
+                    <td colspan=2 class="middle"> <input type="radio" name="GalExgal" value="IsExtragalactic"{% if tab_metadata['IsExtragalactic'] %} checked{% endif %}> Extragalactic </td></tr>
                 <tr><td colspan=3 class="middle"> <font color="#BDBDBD">(for simulations, choose Galactic unless an entire galaxy is covered)</font> </td></tr>
-                <tr><td colspan=3 class="middle"> <input type="text" id="username" name="Username" value="" required> <font color="red">*</font>FirstnameLastname of first author </td></tr>
-                <tr><td colspan=3 class="middle"> <input type="text" id="adsid" name="adsid" value=""> <font color="red">*</font>ADS ID <font color="#BDBDBD">(not the full link)</font> or 
-                                                  <input type="text" id="doi" name="doi" value="" required> <a href="http://www.doi.org/">DOI</a> or URL</td></tr>
+                <tr><td colspan=3 class="middle"> <input type="text" id="username" name="Username" value="{{tab_metadata['Author']}}" required> <font color="red">*</font>FirstnameLastname of first author </td></tr>
+                <tr><td colspan=3 class="middle"> <input type="text" id="adsid" name="adsid" value="{{tab_metadata['ADS_ID']}}"> <font color="red">*</font>ADS ID <font color="#BDBDBD">(not the full link)</font> or
+                                                  <input type="text" id="doi" name="doi" value="{{tab_metadata['DOI or URL']}}" required> <a href="http://www.doi.org/">DOI</a> or URL</td></tr>
                 <tr><td colspan=3 class="middle"> <font color="#BDBDBD">(if this is over 64 characters, please <a href="http://tinyurl.com">shorten</a> it
                             with a <a href="http://goo.gl/">url-shortener service</a>)</font></td></tr>
-                <tr><td colspan=3 class="middle"> <input type="text" id="email" name="Email" value="" required> 
+                <tr><td colspan=3 class="middle"> <input type="text" id="email" name="Email" value="{{tab_metadata['Submitter']}}" required>
                         <font color="red">*</font>Your email address <font color="#BDBDBD">(this will be kept private)</font> </td></tr>
                 <tr><td colspan=3 class="middle"> <font color="red">*</font>required </td></tr>
                 </tbody>
