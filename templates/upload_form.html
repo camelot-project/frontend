@@ -38,18 +38,36 @@ $(document).ready(function(){
 
 <h1 class="title">CAMELOT Upload form</h1>
 <div class="row">
-    <div class="col-md-22 col-md-offset-1" id="upload_form">
+    <div class="" id="upload_form">
         <div id="upload_header">Upload a new data table file</div>
         <br>
-        <div> The file reader uses the astropy.table module and a variety of file formats are accepted
-              (simple ascii, csv, IPAC tables format, etc...). Four columns are required providing
-              IDs, SurfaceDensity, VelocityDispersion, and Radius. Units for the physical quantities
+        <div>
+            The file reader uses the 
+            <a href="astropy.readthedocs.org/en/latest/table/">astropy.table</a>
+            module, which accepts a variety of file formats (simple ascii,
+            csv, IPAC, cds, FITS, etc...).
+        </div>
+        <br><div> Four columns are required:
+            <ul>
+                <li> Object IDs (<tt>IDs</tt>)
+                <li> Surface Density (<tt>SurfaceDensity</tt>)
+                <li> Velocity Dispersion (<tt>VelocityDispersion</tt>)
+                <li> Radius (</tt>Radius</tt>)
+            </ul>
+          </div>
+          <br>
+          <div>Units for the physical quantities
               and metadata to identify the provider of the data are required and can be fully or
-              partially read from the table (if the chosen format supports them) or will be entered
-              manually in the next form. </div>
-        <div> An example of compatible IPAC table format with units and
-              metadata is shown below.</div>
+              partially read from the table if the chosen format supports them.
+              If not, you will be be prompted to enter them manually in the
+              next form.
+          </div>
+          <br>
+          <div> 
+            An example IPAC table with units and metadata is shown below.
+         </div>
         <br>
+        <center>
         <form class="form form-inline" action="upload" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <div class="input-group">
@@ -59,21 +77,23 @@ $(document).ready(function(){
                 </div>    
             </div>
         </form>
+        </center>
         <br>
-        <div>Example file in IPAC table format, with units and metadata (these are not mandatory in the file)</div>
+        <div>Example file in IPAC table format, with (optional) units and metadata</div>
         <br>
-        <samp>\DOI = "10.1051/0004-6361/201014177"<br>
-              \ADS = "2010A&A...520A..50S"<br>
-              \author = GinaSantangelo<br>
-              \email = king.arthur@camelot-project.org<br>
-              \IsObserved = True<br>
-              \IsGalactic = True<br>
-              |  ID | Radius | SurfaceDensity | VelocityDispersion |<br>
-              |char | float  | float          | float              |<br>
-              |     |  pc    |  g/cm^2        |  km/s              |<br>
-                co1   3.0      0.10            7.3                 <br>
-                co2   4.1      0.08            5.5                 <br>
-                ...                 </samp>
+        <pre style="width:600px; margin-left:auto; margin-right: auto; overflow:auto">
+\DOI = "10.1051/0004-6361/201014177"
+\ADS = "2010A\&A...520A..50S"
+\author = GinaSantangelo
+\email = king.arthur@camelot-project.org
+\IsObserved = True
+\IsGalactic = True
+|  ID | Radius | SurfaceDensity | VelocityDispersion |
+|char | float  | float          | float              |
+|     |  pc    |  g/cm^2        |  km/s              |
+ co1   3.0      0.10            7.3
+ co2   4.1      0.08            5.5
+... etc ... </pre>
     </div>
 </div>
 <div id='footer'></div>
