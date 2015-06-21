@@ -186,9 +186,28 @@ def uploaded_file(filename, fileformat=None):
     # column names can't have non-letters in them or javascript fails
     fix_bad_colnames(table)
 
+    # read units and keywords from table
+    column_units=[table[cln].unit for cln in table.colnames]
+    tab_metadata={'Author':'','ADS_ID':'','DOI or URL':'','Submitter':'',
+                  'IsObserved':False,'IsSimulated':False,
+                  'IsGalactic':False,'IsExtragalactic':False}
+    metadata_name_mapping = {'author': 'Author',
+                             'ads': 'ADS_ID', 'asd_id': 'ADS_ID',
+                             'doi': 'DOI or URL', 'url': 'DOI or URL',
+                             'email': 'Submitter', 'submitter': 'Submitter',
+                             'isobserved': 'IsObserved', 'issimulated': 'IsSimulated',
+                             'isgalactic': 'IsGalactic', 'isextragalactic': 'IsExtragalactic'}
+    if len(table.meta) > 0:
+        for name, keyword in table.meta['keywords'].items():
+            if name.lower() in metadata_name_mapping:
+                outkey = metadata_name_mapping[name.lower()]
+                tab_metadata[outkey] = keyword['value']
+
     return render_template("parse_file.html", table=table, filename=filename,
                            real_column_names=valid_column_names,
                            best_column_names=best_column_names,
+                           default_units=column_units,
+                           tab_metadata=tab_metadata,
                            fileformat=fileformat,
                           )
 

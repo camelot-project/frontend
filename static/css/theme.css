@@ -16,9 +16,6 @@ h1{
 }	
 
 #upload_form{
-	margin-top: 140px;
-	padding-top: 24px;
-	margin-bottom: 87px;
 }
 
 #upload_header{
@@ -103,4 +100,8 @@ body {
 .red {
     color: #CC0000;
     font-weight: bold;
+}
+
+samp {
+    background-color: #f7f7f7;
 }
