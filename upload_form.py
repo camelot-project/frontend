@@ -136,6 +136,10 @@ def index():
 def upload_form():
     return render_template('upload_form.html')
 
+@app.route('/credits')
+def credits():
+    return render_template('credits.html')
+
 @app.route('/upload', methods=['POST'])
 @app.route('/upload/<fileformat>', methods=['POST'])
 def upload_file(fileformat=None):
