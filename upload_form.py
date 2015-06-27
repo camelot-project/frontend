@@ -196,7 +196,7 @@ def uploaded_file(filename, fileformat=None):
                   'IsObserved':False,'IsSimulated':False,
                   'IsGalactic':False,'IsExtragalactic':False}
     metadata_name_mapping = {'author': 'Author',
-                             'ads': 'ADS_ID', 'asd_id': 'ADS_ID',
+                             'ads': 'ADS_ID', 'ads_id': 'ADS_ID',
                              'doi': 'DOI or URL', 'url': 'DOI or URL',
                              'email': 'Submitter', 'submitter': 'Submitter',
                              'isobserved': 'IsObserved', 'issimulated': 'IsSimulated',
@@ -361,6 +361,8 @@ def set_columns(filename, fileformat=None):
 
     handle_email(request.form['Email'], unique_filename)
 
+    store_form_data(request, fileformat, unique_filename)
+
     # Detect duplicate IDs in uploaded data and bail out if found
     seen = {}
     for row in table:
@@ -475,10 +477,13 @@ def set_columns(filename, fileformat=None):
         cleanup_git_directory('database/', allow_fail=False)
         return render_template('error.html', error=str(ex),
                                traceback=traceback.format_exc(ex))
+    
+    uploads = [unique_filename,
+               os.path.splitext(unique_filename)+"_formdata.json"]
     try:
         # Adding raw file to uploads
         branch_uploads,timestamp = commit_change_to_database(username,
-                                                             tablename=unique_filename,
+                                                             tablename=uploads,
                                                              workingdir='uploads/',
                                                              database='uploads',
                                                              branch=branch_database,
@@ -588,7 +593,10 @@ def commit_change_to_database(username, remote='origin',
         raise Exception("Error: the remote URL {0} (which is really '{2}') does not match the expected one '{1}'"
                         .format(check_upstream, database, name))
 
-    add_result = subprocess.call(['git','add',tablename], cwd=workingdir)
+    if isinstance(tablename, (list,tuple)):
+        add_result = subprocess.call(['git','add',]+tablename, cwd=workingdir)
+    else:
+        add_result = subprocess.call(['git','add',tablename], cwd=workingdir)
     if add_result != 0:
         raise Exception("Adding {tablename} to the commit failed in {cwd}."
                         .format(tablename=tablename, cwd=workingdir))
@@ -1005,6 +1013,18 @@ def update_database():
                            commit_disagree_message=commit_disagree_message,
                            cls=cls,
                           )
+
+def store_form_data(request, fileformat, unique_filename):
+
+    # remove private data
+    form_data = dict(request.form)
+    form_data['fileformat'] = fileformat
+
+    filebase = os.path.splitext(unique_filename)[0]
+    json_filename = filebase+"_formdata.json"
+    with open(json_filename, 'w') as f:
+        json.dump(form_data, f)
+
 
 def handle_email(email, filename):
     form_url = 'https://docs.google.com/forms/d/1nzdc8jOMlwZEYqdJSvNo6B60gNrUZ9trrhUeYRtUM8g/formResponse'
