@@ -111,6 +111,7 @@ for path in (MPLD3_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
 import jinja2
 env = jinja2.Environment()
 env.globals.update(zip=zip)
+env.globals['offline_mode'] = False
 
 # http://stackoverflow.com/questions/21306134/iterating-over-multiple-lists-in-python-flask-jinja2-templates
 @app.template_global(name='zip')
@@ -359,9 +360,9 @@ def set_columns(filename, fileformat=None):
     add_filename_column(table, unique_filename)
     log.debug("Table column names after add_filename_column: ",table.colnames)
 
-    handle_email(request.form['Email'], unique_filename)
-
     store_form_data(request, fileformat, unique_filename)
+
+    handle_email(request.form['Email'], unique_filename)
 
     # Detect duplicate IDs in uploaded data and bail out if found
     seen = {}
@@ -853,8 +854,13 @@ def setup_authenticate_with_github():
     credentials etc.
     """
 
+    # Allow server to start when there is no net connection
+    # Purely for testing!!!
+    if env.globals['offline_mode']:
+        return True
+
     # Only run the configuration on the heroku app
-    if os.getenv('HEROKU_SERVER') != 'camelot-project.herokuapp.com':
+    if (os.getenv('HEROKU_SERVER') != 'camelot-project.herokuapp.com'):
         # but do the checking no matter what
         return check_authenticate_with_github()
 
@@ -1016,12 +1022,16 @@ def update_database():
 
 def store_form_data(request, fileformat, unique_filename):
 
-    # remove private data
     form_data = dict(request.form)
     form_data['fileformat'] = fileformat
 
+    # remove private data
+    del formdata['Email']
+
     filebase = os.path.splitext(unique_filename)[0]
-    json_filename = filebase+"_formdata.json"
+    json_filename = os.path.join(app.config['UPLOAD_FOLDER'],
+                                 filebase+"_formdata.json")
+    print("Storing form data to {0}".format(json_filename))
     with open(json_filename, 'w') as f:
         json.dump(form_data, f)
 
@@ -1067,6 +1077,11 @@ def version():
     return git_id, git_database_id
 
 if __name__ == '__main__':
+    try:
+        requests.get('http://www.github.com')
+    except requests.ConnectionError:
+        env.globals['offline_mode']=True
+
     if os.getenv('HEROKU_SERVER'):
         app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT')))
     else:
