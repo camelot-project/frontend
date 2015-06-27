@@ -5,6 +5,10 @@ from astropy import units as u
 import re
 import string
 
+unit_mapping = {'SurfaceDensity':u.M_sun/u.pc**2,
+                'VelocityDispersion':u.km/u.s,
+                'Radius':u.pc}
+
 def fix_logical(t):
     """
     Convert a boolean column from string to boolean
@@ -65,9 +69,7 @@ def fix_bad_types(tbl):
             columns.append(column)
     return Table(columns)
 
-def set_units(tbl, units={'SurfaceDensity':u.M_sun/u.pc**2,
-                          'VelocityDispersion':u.km/u.s,
-                          'Radius':u.pc}):
+def set_units(tbl, units=unit_mapping):
     """
     Set the units of the table to the specified units.
     WARNING: this *overwrites* existing units, it does not convert them!
@@ -81,9 +83,7 @@ def set_units(tbl, units={'SurfaceDensity':u.M_sun/u.pc**2,
             tbl[k].unit = v
         #DEBUG print 'AFTER  unit for',k,":",tbl[k].unit
 
-def convert_units(tbl, units={'SurfaceDensity':u.M_sun/u.pc**2,
-                          'VelocityDispersion':u.km/u.s,
-                          'Radius':u.pc}):
+def convert_units(tbl, units=unit_mapping):
     """
     Convert from the units used in the table to the specified units.
     """

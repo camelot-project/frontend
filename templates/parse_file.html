@@ -24,9 +24,11 @@ $(document).ready(function(){
 
     $(".units").on('input', function(){
         var units = $(this).val();
+        var equiv = $(this)[0].attributes['equiv'].value;
         var input_id = $(this)[0].id;
         $.getJSON('/validate_units', {
-            unit_str: units
+            unit_str: units,
+            equivalent_unit: equiv
         }, function(data){
             console.log(data);
             if (data.OK) {
@@ -37,6 +39,12 @@ $(document).ready(function(){
             };
         })
     });
+
+    $(".real_column_name").on('change', function(){
+            var column_name = $(this)[0].name;
+            var mapping = $.getJSON('/unit_map_page');
+            $("."+column_name+"_units").equiv = mapping.responseJSON[column_name];
+            });
 });
 
 </script>
@@ -64,10 +72,15 @@ $(document).ready(function(){
                             <option value="{{real_column_name}}">{{real_column_name}}</option>
                             {% endif %}
                             {% endfor %}
+
+                            <option disabled>── Extras ──</option>
+                            {% for cn,display in additional_metadata.items() %}
+                            <option value="{{cn}}">{{display}}</option>
+                            {% endfor %}
                         </select>
                     </td>
                     <td class="middle">
-                        <input class="units form-control" id="{{column_name|striptags}}_units" name="{{column_name|striptags}}_units" value="{{default_unit}}">
+                        <input class="units form-control" id="{{column_name|striptags}}_units" name="{{column_name|striptags}}_units" value="{{default_unit}}" equiv=None>
                     </td>
                     </div>
                 </tr>

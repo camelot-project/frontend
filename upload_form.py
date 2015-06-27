@@ -27,7 +27,7 @@ from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     reorder_columns, append_table,
                                     ignore_duplicates, update_duplicates,
                                     add_is_gal_if_needed, add_is_gal_column,
-                                    fix_bad_colnames)
+                                    fix_bad_colnames, unit_mapping)
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
 from simple_plot import plotData, plotData_Sigma_sigma
@@ -106,6 +106,13 @@ for path in (MPLD3_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
             log.debug("Failed to create {0}: {1}".format(path, ex))
             continue
 
+
+# Load the metadata unit mapping
+with open('alternate_allowed_metadata.json') as f:
+    additional_metadata = json.load(f)
+    additional_metadata_names = {k:v[0] for k,v in
+                                 additional_metadata.items()}
+    unit_mapping.update({k:v[1] for k,v in additional_metadata.items()})
 
 # Allow zipping in jinja templates: http://stackoverflow.com/questions/5208252/ziplist1-list2-in-jinja2
 import jinja2
@@ -211,6 +218,8 @@ def uploaded_file(filename, fileformat=None):
     return render_template("parse_file.html", table=table, filename=filename,
                            real_column_names=valid_column_names,
                            best_column_names=best_column_names,
+                           additional_metadata=additional_metadata_names,
+                           unit_mapping=unit_mapping,
                            default_units=column_units,
                            tab_metadata=tab_metadata,
                            fileformat=fileformat,
@@ -249,11 +258,17 @@ def autocomplete_units():
     app.logger.debug(search)
     return jsonify(json_list=list(allunits))
 
+@app.route('/unit_map_page')
+def unit_map_page():
+    return jsonify({k:str(v) for k,v in unit_mapping.items()})
+
 @app.route('/validate_units', methods=['GET', 'POST'])
 def validate_units():
     """
     Validate the units: try to interpret the passed string as an astropy unit.
     """
+    print("Unit str: {0} Equiv: {1}".format(request.args.get('unit_str'),
+                                            request.args.get('equivalent_unit')))
     try:
         unit_str = request.args.get('unit_str', 'error', type=str)
         u.Unit(unit_str)
