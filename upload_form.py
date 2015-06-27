@@ -645,7 +645,7 @@ def commit_change_to_database(username, remote='origin',
     if diff_result == '':
         checkout_master(remote, workingdir)
         raise Exception("No difference was detected between the input branch "
-                        "of {0} ard the master after staging."
+                        "of {0} and the master after staging."
                         "  Possibly the submitted data "
                         "file contains no data.".format(workingdir))
 
