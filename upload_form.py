@@ -56,7 +56,7 @@ DATABASE_FOLDER = 'database/'
 MPLD3_FOLDER = 'static/mpld3/'
 PNG_PLOT_FOLDER = 'static/figures/'
 TABLE_FOLDER = 'static/jstables/'
-ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
+ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv', 'ecsv', 'cds'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated', 'IsGalactic', 'Username', 'Filename']
 dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic',
@@ -112,7 +112,8 @@ with open('alternate_allowed_metadata.json') as f:
     additional_metadata = json.load(f)
     additional_metadata_names = {k:v[0] for k,v in
                                  additional_metadata.items()}
-    unit_mapping.update({k:v[1] for k,v in additional_metadata.items()})
+    unit_mapping = dict({k:v[1] for k,v in additional_metadata.items()},
+                        **unit_mapping)
 
 # Allow zipping in jinja templates: http://stackoverflow.com/questions/5208252/ziplist1-list2-in-jinja2
 import jinja2
@@ -506,7 +507,7 @@ def set_columns(filename, fileformat=None):
                                traceback=traceback.format_exc(ex))
     
     uploads = [unique_filename,
-               os.path.splitext(unique_filename)+"_formdata.json"]
+               os.path.splitext(unique_filename)[0]+"_formdata.json"]
     try:
         # Adding raw file to uploads
         branch_uploads,timestamp = commit_change_to_database(username,
@@ -551,8 +552,16 @@ def set_columns(filename, fileformat=None):
                          jskwargs={'use_local_files':False},
                          table_id=outfilename)
 
-    return render_template('show_plot.html', imagename='/'+myplot_html,
-                           png_imagename="/"+myplot_png,
+    if myplot_html is None:
+        assert myplot_png is None # should be both or neither
+        imagename = None
+        png_imagename = None
+    else:
+        imagename = '/'+myplot_html
+        png_imagename = "/"+myplot_png
+
+    return render_template('show_plot.html', imagename=imagename,
+                           png_imagename=png_imagename,
                            tablefile='{fn}.html'.format(fn=outfilename),
                            link_pull_uploads=link_pull_uploads,
                            link_pull_database=link_pull_database,
@@ -1052,7 +1061,7 @@ def store_form_data(request, fileformat, unique_filename):
     form_data['fileformat'] = fileformat
 
     # remove private data
-    del formdata['Email']
+    del form_data['Email']
 
     filebase = os.path.splitext(unique_filename)[0]
     json_filename = os.path.join(app.config['UPLOAD_FOLDER'],
