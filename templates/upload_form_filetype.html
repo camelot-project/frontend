@@ -23,7 +23,19 @@ $(document).ready(function(){
         else{
             $('#upload_button').attr('disabled','disabled');
         }
-    })
+    });
+
+
+    $(function() {
+        $.ajax({
+            url: '{{ url_for(".autocomplete_filetypes") }}'
+            }).done(function (data) {
+                $('#file_format').autocomplete({
+                source: data.json_list,
+                minLength: 2
+            });
+        });
+    });
 
 });
 </script>

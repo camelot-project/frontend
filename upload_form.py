@@ -271,10 +271,21 @@ def validate_units():
                                             request.args.get('equivalent_unit')))
     try:
         unit_str = request.args.get('unit_str', 'error', type=str)
-        u.Unit(unit_str)
-        OK = True
-    except:
-        OK = False
+        equivalent_unit = request.args.get('equivalent_unit', 'error', type=str)
+        if equivalent_unit in ('None', 'none', None):
+            u.Unit(unit_str)
+            OK = 'green'
+        else:
+            try:
+                u.Unit(unit_str).to(u.Unit(equivalent_unit))
+                OK = 'green'
+            except u.UnitsError as ex:
+                print(ex)
+                u.Unit(unit_str)
+                OK = 'yellow'
+    except ValueError as ex:
+        print(ex)
+        OK = 'red'
     return jsonify(OK=OK)
 
 @app.route('/autocomplete_filetypes',methods=['GET'])
