@@ -1,0 +1,11 @@
+{"T_g": ["Gas Temperature", "K"],
+ "T_d": ["Dust Temperature", "K"],
+ "timestep": ["Simulation Timestep", "Myr"],
+ "timestep_id": ["Simulation Timestep ID", "None"],
+ "age": ["Age", "Myr"],
+ "Z": ["Metallicity", "None"],
+ "z": ["Redshift", "None"],
+ "density": ["Density", "g/cm**3"]
+}
+
+
