@@ -12,6 +12,7 @@ from astropy import units as u
 import mpld3
 from mpld3 import plugins
 import pdb
+from astropy import log
 
 
 matplotlib.rcParams['figure.figsize'] = (12, 8)
@@ -59,12 +60,22 @@ def plotData_Sigma_sigma(NQuery, table, FigureStrBase,
                          RadMax=1e3*u.pc,
                          **kwargs):
     """
-    SurfMin
-    SurfMax
-    VDispMin
-    VDispMax
-    RadMin
-    RadMax
+    Plot the Sigma-sigma-R plot (R is shown as point size)
+    
+    Parameters
+    ----------
+    NQuery : str
+        A filename suffix (needs further explanation - Diederik?)
+    table : `astropy.table.Table`
+        The table to plot
+    FigureStrBase : str
+        A filename prefix
+    SurfMin : u.Quantity
+    SurfMax : u.Quantity
+    VDispMin : u.Quantity
+    VDispMax : u.Quantity
+    RadMin : u.Quantity
+    RadMax : u.Quantity
     """
     return plotData(NQuery, table, FigureStrBase,
                     xvariable="SurfaceDensity",
@@ -110,6 +121,8 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
         shortest axis.
 
     """
+    if len(input_table) == 0:
+        raise ValueError("The input table is empty.")
 
     figure = matplotlib.figure.Figure()
     if interactive:
@@ -168,8 +181,21 @@ def plotData(NQuery, input_table, FigureStrBase, html_dir=None, png_dir=None,
     # intersects the three subsets defined above
     Use = Use_x_ax & Use_y_ax & Use_z_ax
 
-    if np.count_nonzero(Use) == 0:
+    nptstoplot = np.count_nonzero(Use)
+    if nptstoplot == 0:
+        log.debug("Use: {0}".format(Use))
+        log.debug("Use_x_ax: {0}".format(Use_x_ax))
+        log.debug("xmin: {0} xmax: {1}".format(xMin, xMax))
+        log.debug("x_ax: {0}".format(x_ax))
+        log.debug("Use_y_ax: {0}".format(Use_y_ax))
+        log.debug("ymin: {0} ymax: {1}".format(yMin, yMax))
+        log.debug("y_ax: {0}".format(y_ax))
+        log.debug("Use_z_ax: {0}".format(Use_z_ax))
+        log.debug("zmin: {0} zmax: {1}".format(zMin, zMax))
+        log.debug("z_ax: {0}".format(z_ax))
         return None,None
+    else:
+        log.debug("Found {0} points to plot".format(nptstoplot))
 
     UniqueAuthor = list(set(Author[Use]))
     NUniqueAuthor = len(UniqueAuthor)

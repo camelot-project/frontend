@@ -320,7 +320,10 @@ def set_columns(filename, fileformat=None, testmode=False):
         fileformat = request.args['fileformat']
 
     if 'testmode' in request.args:
-        testmode = request.args['testmode'].lower() == 'true'
+        if request.args['testmode'].lower() == 'skip':
+            testmode = 'skip'
+        else:
+            testmode = request.args['testmode'].lower() == 'true'
     if testmode:
         loglevel = log.level
         log.setLevel(10)
@@ -488,6 +491,50 @@ def set_columns(filename, fileformat=None, testmode=False):
 
     username = column_data.get('Username')['Name']
 
+    if testmode != 'skip':
+        link_pull_database, link_pull_uploads = \
+                create_pull_request(username=username,
+                                    merged_table=merged_table,
+                                    merged_table_name=merged_table_name,
+                                    table_widths=table_widths,
+                                    unique_filename=unique_filename,
+                                    testmode=testmode)
+    else:
+        link_pull_database, link_pull_uploads = 'placeholder','placeholder'
+
+    outfilename = os.path.splitext(filename)[0]
+    log.debug("Creating plot {0}.".format(outfilename))
+    myplot_html, myplot_png = \
+        plotData_Sigma_sigma(timeString(), table, outfilename,
+                             html_dir=app.config['MPLD3_FOLDER'],
+                             png_dir=app.config['PNG_PLOT_FOLDER'])
+
+    log.debug("Creating table.")
+    tablecss = "table,th,td,tr,tbody {border: 1px solid black; border-collapse: collapse;}"
+    write_table_jsviewer(table,
+                         os.path.join(TABLE_FOLDER, '{fn}.html'.format(fn=outfilename)),
+                         css=tablecss,
+                         jskwargs={'use_local_files':False},
+                         table_id=outfilename)
+
+    if myplot_html is None:
+        assert myplot_png is None # should be both or neither
+        imagename = None
+        png_imagename = None
+    else:
+        imagename = '/'+myplot_html
+        png_imagename = "/"+myplot_png
+
+    return render_template('show_plot.html',
+                           imagename=imagename,
+                           png_imagename=png_imagename,
+                           tablefile='{fn}.html'.format(fn=outfilename),
+                           link_pull_uploads=link_pull_uploads,
+                           link_pull_database=link_pull_database,
+                          )
+
+def create_pull_request(username, merged_table, merged_table_name,
+                        table_widths, unique_filename, testmode=False):
     # go to appropriate branches in the database gits
     print("Re-fetching the databases.")
     try:
@@ -565,35 +612,7 @@ def set_columns(filename, fileformat=None, testmode=False):
             return render_template('error.html', error=str(ex),
                                    traceback=traceback.format_exc(ex))
 
-    log.debug("Creating plot.")
-    outfilename = os.path.splitext(filename)[0]
-    myplot_html, myplot_png = \
-        plotData_Sigma_sigma(timeString(), table, outfilename,
-                             html_dir=app.config['MPLD3_FOLDER'],
-                             png_dir=app.config['PNG_PLOT_FOLDER'])
-
-    log.debug("Creating table.")
-    tablecss = "table,th,td,tr,tbody {border: 1px solid black; border-collapse: collapse;}"
-    write_table_jsviewer(table,
-                         os.path.join(TABLE_FOLDER, '{fn}.html'.format(fn=outfilename)),
-                         css=tablecss,
-                         jskwargs={'use_local_files':False},
-                         table_id=outfilename)
-
-    if myplot_html is None:
-        assert myplot_png is None # should be both or neither
-        imagename = None
-        png_imagename = None
-    else:
-        imagename = '/'+myplot_html
-        png_imagename = "/"+myplot_png
-
-    return render_template('show_plot.html', imagename=imagename,
-                           png_imagename=png_imagename,
-                           tablefile='{fn}.html'.format(fn=outfilename),
-                           link_pull_uploads=link_pull_uploads,
-                           link_pull_database=link_pull_database,
-                          )
+    return link_pull_database, link_pull_uploads
 
 
 def setup_submodule(username, remote='origin', workingdir='database/',

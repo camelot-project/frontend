@@ -91,6 +91,7 @@ def convert_units(tbl, units=unit_mapping):
         if k not in tbl.colnames:
             raise KeyError("{0} not in table: run `rename_columns` first.".format(k))
         tbl[k] = tbl[k].to(v)
+        tbl[k].unit = v
 
 def add_name_column(tbl, name):
     """
