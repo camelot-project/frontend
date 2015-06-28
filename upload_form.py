@@ -622,7 +622,13 @@ def setup_submodule(username, remote='origin', workingdir='database/',
                                              cwd=workingdir)
     name = os.path.split(check_upstream)[1][:-5]
     if name != database:
-        raise Exception("Error: the remote URL {0} (which is really '{2}') does not match the expected one '{1}'"
+        raise Exception("Error: the remote URL {0} "
+                        "(which points to '{2}')"
+                        " does not match the expected one '{1}'"
+                        " that was passed to setup_module.  The"
+                        " full string was {0}, and the last 5 "
+                        "characters are supposed to be cropped"
+                        " after splitting."
                         .format(check_upstream, database, name))
 
     branch_result = subprocess.call(['git','branch', '-a'], cwd=workingdir)
