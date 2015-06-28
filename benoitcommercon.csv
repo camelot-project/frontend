@@ -1,0 +1,7 @@
+id,vdisp,surfdens,radius,is_sim
+mdc2011,0.4,224,1.35,True
+mdc_a,0.7,2241,0.225,True
+mdc_b,1.4,2241,0.225,True
+mdc_c,0.7,35869,0.05,True
+mdc_d,1.4,35869,0.05,True
+test,1.4,35869,0.05,True

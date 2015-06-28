@@ -24,19 +24,46 @@ $(document).ready(function(){
 
     $(".units").on('input', function(){
         var units = $(this).val();
+        var equiv = $(this)[0].attributes['equiv'].value;
         var input_id = $(this)[0].id;
         $.getJSON('/validate_units', {
-            unit_str: units
+            unit_str: units,
+            equivalent_unit: equiv
         }, function(data){
             console.log(data);
-            if (data.OK) {
+            if (data.OK == 'green') {
                 $("#"+input_id).css("background-color","#66FF66");
                 $("#"+input_id).addClass("background-color","#66FF66");
+            } else if (data.OK == 'yellow') {
+                $("#"+input_id).css("background-color","#DDDD66");
+                $("#"+input_id).addClass("background-color","#DDDD66");
             } else {
                 $("#"+input_id).css("background-color","#FFAAAA");
             };
         })
     });
+
+    var unit_mapping;
+    $.getJSON('/unit_map_page', function(json){
+            console.log("Successfully queried unit_map_page");
+            console.log("json: ",json);
+            unit_mapping = json;
+            });
+
+    $(".real_column_name").on('change', function(){
+            var column_name = $(this)[0].name;
+            var variable_name = $(this).val();
+            var target_cell = $("#"+column_name+"_units")[0];
+            // console.log(target_cell.attributes['equiv'].value)
+            // console.log("column_name:", column_name);
+            // console.log("variable_name:", variable_name);
+            var out_unit = unit_mapping[variable_name];
+            // console.log("unit_mapping ", unit_mapping);
+            // console.log("unit_mapping[column_name] ", unit_mapping[column_name]);
+            // console.log("out_unit:", out_unit);
+            target_cell.attributes['equiv'].value = out_unit;
+            });
+
 });
 
 </script>
@@ -59,15 +86,21 @@ $(document).ready(function(){
                         <select class="form-control real_column_name" name="{{column_name}}">
                             {% for real_column_name in real_column_names %}
                             {% if real_column_name == best_column_name %}
-                            <option value="{{real_column_name}}" selected>{{real_column_name}}</option>
+                                <option value="{{real_column_name}}" selected>{{real_column_name}}</option>
                             {% else %}
                             <option value="{{real_column_name}}">{{real_column_name}}</option>
                             {% endif %}
                             {% endfor %}
+
+                            <option disabled>── Extras ──</option>
+                            {% for cn,display in additional_metadata.items() %}
+                            <option value="{{cn}}">{{display}}</option>
+                            {% endfor %}
                         </select>
                     </td>
                     <td class="middle">
-                        <input class="units form-control" id="{{column_name|striptags}}_units" name="{{column_name|striptags}}_units" value="{{default_unit}}">
+                        <input class="units form-control" id="{{column_name|striptags}}_units" name="{{column_name|striptags}}_units" value="{{default_unit}}"
+                         equiv="{{unit_mapping.get(best_column_name)}}">
                     </td>
                     </div>
                 </tr>

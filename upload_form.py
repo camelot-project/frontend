@@ -27,7 +27,7 @@ from ingest_datasets_better import (rename_columns, set_units, convert_units,
                                     reorder_columns, append_table,
                                     ignore_duplicates, update_duplicates,
                                     add_is_gal_if_needed, add_is_gal_column,
-                                    fix_bad_colnames)
+                                    fix_bad_colnames, unit_mapping)
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
 from simple_plot import plotData, plotData_Sigma_sigma
@@ -56,7 +56,7 @@ DATABASE_FOLDER = 'database/'
 MPLD3_FOLDER = 'static/mpld3/'
 PNG_PLOT_FOLDER = 'static/figures/'
 TABLE_FOLDER = 'static/jstables/'
-ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv'])
+ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv', 'ecsv', 'cds'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated', 'IsGalactic', 'Username', 'Filename']
 dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic',
@@ -107,10 +107,19 @@ for path in (MPLD3_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
             continue
 
 
+# Load the metadata unit mapping
+with open('alternate_allowed_metadata.json') as f:
+    additional_metadata = json.load(f)
+    additional_metadata_names = {k:v[0] for k,v in
+                                 additional_metadata.items()}
+    unit_mapping = dict({k:v[1] for k,v in additional_metadata.items()},
+                        **unit_mapping)
+
 # Allow zipping in jinja templates: http://stackoverflow.com/questions/5208252/ziplist1-list2-in-jinja2
 import jinja2
 env = jinja2.Environment()
 env.globals.update(zip=zip)
+env.globals['offline_mode'] = False
 
 # http://stackoverflow.com/questions/21306134/iterating-over-multiple-lists-in-python-flask-jinja2-templates
 @app.template_global(name='zip')
@@ -196,7 +205,7 @@ def uploaded_file(filename, fileformat=None):
                   'IsObserved':False,'IsSimulated':False,
                   'IsGalactic':False,'IsExtragalactic':False}
     metadata_name_mapping = {'author': 'Author',
-                             'ads': 'ADS_ID', 'asd_id': 'ADS_ID',
+                             'ads': 'ADS_ID', 'ads_id': 'ADS_ID',
                              'doi': 'DOI or URL', 'url': 'DOI or URL',
                              'email': 'Submitter', 'submitter': 'Submitter',
                              'isobserved': 'IsObserved', 'issimulated': 'IsSimulated',
@@ -210,6 +219,8 @@ def uploaded_file(filename, fileformat=None):
     return render_template("parse_file.html", table=table, filename=filename,
                            real_column_names=valid_column_names,
                            best_column_names=best_column_names,
+                           additional_metadata=additional_metadata_names,
+                           unit_mapping=unit_mapping,
                            default_units=column_units,
                            tab_metadata=tab_metadata,
                            fileformat=fileformat,
@@ -248,17 +259,34 @@ def autocomplete_units():
     app.logger.debug(search)
     return jsonify(json_list=list(allunits))
 
+@app.route('/unit_map_page')
+def unit_map_page():
+    return jsonify({k:str(v) for k,v in unit_mapping.items()})
+
 @app.route('/validate_units', methods=['GET', 'POST'])
 def validate_units():
     """
     Validate the units: try to interpret the passed string as an astropy unit.
     """
+    print("Unit str: {0} Equiv: {1}".format(request.args.get('unit_str'),
+                                            request.args.get('equivalent_unit')))
     try:
         unit_str = request.args.get('unit_str', 'error', type=str)
-        u.Unit(unit_str)
-        OK = True
-    except:
-        OK = False
+        equivalent_unit = request.args.get('equivalent_unit', 'error', type=str)
+        if equivalent_unit in ('None', 'none', None):
+            u.Unit(unit_str)
+            OK = 'green'
+        else:
+            try:
+                u.Unit(unit_str).to(u.Unit(equivalent_unit))
+                OK = 'green'
+            except u.UnitsError as ex:
+                print(ex)
+                u.Unit(unit_str)
+                OK = 'yellow'
+    except ValueError as ex:
+        print(ex)
+        OK = 'red'
     return jsonify(OK=OK)
 
 @app.route('/autocomplete_filetypes',methods=['GET'])
@@ -278,7 +306,7 @@ def autocomplete_column_names():
     return jsonify(json_list=valid_column_names)
 
 @app.route('/set_columns/<path:filename>', methods=['POST', 'GET'])
-def set_columns(filename, fileformat=None):
+def set_columns(filename, fileformat=None, testmode=False):
     """
     Meat of the program: takes the columns from the input table and matches
     them to the columns provided by the user in the column form.
@@ -290,6 +318,17 @@ def set_columns(filename, fileformat=None):
 
     if fileformat is None and 'fileformat' in request.args:
         fileformat = request.args['fileformat']
+
+    if 'testmode' in request.args:
+        if request.args['testmode'].lower() == 'skip':
+            testmode = 'skip'
+        else:
+            testmode = request.args['testmode'].lower() == 'true'
+    if testmode:
+        loglevel = log.level
+        log.setLevel(10)
+
+    log.debug("Test mode = {0}.".format(testmode))
 
     log.debug("Reading table {0}".format(filename))
     try:
@@ -322,14 +361,19 @@ def set_columns(filename, fileformat=None):
     mapping = {filename: [column_data, units_data]}
 
     log.debug("Further table handling.")
+    key_rename_mapping = {k: v['Name'] for k,v in column_data.items()}
+    log.debug("Mapping: {0}".format(key_rename_mapping))
     # Parse the table file, step-by-step
-    rename_columns(table, {k: v['Name'] for k,v in column_data.items()})
+    rename_columns(table, key_rename_mapping)
     set_units(table, units_data)
     table = fix_bad_types(table)
     try:
         convert_units(table)
     except Exception as ex:
-        return render_template('error.html', error=str(ex), traceback=traceback.format_exc(ex))
+        if testmode:
+            raise ex
+        else:
+            return render_template('error.html', error=str(ex), traceback=traceback.format_exc(ex))
     add_name_column(table, column_data.get('Username')['Name'])
     if 'ADS_ID' not in table.colnames:
         table.add_column(table.Column(name='ADS_ID', data=[request.form['adsid']]*len(table)))
@@ -358,6 +402,8 @@ def set_columns(filename, fileformat=None):
     os.rename(full_filename_old, full_filename_new)
     add_filename_column(table, unique_filename)
     log.debug("Table column names after add_filename_column: ",table.colnames)
+
+    store_form_data(request, fileformat, unique_filename)
 
     handle_email(request.form['Email'], unique_filename)
 
@@ -445,67 +491,30 @@ def set_columns(filename, fileformat=None):
 
     username = column_data.get('Username')['Name']
 
-    # go to appropriate branches in the database gits
-    print("Re-fetching the databases.")
-    try:
-        check_authenticate_with_github()
-        branch_database, timestamp = setup_submodule(username,
-                                                     workingdir='database/',
-                                                     database='database')
-        branch_uploads, timestamp = setup_submodule(username,
-                                                    workingdir='uploads/',
-                                                    database='uploads',
-                                                    timestamp=timestamp,
-                                                    branch=branch_database,
-                                                   )
-    except Exception as ex:
-        return render_template('error.html', error=str(ex),
-                               traceback=traceback.format_exc(ex))
+    if testmode != 'skip':
+        try:
+            link_pull_database, link_pull_uploads = \
+                    create_pull_request(username=username,
+                                        merged_table=merged_table,
+                                        merged_table_name=merged_table_name,
+                                        table_widths=table_widths,
+                                        unique_filename=unique_filename,
+                                        testmode=testmode)
+        except Exception as ex:
+            if testmode:
+                raise ex
+            else:
+                return render_template('error.html', error=str(ex),
+                                       traceback=traceback.format_exc(ex))
+        if isinstance(link_pull_database, Exception):
+            ex = link_pull_database
+            return render_template('error.html', error=str(ex),
+                                   traceback=traceback.format_exc(ex))
+    else:
+        link_pull_database, link_pull_uploads = 'placeholder','placeholder'
 
-    # write the modified table
-    ipac_writer(merged_table, merged_table_name, widths=table_widths)
-
-    print("Committing changes")
-    # Add merged data to database
-    try:
-        branch_database,timestamp = commit_change_to_database(username,
-                                                              branch=branch_database,
-                                                              timestamp=timestamp)
-    except Exception as ex:
-        cleanup_git_directory('database/', allow_fail=False)
-        return render_template('error.html', error=str(ex),
-                               traceback=traceback.format_exc(ex))
-    try:
-        # Adding raw file to uploads
-        branch_uploads,timestamp = commit_change_to_database(username,
-                                                             tablename=unique_filename,
-                                                             workingdir='uploads/',
-                                                             database='uploads',
-                                                             branch=branch_database,
-                                                             timestamp=timestamp)
-    except Exception as ex:
-        cleanup_git_directory('uploads/', allow_fail=False)
-        return render_template('error.html', error=str(ex),
-                               traceback=traceback.format_exc(ex))
-
-
-    try:
-        log.debug("Creating pull requests")
-        response_database, link_pull_database = pull_request(branch_database,
-                                                             username,
-                                                             timestamp)
-        response_uploads, link_pull_uploads = pull_request(branch_database,
-                                                           username,
-                                                           timestamp,
-                                                           database='uploads')
-    except Exception as ex:
-        cleanup_git_directory('uploads/', allow_fail=False)
-        cleanup_git_directory('database/', allow_fail=False)
-        return render_template('error.html', error=str(ex),
-                               traceback=traceback.format_exc(ex))
-
-    log.debug("Creating plot.")
     outfilename = os.path.splitext(filename)[0]
+    log.debug("Creating plot {0}.".format(outfilename))
     myplot_html, myplot_png = \
         plotData_Sigma_sigma(timeString(), table, outfilename,
                              html_dir=app.config['MPLD3_FOLDER'],
@@ -519,30 +528,107 @@ def set_columns(filename, fileformat=None):
                          jskwargs={'use_local_files':False},
                          table_id=outfilename)
 
-    return render_template('show_plot.html', imagename='/'+myplot_html,
-                           png_imagename="/"+myplot_png,
+    if myplot_html is None:
+        assert myplot_png is None # should be both or neither
+        imagename = None
+        png_imagename = None
+    else:
+        imagename = '/'+myplot_html
+        png_imagename = "/"+myplot_png
+
+    return render_template('show_plot.html',
+                           imagename=imagename,
+                           png_imagename=png_imagename,
                            tablefile='{fn}.html'.format(fn=outfilename),
                            link_pull_uploads=link_pull_uploads,
                            link_pull_database=link_pull_database,
                           )
 
+def create_pull_request(username, merged_table, merged_table_name,
+                        table_widths, unique_filename, testmode=False):
+    # go to appropriate branches in the database gits
+    print("Re-fetching the databases.")
+    check_authenticate_with_github()
+    branch_database, timestamp = setup_submodule(username,
+                                                 workingdir='database/',
+                                                 database='database',
+                                                 testmode=testmode)
+    branch_uploads, timestamp = setup_submodule(username,
+                                                workingdir='uploads/',
+                                                database='uploads',
+                                                timestamp=timestamp,
+                                                branch=branch_database,
+                                               )
+
+    # write the modified table
+    ipac_writer(merged_table, merged_table_name, widths=table_widths)
+
+    print("Committing changes")
+    # Add merged data to database
+    branch_database,timestamp = commit_change_to_database(username,
+                                                          branch=branch_database,
+                                                          timestamp=timestamp)
+    
+    uploads = [unique_filename,
+               os.path.splitext(unique_filename)[0]+"_formdata.json"]
+    try:
+        # Adding raw file to uploads
+        branch_uploads,timestamp = commit_change_to_database(username,
+                                                             tablename=uploads,
+                                                             workingdir='uploads/',
+                                                             database='uploads',
+                                                             branch=branch_database,
+                                                             timestamp=timestamp)
+    except Exception as ex:
+        cleanup_git_directory('uploads/', allow_fail=False)
+        return ex,ex
+
+    try:
+        log.debug("Creating pull requests")
+        response_database, link_pull_database = pull_request(branch_database,
+                                                             username,
+                                                             timestamp,
+                                                             testmode=testmode)
+        response_uploads, link_pull_uploads = pull_request(branch_database,
+                                                           username,
+                                                           timestamp,
+                                                           database='uploads',
+                                                           testmode=testmode)
+    except Exception as ex:
+        cleanup_git_directory('uploads/', allow_fail=False)
+        cleanup_git_directory('database/', allow_fail=False)
+        return ex,ex
+
+    return link_pull_database, link_pull_uploads
+
 
 def setup_submodule(username, remote='origin', workingdir='database/',
-                    database='database', branch=None, timestamp=None):
+                    database='database', branch=None, timestamp=None,
+                    testmode=False):
     """
     """
     if timestamp is None:
         timestamp = datetime.now().isoformat().replace(":","_")
 
     if branch is None:
-        branch = '{0}_{1}'.format(username, timestamp)
+        if testmode:
+            branch = 'TEST_{0}_{1}'.format(username, timestamp)
+        else:
+            branch = '{0}_{1}'.format(username, timestamp)
+        log.debug("Branch name: {0}".format(branch))
 
     check_upstream = subprocess.check_output(['git', 'config', '--get',
                                               'remote.{remote}.url'.format(remote=remote)],
                                              cwd=workingdir)
     name = os.path.split(check_upstream)[1][:-5]
     if name != database:
-        raise Exception("Error: the remote URL {0} (which is really '{2}') does not match the expected one '{1}'"
+        raise Exception("Error: the remote URL {0} "
+                        "(which points to '{2}')"
+                        " does not match the expected one '{1}'"
+                        " that was passed to setup_module.  The"
+                        " full string was {0}, and the last 5 "
+                        "characters are supposed to be cropped"
+                        " after splitting."
                         .format(check_upstream, database, name))
 
     branch_result = subprocess.call(['git','branch', '-a'], cwd=workingdir)
@@ -588,7 +674,10 @@ def commit_change_to_database(username, remote='origin',
         raise Exception("Error: the remote URL {0} (which is really '{2}') does not match the expected one '{1}'"
                         .format(check_upstream, database, name))
 
-    add_result = subprocess.call(['git','add',tablename], cwd=workingdir)
+    if isinstance(tablename, (list,tuple)):
+        add_result = subprocess.call(['git','add',]+tablename, cwd=workingdir)
+    else:
+        add_result = subprocess.call(['git','add',tablename], cwd=workingdir)
     if add_result != 0:
         raise Exception("Adding {tablename} to the commit failed in {cwd}."
                         .format(tablename=tablename, cwd=workingdir))
@@ -601,7 +690,7 @@ def commit_change_to_database(username, remote='origin',
     if diff_result == '':
         checkout_master(remote, workingdir)
         raise Exception("No difference was detected between the input branch "
-                        "of {0} ard the master after staging."
+                        "of {0} and the master after staging."
                         "  Possibly the submitted data "
                         "file contains no data.".format(workingdir))
 
@@ -639,7 +728,8 @@ def checkout_master(remote, workingdir):
                         "This will prevent future uploads from working, which is bad!!"
                         .format(remote=remote, workingdir=workingdir))
 
-def pull_request(branch, user, timestamp, database='database', retry=5):
+def pull_request(branch, user, timestamp, database='database', retry=5,
+                 testmode=False):
     """
     WIP: Eventually, we want each file to be uploaded to github and submitted
     as a pull request when people submit their data
@@ -663,8 +753,13 @@ def pull_request(branch, user, timestamp, database='database', retry=5):
                         "appropriate environmental variable")
     #S.get('https://api.github.com/', data={'access_token':'e4942f7d7cc9468ffd0e'})
 
+    if testmode:
+        prtitle = "**TEST** data table from {user}".format(user=user)
+    else:
+        prtitle = "New data table from {user}".format(user=user)
+
     data = {
-      "title": "New data table from {user}".format(user=user),
+      "title": prtitle,
       "body": "Data table added by {user} at {timestamp}".format(user=user, timestamp=timestamp),
       "head": "camelot-project:{0}".format(branch),
       "base": "master"
@@ -845,8 +940,13 @@ def setup_authenticate_with_github():
     credentials etc.
     """
 
+    # Allow server to start when there is no net connection
+    # Purely for testing!!!
+    if env.globals['offline_mode']:
+        return True
+
     # Only run the configuration on the heroku app
-    if os.getenv('HEROKU_SERVER') != 'camelot-project.herokuapp.com':
+    if (os.getenv('HEROKU_SERVER') != 'camelot-project.herokuapp.com'):
         # but do the checking no matter what
         return check_authenticate_with_github()
 
@@ -1006,6 +1106,22 @@ def update_database():
                            cls=cls,
                           )
 
+def store_form_data(request, fileformat, unique_filename):
+
+    form_data = dict(request.form)
+    form_data['fileformat'] = fileformat
+
+    # remove private data
+    del form_data['Email']
+
+    filebase = os.path.splitext(unique_filename)[0]
+    json_filename = os.path.join(app.config['UPLOAD_FOLDER'],
+                                 filebase+"_formdata.json")
+    print("Storing form data to {0}".format(json_filename))
+    with open(json_filename, 'w') as f:
+        json.dump(form_data, f)
+
+
 def handle_email(email, filename):
     form_url = 'https://docs.google.com/forms/d/1nzdc8jOMlwZEYqdJSvNo6B60gNrUZ9trrhUeYRtUM8g/formResponse'
 
@@ -1047,6 +1163,12 @@ def version():
     return git_id, git_database_id
 
 if __name__ == '__main__':
+    log.setLevel(10)
+    try:
+        requests.get('http://www.github.com')
+    except requests.ConnectionError:
+        env.globals['offline_mode']=True
+
     if os.getenv('HEROKU_SERVER'):
         app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT')))
     else:

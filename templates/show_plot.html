@@ -28,6 +28,7 @@
      {% if link_pull_uploads %}
     <div id="link_pull_uploads">Submitted file pull request: <a href="{{link_pull_uploads}}">{{link_pull_uploads}}</a></div>
      {% endif %}
+     {% if png_imagename is not none %}
      <div class="row" align="left">
         <div class="col-md-10">
             <div>
@@ -67,13 +68,16 @@
      <div id="includedTable"></div>
 
      <div> If you think data are missing, try <a href="/update_database">updating the database</a> </div>
+     {% else %}
+         <div> No data were found to plot</div>
+     {% endif %}
     <div id='footer'></div>
   </body>
 </html>
 
 <!-- imagename = {{imagename}} -->
 
-{% if imagename[:-3] == 'png' %}
+{% if imagename is not none and imagename[:-3] == 'png' %}
     <img src="{{imagename}}" width=800>
 {% else %}
 
