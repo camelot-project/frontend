@@ -1,1 +1,40 @@
-uploads/b02f29338e4b8ae5d53af2402656764.ecsv
+# %ECSV 0.9
+# ---
+# datatype:
+# - {name: '---', datatype: string, description: '[GRSMC]'}
+# - {name: GRSMC, datatype: string, description: Molecular cloud name (GLLL.ll+BB.bb)
+#     (1)}
+# - {name: GLON, unit: deg, datatype: float64, description: Galactic longitude}
+# - {name: GLAT, unit: deg, datatype: float64, description: Galactic latitude}
+# - {name: Vlsr, unit: km / s, datatype: float64, description: Velocity of the peak
+#     voxel of the emission}
+# - {name: DeltaV, unit: km / s, datatype: float64, description: Velocity FWHM (2)}
+# - {name: Tmb, unit: K, datatype: float64, description: Main beam temperature of the
+#     peak voxel}
+# - {name: GLONc, unit: deg, datatype: float64, description: Galactic longitude of centroid
+#     (3)}
+# - {name: GLATc, unit: deg, datatype: float64, description: Galactic latitude of centroid
+#     (3)}
+# - {name: a, unit: deg, datatype: float64, description: Semimajor axis of fitted ellipse
+#     (4)}
+# - {name: b, unit: deg, datatype: float64, description: Semiminor axis of fitted ellipse
+#     (4)}
+# - {name: pa, unit: deg, datatype: int64, description: '[-90/90] Position angle of
+#     fitted ellipse (5)'}
+# - {name: Area, unit: deg2, datatype: float64, description: Projected two-dimensional
+#     area}
+# - {name: Tav, unit: K, datatype: float64, description: Average main beam temperature
+#     of the cloud (6)}
+# - {name: Ipeak, unit: K km / s, datatype: float64, description: Peak integrated intensity}
+# - {name: Itot, unit: K km / (deg2 s), datatype: float64, description: Total ^13^CO
+#     integrated intensity}
+# - {name: N(H2), unit: 1e+22 / cm2, datatype: float64, description: Peak H2 column
+#     density}
+# - {name: Flag, datatype: string, description: '[YXV- ] Boundary flag(s) (G1)'}
+# - {name: Dist, unit: kpc, datatype: float64, description: Kinematic distance to the
+#     cloud}
+# - {name: radius, unit: pc, datatype: float64, description: Radius = sqrt(area)}
+--- GRSMC GLON GLAT Vlsr DeltaV Tmb GLONc GLATc a b pa Area Tav Ipeak Itot N(H2) Flag Dist radius
+GRSMC G053.59+00.04 53.59 0.04 23.7 1.99 5.75 53.69 0.01 0.52 0.19 16 0.27 1.9 36.5 0.95 1.8e+22 -- 8.15 73.9123240925
+GRSMC G029.89-00.06 29.89 -0.06 100.7 5.09 5.46 29.99 -0.17 0.44 0.35 -46 0.46 2.49 87.6 3.12 4.3e+22 -- 6.78 80.257564652
+GRSMC test 29.89 -0.06 100.7 5.09 5.46 29.99 -0.17 0.44 0.35 -46 0.46 2.49 87.6 3.12 4.3e+22 -- 6.78 80.257564652

@@ -5,10 +5,17 @@ import requests
 from bs4 import BeautifulSoup
 import github_helpers
 
-def test_upload_file(filename='benoitcommercon.csv',
+def test_upload_file(email,
+                     filename='benoitcommercon.csv',
                      username='test_BenoitCommercon', adsid='unknown_adsid',
-                     doi='unknown_doi', email='tester_adamginsburg@gmail.com',
+                     doi='unknown_doi',
                      base_url='http://camelot-project.herokuapp.com'):
+    """
+    Submit the benoitcommercon test dataset
+
+    Your e-mail is REQUIRED here: please submit either your email address, your
+    name, or your github id.
+    """
 
     S = requests.Session()
     r1 = S.get(base_url+"/upload_form")
@@ -41,8 +48,8 @@ def test_upload_file(filename='benoitcommercon.csv',
     jsondata = json.dumps(dictdata)
     print("JSON data: ",jsondata)
 
-    r3 = S.post(base_url+'/set_columns/{filename}'.format(filename=filename),
-               data=dictdata)
+    r3 = S.post(base_url+'/set_columns/{filename}?testmode=True'.format(filename=filename),
+                data=dictdata)
     r3.raise_for_status()
 
     soup = BeautifulSoup(r3.content)
@@ -58,12 +65,18 @@ def test_upload_file(filename='benoitcommercon.csv',
 
     return S,r1,r2,r3
 
-def test_upload_rathborne(filename='rathborne2009_table2.ecsv',
+def test_upload_rathborne(email,
+                          filename='rathborne2009_table2.ecsv',
                           username='JillRathborne',
                           adsid='2009ApJS..182..131R',
                           doi='10.1088/0067-0049/182/1/131',
-                          email='adamgginsburg@gmail.com',
                           base_url='http://camelot-project.herokuapp.com'):
+    """
+    Submit the Rathborne test dataset
+
+    Your e-mail is REQUIRED here: please submit either your email address, your
+    name, or your github id.
+    """
 
     S = requests.Session()
     r1 = S.get(base_url+"/upload_form")
@@ -128,8 +141,8 @@ def test_upload_rathborne(filename='rathborne2009_table2.ecsv',
     print("JSON data: ",jsondata)
 
     #/set_columns/rathborne2009_table2.ecsv?fileformat=ascii.ecsv
-    r3 = S.post(base_url+'/set_columns/{filename}?fileformat=ascii.ecsv'.format(filename=filename),
-               data=dictdata)
+    r3 = S.post(base_url+'/set_columns/{filename}?fileformat=ascii.ecsv&testmode=True'.format(filename=filename),
+                data=dictdata)
     r3.raise_for_status()
 
     soup = BeautifulSoup(r3.content)

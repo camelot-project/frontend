@@ -306,7 +306,7 @@ def autocomplete_column_names():
     return jsonify(json_list=valid_column_names)
 
 @app.route('/set_columns/<path:filename>', methods=['POST', 'GET'])
-def set_columns(filename, fileformat=None):
+def set_columns(filename, fileformat=None, testmode=False):
     """
     Meat of the program: takes the columns from the input table and matches
     them to the columns provided by the user in the column form.
@@ -318,6 +318,14 @@ def set_columns(filename, fileformat=None):
 
     if fileformat is None and 'fileformat' in request.args:
         fileformat = request.args['fileformat']
+
+    if 'testmode' in request.args:
+        testmode = request.args['testmode'].lower() == 'true'
+    if testmode:
+        loglevel = log.level
+        log.setLevel(10)
+
+    log.debug("Test mode = {0}.".format(testmode))
 
     log.debug("Reading table {0}".format(filename))
     try:
@@ -350,14 +358,19 @@ def set_columns(filename, fileformat=None):
     mapping = {filename: [column_data, units_data]}
 
     log.debug("Further table handling.")
+    key_rename_mapping = {k: v['Name'] for k,v in column_data.items()}
+    log.debug("Mapping: {0}".format(key_rename_mapping))
     # Parse the table file, step-by-step
-    rename_columns(table, {k: v['Name'] for k,v in column_data.items()})
+    rename_columns(table, key_rename_mapping)
     set_units(table, units_data)
     table = fix_bad_types(table)
     try:
         convert_units(table)
     except Exception as ex:
-        return render_template('error.html', error=str(ex), traceback=traceback.format_exc(ex))
+        if testmode:
+            raise ex
+        else:
+            return render_template('error.html', error=str(ex), traceback=traceback.format_exc(ex))
     add_name_column(table, column_data.get('Username')['Name'])
     if 'ADS_ID' not in table.colnames:
         table.add_column(table.Column(name='ADS_ID', data=[request.form['adsid']]*len(table)))
@@ -481,7 +494,8 @@ def set_columns(filename, fileformat=None):
         check_authenticate_with_github()
         branch_database, timestamp = setup_submodule(username,
                                                      workingdir='database/',
-                                                     database='database')
+                                                     database='database',
+                                                     testmode=testmode)
         branch_uploads, timestamp = setup_submodule(username,
                                                     workingdir='uploads/',
                                                     database='uploads',
@@ -489,8 +503,11 @@ def set_columns(filename, fileformat=None):
                                                     branch=branch_database,
                                                    )
     except Exception as ex:
-        return render_template('error.html', error=str(ex),
-                               traceback=traceback.format_exc(ex))
+        if testmode:
+            raise ex
+        else:
+            return render_template('error.html', error=str(ex),
+                                   traceback=traceback.format_exc(ex))
 
     # write the modified table
     ipac_writer(merged_table, merged_table_name, widths=table_widths)
@@ -503,8 +520,11 @@ def set_columns(filename, fileformat=None):
                                                               timestamp=timestamp)
     except Exception as ex:
         cleanup_git_directory('database/', allow_fail=False)
-        return render_template('error.html', error=str(ex),
-                               traceback=traceback.format_exc(ex))
+        if testmode:
+            raise ex
+        else:
+            return render_template('error.html', error=str(ex),
+                                   traceback=traceback.format_exc(ex))
     
     uploads = [unique_filename,
                os.path.splitext(unique_filename)[0]+"_formdata.json"]
@@ -518,24 +538,32 @@ def set_columns(filename, fileformat=None):
                                                              timestamp=timestamp)
     except Exception as ex:
         cleanup_git_directory('uploads/', allow_fail=False)
-        return render_template('error.html', error=str(ex),
-                               traceback=traceback.format_exc(ex))
+        if testmode:
+            raise ex
+        else:
+            return render_template('error.html', error=str(ex),
+                                   traceback=traceback.format_exc(ex))
 
 
     try:
         log.debug("Creating pull requests")
         response_database, link_pull_database = pull_request(branch_database,
                                                              username,
-                                                             timestamp)
+                                                             timestamp,
+                                                             testmode=testmode)
         response_uploads, link_pull_uploads = pull_request(branch_database,
                                                            username,
                                                            timestamp,
-                                                           database='uploads')
+                                                           database='uploads',
+                                                           testmode=testmode)
     except Exception as ex:
         cleanup_git_directory('uploads/', allow_fail=False)
         cleanup_git_directory('database/', allow_fail=False)
-        return render_template('error.html', error=str(ex),
-                               traceback=traceback.format_exc(ex))
+        if testmode:
+            raise ex
+        else:
+            return render_template('error.html', error=str(ex),
+                                   traceback=traceback.format_exc(ex))
 
     log.debug("Creating plot.")
     outfilename = os.path.splitext(filename)[0]
@@ -569,14 +597,19 @@ def set_columns(filename, fileformat=None):
 
 
 def setup_submodule(username, remote='origin', workingdir='database/',
-                    database='database', branch=None, timestamp=None):
+                    database='database', branch=None, timestamp=None,
+                    testmode=False):
     """
     """
     if timestamp is None:
         timestamp = datetime.now().isoformat().replace(":","_")
 
     if branch is None:
-        branch = '{0}_{1}'.format(username, timestamp)
+        if testmode:
+            branch = 'TEST_{0}_{1}'.format(username, timestamp)
+        else:
+            branch = '{0}_{1}'.format(username, timestamp)
+        log.debug("Branch name: {0}".format(branch))
 
     check_upstream = subprocess.check_output(['git', 'config', '--get',
                                               'remote.{remote}.url'.format(remote=remote)],
@@ -683,7 +716,8 @@ def checkout_master(remote, workingdir):
                         "This will prevent future uploads from working, which is bad!!"
                         .format(remote=remote, workingdir=workingdir))
 
-def pull_request(branch, user, timestamp, database='database', retry=5):
+def pull_request(branch, user, timestamp, database='database', retry=5,
+                 testmode=False):
     """
     WIP: Eventually, we want each file to be uploaded to github and submitted
     as a pull request when people submit their data
@@ -707,8 +741,13 @@ def pull_request(branch, user, timestamp, database='database', retry=5):
                         "appropriate environmental variable")
     #S.get('https://api.github.com/', data={'access_token':'e4942f7d7cc9468ffd0e'})
 
+    if testmode:
+        prtitle = "**TEST** data table from {user}".format(user=user)
+    else:
+        prtitle = "New data table from {user}".format(user=user)
+
     data = {
-      "title": "New data table from {user}".format(user=user),
+      "title": prtitle,
       "body": "Data table added by {user} at {timestamp}".format(user=user, timestamp=timestamp),
       "head": "camelot-project:{0}".format(branch),
       "base": "master"
@@ -1112,6 +1151,7 @@ def version():
     return git_id, git_database_id
 
 if __name__ == '__main__':
+    log.setLevel(10)
     try:
         requests.get('http://www.github.com')
     except requests.ConnectionError:
