@@ -506,6 +506,10 @@ def set_columns(filename, fileformat=None, testmode=False):
             else:
                 return render_template('error.html', error=str(ex),
                                        traceback=traceback.format_exc(ex))
+        if isinstance(link_pull_database, Exception):
+            ex = link_pull_database
+            return render_template('error.html', error=str(ex),
+                                   traceback=traceback.format_exc(ex))
     else:
         link_pull_database, link_pull_uploads = 'placeholder','placeholder'
 
@@ -575,8 +579,9 @@ def create_pull_request(username, merged_table, merged_table_name,
                                                              database='uploads',
                                                              branch=branch_database,
                                                              timestamp=timestamp)
-    finally:
+    except Exception as ex:
         cleanup_git_directory('uploads/', allow_fail=False)
+        return ex,ex
 
     try:
         log.debug("Creating pull requests")
@@ -589,9 +594,10 @@ def create_pull_request(username, merged_table, merged_table_name,
                                                            timestamp,
                                                            database='uploads',
                                                            testmode=testmode)
-    finally:
+    except Exception as ex:
         cleanup_git_directory('uploads/', allow_fail=False)
         cleanup_git_directory('database/', allow_fail=False)
+        return ex,ex
 
     return link_pull_database, link_pull_uploads
 
