@@ -492,13 +492,20 @@ def set_columns(filename, fileformat=None, testmode=False):
     username = column_data.get('Username')['Name']
 
     if testmode != 'skip':
-        link_pull_database, link_pull_uploads = \
-                create_pull_request(username=username,
-                                    merged_table=merged_table,
-                                    merged_table_name=merged_table_name,
-                                    table_widths=table_widths,
-                                    unique_filename=unique_filename,
-                                    testmode=testmode)
+        try:
+            link_pull_database, link_pull_uploads = \
+                    create_pull_request(username=username,
+                                        merged_table=merged_table,
+                                        merged_table_name=merged_table_name,
+                                        table_widths=table_widths,
+                                        unique_filename=unique_filename,
+                                        testmode=testmode)
+        except Exception as ex:
+            if testmode:
+                raise ex
+            else:
+                return render_template('error.html', error=str(ex),
+                                       traceback=traceback.format_exc(ex))
     else:
         link_pull_database, link_pull_uploads = 'placeholder','placeholder'
 
@@ -537,41 +544,26 @@ def create_pull_request(username, merged_table, merged_table_name,
                         table_widths, unique_filename, testmode=False):
     # go to appropriate branches in the database gits
     print("Re-fetching the databases.")
-    try:
-        check_authenticate_with_github()
-        branch_database, timestamp = setup_submodule(username,
-                                                     workingdir='database/',
-                                                     database='database',
-                                                     testmode=testmode)
-        branch_uploads, timestamp = setup_submodule(username,
-                                                    workingdir='uploads/',
-                                                    database='uploads',
-                                                    timestamp=timestamp,
-                                                    branch=branch_database,
-                                                   )
-    except Exception as ex:
-        if testmode:
-            raise ex
-        else:
-            return render_template('error.html', error=str(ex),
-                                   traceback=traceback.format_exc(ex))
+    check_authenticate_with_github()
+    branch_database, timestamp = setup_submodule(username,
+                                                 workingdir='database/',
+                                                 database='database',
+                                                 testmode=testmode)
+    branch_uploads, timestamp = setup_submodule(username,
+                                                workingdir='uploads/',
+                                                database='uploads',
+                                                timestamp=timestamp,
+                                                branch=branch_database,
+                                               )
 
     # write the modified table
     ipac_writer(merged_table, merged_table_name, widths=table_widths)
 
     print("Committing changes")
     # Add merged data to database
-    try:
-        branch_database,timestamp = commit_change_to_database(username,
-                                                              branch=branch_database,
-                                                              timestamp=timestamp)
-    except Exception as ex:
-        cleanup_git_directory('database/', allow_fail=False)
-        if testmode:
-            raise ex
-        else:
-            return render_template('error.html', error=str(ex),
-                                   traceback=traceback.format_exc(ex))
+    branch_database,timestamp = commit_change_to_database(username,
+                                                          branch=branch_database,
+                                                          timestamp=timestamp)
     
     uploads = [unique_filename,
                os.path.splitext(unique_filename)[0]+"_formdata.json"]
@@ -583,14 +575,8 @@ def create_pull_request(username, merged_table, merged_table_name,
                                                              database='uploads',
                                                              branch=branch_database,
                                                              timestamp=timestamp)
-    except Exception as ex:
+    finally:
         cleanup_git_directory('uploads/', allow_fail=False)
-        if testmode:
-            raise ex
-        else:
-            return render_template('error.html', error=str(ex),
-                                   traceback=traceback.format_exc(ex))
-
 
     try:
         log.debug("Creating pull requests")
@@ -603,14 +589,9 @@ def create_pull_request(username, merged_table, merged_table_name,
                                                            timestamp,
                                                            database='uploads',
                                                            testmode=testmode)
-    except Exception as ex:
+    finally:
         cleanup_git_directory('uploads/', allow_fail=False)
         cleanup_git_directory('database/', allow_fail=False)
-        if testmode:
-            raise ex
-        else:
-            return render_template('error.html', error=str(ex),
-                                   traceback=traceback.format_exc(ex))
 
     return link_pull_database, link_pull_uploads
 
