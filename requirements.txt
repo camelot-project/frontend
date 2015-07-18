@@ -2,6 +2,7 @@ Flask==0.10
 Jinja2==2.6
 Werkzeug==0.8.3
 gunicorn==19.3
+numpy
 astropy==1.0.1
 requests==2.7.0
 matplotlib==1.4.3
