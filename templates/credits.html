@@ -3,11 +3,14 @@
 {% block body %}
 {{ super() }}
 
-To cite the CAMELOT project, please use the following blurb:
+<div class=row>
+    To cite the CAMELOT project, please use the following blurb:<br>
 
-"This work has used the CAMELOT project (Ginsburg et al 2016; DOI: XXXX; http://camelot-project.org/)."
+"This work has used the CAMELOT project (Ginsburg et al 2016; DOI: [in progress]; http://camelot-project.org/)."
 
+<br><br>
 Or you may use this bibtex template:
+{% raw %}
 <pre>
 @electronic{Ginsburg2016,
     Author = {{Ginsburg}, A. and {Kruijssen}, J.M.D. and {Longmore},
@@ -21,6 +24,10 @@ Or you may use this bibtex template:
 	Urldate = {2016},
 	Year = {2016}}
 </pre>
+{% endraw %}
+</div>
+
+<hr>
 
 
 <div class=row>
