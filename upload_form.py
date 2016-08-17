@@ -80,7 +80,7 @@ app.config['MPLD3_FOLDER'] = MPLD3_FOLDER
 app.config['DATABASE_FOLDER'] = DATABASE_FOLDER
 app.config['PNG_PLOT_FOLDER'] = PNG_PLOT_FOLDER
 app.config['TABLE_FOLDER'] = TABLE_FOLDER
-app.config['DEBUG']=True
+#app.config['DEBUG']=True
 
 # this might be subject to a race condition?  How?!
 for path in (MPLD3_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
