@@ -2,6 +2,7 @@ import numpy as np
 from astropy import table
 from astropy.table import Table,Column
 from astropy import units as u
+from astropy import log
 import re
 import string
 
@@ -60,11 +61,15 @@ def fix_bad_types(tbl):
     """
     For all columns that *can* be converted to float, convert them to float
     """
+    log.debug("Fixing bad types")
     columns = []
     for columnname, column in tbl.columns.items():
         try:
-            col = Column(data=column.astype('float'), name=column.name)
+            col = Column(data=column.astype('float'), name=column.name,
+                         unit=column.unit)
             columns.append(col)
+            log.debug("Converted column {0} from {1} to {2}"
+                      .format(column.name, column, col))
         except:
             columns.append(column)
     return Table(columns)
@@ -87,9 +92,11 @@ def convert_units(tbl, units=unit_mapping):
     """
     Convert from the units used in the table to the specified units.
     """
+    log.debug("unit mapping: {0}".format(unit_mapping))
     for k,v in units.items():
         if k not in tbl.colnames:
             raise KeyError("{0} not in table: run `rename_columns` first.".format(k))
+        log.debug("unit key:{0} value:{1} tbl[k]={2}".format(k,v,tbl[k]))
         tbl[k] = tbl[k].to(v)
         tbl[k].unit = v
 
