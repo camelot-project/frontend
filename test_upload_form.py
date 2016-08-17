@@ -10,6 +10,7 @@ def test_upload_file(email,
                      username='test_BenoitCommercon', adsid='unknown_adsid',
                      doi='unknown_doi',
                      base_url='http://camelot-project.herokuapp.com',
+                     fileformat=None,
                      testmode=True):
     """
     Submit the benoitcommercon test dataset
@@ -54,7 +55,11 @@ def test_upload_file(email,
     jsondata = json.dumps(dictdata)
     print("JSON data: ",jsondata)
 
-    r3 = S.post(base_url+'/set_columns/{filename}?testmode={testmode}'.format(filename=filename, testmode=testmode),
+    r3 = S.post(base_url+'/set_columns/{filename}?{fileformat}testmode={testmode}'
+                .format(filename=filename, testmode=testmode,
+                        fileformat=("" if fileformat is None
+                                    else "fileformat={0}&".format(fileformat))
+                       ),
                 data=dictdata)
     r3.raise_for_status()
 
