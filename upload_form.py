@@ -58,7 +58,8 @@ PNG_PLOT_FOLDER = 'static/figures/'
 TABLE_FOLDER = 'static/jstables/'
 ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv', 'ecsv', 'cds'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
-                      'Radius', 'IsSimulated', 'IsGalactic', 'Username', 'Filename']
+                      'Radius', 'IsSimulated', 'IsGalactic', 'Username', 'Filename',
+                      'DataURL', 'synthimURL']
 dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic',
                               'Username', 'Filename', 'Email', 'ObsSim',
                               'GalExgal', "ADS_ID", "DOI_or_URL", 'doi', 'adsid',
@@ -204,13 +205,15 @@ def uploaded_file(filename, fileformat=None):
     column_units=[table[cln].unit for cln in table.colnames]
     tab_metadata={'Author':'','ADS_ID':'','DOI or URL':'','Submitter':'',
                   'IsObserved':False,'IsSimulated':False,
-                  'IsGalactic':False,'IsExtragalactic':False}
+                  'IsGalactic':False,'IsExtragalactic':False,
+                  'DataURL': False, 'synthimURL': False}
     metadata_name_mapping = {'author': 'Author',
                              'ads': 'ADS_ID', 'ads_id': 'ADS_ID',
                              'doi': 'DOI or URL', 'url': 'DOI or URL',
                              'email': 'Submitter', 'submitter': 'Submitter',
                              'isobserved': 'IsObserved', 'issimulated': 'IsSimulated',
-                             'isgalactic': 'IsGalactic', 'isextragalactic': 'IsExtragalactic'}
+                             'isgalactic': 'IsGalactic', 'isextragalactic': 'IsExtragalactic',
+                             'dataurl': 'DataURL', 'synthimurl': 'synthimURL'}
     if len(table.meta) > 0:
         for name, keyword in table.meta['keywords'].items():
             if name.lower() in metadata_name_mapping:
