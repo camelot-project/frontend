@@ -61,7 +61,8 @@ valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Radius', 'IsSimulated', 'IsGalactic', 'Username', 'Filename']
 dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic',
                               'Username', 'Filename', 'Email', 'ObsSim',
-                              'GalExgal', "ADS_ID", "DOI_or_URL", 'doi', 'adsid']
+                              'GalExgal', "ADS_ID", "DOI_or_URL", 'doi', 'adsid',
+                              'DataURL', 'synthimURL']
 use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
 use_units = ['Msun/pc^2','km/s','pc']
 FigureStrBase='Output_Sigma_sigma_r_'
@@ -568,7 +569,7 @@ def create_pull_request(username, merged_table, merged_table_name,
     branch_database,timestamp = commit_change_to_database(username,
                                                           branch=branch_database,
                                                           timestamp=timestamp)
-    
+
     uploads = [unique_filename,
                os.path.splitext(unique_filename)[0]+"_formdata.json"]
     try:

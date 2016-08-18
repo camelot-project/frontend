@@ -5,9 +5,7 @@
  "age": ["Age", "Myr"],
  "Z": ["Metallicity", "None"],
  "z": ["Redshift", "None"],
- "density": ["Density", "g/cm**3"],
- "DataURL": ["DataURL", "None"],
- "SyntheticObservationsURL": ["SyntheticObservationsURL", "None"]
+ "density": ["Density", "g/cm**3"]
 }
 
 
