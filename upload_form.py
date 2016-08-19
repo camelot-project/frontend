@@ -63,7 +63,8 @@ valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
 dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic',
                               'Username', 'Filename', 'Email', 'ObsSim',
                               'GalExgal', "ADS_ID", "DOI_or_URL", 'doi',
-                              'adsid', 'DataURL', 'synthimURL']
+                              'adsid', 'DataURL', 'synthimURL', 'dataurl',
+                              'synthimurl']
 use_column_names = ['SurfaceDensity', 'VelocityDispersion', 'Radius']
 use_units = ['Msun/pc^2', 'km/s', 'pc']
 FigureStrBase = 'Output_Sigma_sigma_r_'
@@ -406,6 +407,10 @@ def set_columns(filename, fileformat=None, testmode='skip'):  # XXX
         add_repeat_column(table, request.form['adsid'], 'ADS_ID')
     if 'DOI_or_URL' not in table.colnames:
         add_repeat_column(table, request.form['doi'], 'DOI_or_URL')
+    if 'DataURL' not in table.colnames:
+        add_repeat_column(table, request.form['dataurl'], 'DataURL')
+    if 'synthimURL' not in table.colnames:
+        add_repeat_column(table, request.form['synthimurl'], 'synthimURL')
     timestamp = datetime.now()
     add_repeat_column(table, timestamp, 'Timestamp')
 
