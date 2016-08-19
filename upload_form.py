@@ -21,12 +21,12 @@ import subprocess
 import requests
 import json
 from ingest_datasets_better import (rename_columns, set_units, convert_units,
-                                    add_name_column, add_generic_ids_if_needed,
+                                    add_repeat_column,
+                                    add_generic_ids_if_needed,
                                     add_is_sim_if_needed, fix_bad_types,
-                                    add_filename_column, add_timestamp_column,
                                     reorder_columns, append_table,
                                     ignore_duplicates, update_duplicates,
-                                    add_is_gal_if_needed, add_is_gal_column,
+                                    add_is_gal_if_needed,
                                     fix_bad_colnames, unit_mapping)
 from flask import (Flask, request, redirect, url_for, render_template,
                    send_from_directory, jsonify)
@@ -310,7 +310,7 @@ def autocomplete_column_names():
     return jsonify(json_list=valid_column_names)
 
 @app.route('/set_columns/<path:filename>', methods=['POST', 'GET'])
-def set_columns(filename, fileformat=None, testmode=False):
+def set_columns(filename, fileformat=None, testmode='skip'):
     """
     Meat of the program: takes the columns from the input table and matches
     them to the columns provided by the user in the column form.
@@ -378,13 +378,13 @@ def set_columns(filename, fileformat=None, testmode=False):
             raise ex
         else:
             return render_template('error.html', error=str(ex), traceback=traceback.format_exc(ex))
-    add_name_column(table, column_data.get('Username')['Name'])
+    add_repeat_column(table, column_data.get('Username')['Name'], 'Names')
     if 'ADS_ID' not in table.colnames:
         table.add_column(table.Column(name='ADS_ID', data=[request.form['adsid']]*len(table)))
     if 'DOI_or_URL' not in table.colnames:
         table.add_column(table.Column(name='DOI_or_URL', data=[request.form['doi']]*len(table)))
     timestamp = datetime.now()
-    add_timestamp_column(table, timestamp)
+    add_repeat_column(table, timestamp, 'Timestamp')
 
     add_generic_ids_if_needed(table)
     if column_data.get('ObsSim')['Name'] == 'IsObserved':
@@ -404,7 +404,7 @@ def set_columns(filename, fileformat=None, testmode=False):
         unique_filename = hashlib.sha1(file.read()).hexdigest()[0:36-len(extension)] + extension
     full_filename_new = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
     os.rename(full_filename_old, full_filename_new)
-    add_filename_column(table, unique_filename)
+    add_repeat_column(table, unique_filename, 'Filename')
     log.debug("Table column names after add_filename_column: ",table.colnames)
 
     store_form_data(request, fileformat, unique_filename)
@@ -440,16 +440,16 @@ def set_columns(filename, fileformat=None, testmode=False):
                                   format='ascii.ipac')
         if 'IsGalactic' not in merged_table.colnames:
             # Assume that anything we didn't already tag as Galactic is probably Galactic
-            add_is_gal_column(merged_table, True)
+            add_repeat_column(merged_table, True, 'IsGalactic')
 
         if 'Timestamp' not in merged_table.colnames:
             # Create a fake timestamp for the previous entries if they don't already have one
             fake_timestamp = datetime.min
-            add_timestamp_column(merged_table, fake_timestamp)
+            add_repeat_column(merged_table, fake_timestamp, "Timestamp")
 
         if 'Filename' not in merged_table.colnames:
             # If we don't know the filename, flag it as unknown
-            add_filename_column(merged_table, 'Unknown'+' '*29)
+            add_repeat_column(merged_table, 'Unknown' + ' ' * 29, 'Filename')
 
         if 'ADS_ID' not in merged_table.colnames:
             # If we don't know the filename, flag it as unknown
@@ -545,8 +545,7 @@ def set_columns(filename, fileformat=None, testmode=False):
                            png_imagename=png_imagename,
                            tablefile='{fn}.html'.format(fn=outfilename),
                            link_pull_uploads=link_pull_uploads,
-                           link_pull_database=link_pull_database,
-                          )
+                           link_pull_database=link_pull_database)
 
 def create_pull_request(username, merged_table, merged_table_name,
                         table_widths, unique_filename, testmode=False):
