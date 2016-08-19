@@ -77,7 +77,7 @@ $(document).ready(function(){
         <form action="{{ url_for('set_columns', filename=filename, fileformat=fileformat) }}" method="post">
             <table class="table table-striped">
                 <thead><tr><th>File Column Name</th><th>Real Column Name</th><th><font color="red">*</font>Units</th></tr></thead>
-                <tbody>                
+                <tbody>
                 {% for column_name,best_column_name,default_unit in zip(table.colnames, best_column_names, default_units) %}
                 <tr>
                     <div class="form-group">
@@ -115,7 +115,9 @@ $(document).ready(function(){
                 <tr><td colspan=3 class="middle"> <font color="#BDBDBD">(for simulations, choose Galactic unless an entire galaxy is covered)</font> </td></tr>
                 <tr><td colspan=3 class="middle"> <input type="text" id="username" name="Username" value="{{tab_metadata['Author']}}" required> <font color="red">*</font>FirstnameLastname of first author </td></tr>
                 <tr><td colspan=3 class="middle"> <input type="text" id="adsid" name="adsid" value="{{tab_metadata['ADS_ID']}}"> <font color="red">*</font>ADS ID <font color="#BDBDBD">(not the full link)</font> or
-                                                  <input type="text" id="doi" name="doi" value="{{tab_metadata['DOI or URL']}}" required> <a href="http://www.doi.org/">DOI</a> or URL</td></tr>
+                                                  <input type="text" id="doi" name="doi" value="{{tab_metadata['DOI or URL']}}" required> Publication <a href="http://www.doi.org/">DOI</a> or URL</td></tr>
+                <tr><td colspan=3 class="middle"> <input type="text" id="dataurl" name="dataurl" value="{{tab_metadata['DataURL']}}"> <font color="red">*</font>Data URL or
+                                                  <input type="text" id="synthimurl" name="synthimurl" value="{{tab_metadata['synthimURL']}}" required> Synthetic Image URL</td></tr>
                 <tr><td colspan=3 class="middle"> <font color="#BDBDBD">(if this is over 64 characters, please <a href="http://tinyurl.com">shorten</a> it
                             with a <a href="http://goo.gl/">url-shortener service</a>)</font></td></tr>
                 <tr><td colspan=3 class="middle"> <input type="text" id="email" name="Email" value="{{tab_metadata['Submitter']}}" required>
@@ -124,7 +126,7 @@ $(document).ready(function(){
                 </tbody>
             </table>
             <div class="col-md-2 col-md-offset-10" id="column_submit">
-                <input class="btn btn-success" id="submit_button" type="submit" value="Submit"> 
+                <input class="btn btn-success" id="submit_button" type="submit" value="Submit">
             </div>
         </form>
     </div>
