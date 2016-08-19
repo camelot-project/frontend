@@ -62,7 +62,7 @@ valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
                       'Filename', 'DataURL', 'synthimURL']
 dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic',
                               'Username', 'Filename', 'Email', 'ObsSim',
-                              'GalExgal', "ADS_ID", "DOI_or_URL", 'doi',
+                              'GalExgal', "ADS_ID", "Publication_DOI_or_URL", 'doi',
                               'adsid', 'DataURL', 'synthimURL', 'dataurl',
                               'synthimurl']
 use_column_names = ['SurfaceDensity', 'VelocityDispersion', 'Radius']
@@ -405,8 +405,8 @@ def set_columns(filename, fileformat=None, testmode='skip'):  # XXX
     add_repeat_column(table, column_data.get('Username')['Name'], 'Names')
     if 'ADS_ID' not in table.colnames:
         add_repeat_column(table, request.form['adsid'], 'ADS_ID')
-    if 'DOI_or_URL' not in table.colnames:
-        add_repeat_column(table, request.form['doi'], 'DOI_or_URL')
+    if 'Publication_DOI_or_URL' not in table.colnames:
+        add_repeat_column(table, request.form['doi'], 'Publication_DOI_or_URL')
     if 'DataURL' not in table.colnames:
         add_repeat_column(table, request.form['dataurl'], 'DataURL')
     if 'synthimURL' not in table.colnames:
@@ -492,9 +492,9 @@ def set_columns(filename, fileformat=None, testmode='skip'):  # XXX
             # If we don't know the filename, flag it as unknown
             add_repeat_column(merged_table, 'Unknown' + ' ' * 13, 'ADS_ID')
 
-        if 'DOI_or_URL' not in merged_table.colnames:
+        if 'Publication_DOI_or_URL' not in merged_table.colnames:
             # If we don't know the filename, flag it as unknown
-            add_repeat_column(merged_table, 'Unknown' + ' ' * 57, 'DOI_or_URL')
+            add_repeat_column(merged_table, 'Unknown' + ' ' * 57, 'Publication_DOI_or_URL')
 
         if 'DataURL' not in merged_table.colnames:
             # If we don't know the filename, flag it as unknown
@@ -513,7 +513,7 @@ def set_columns(filename, fileformat=None, testmode='skip'):  # XXX
         #       these limits
         names = ['Names', 'IDs', 'SurfaceDensity',
                  'VelocityDispersion', 'Radius', 'IsSimulated', 'IsGalactic',
-                 'Timestamp', 'Filename', 'ADS_ID', 'DOI_or_URL', 'DataURL',
+                 'Timestamp', 'Filename', 'ADS_ID', 'Publication_DOI_or_URL', 'DataURL',
                  'synthimURL']
         col_dtypes = [('str', 64), ('str', 64), 'float', 'float', 'float',
                       'bool', 'bool', ('str', 26), ('str', 36), ('str', 20),
