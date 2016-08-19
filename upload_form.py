@@ -346,7 +346,7 @@ def set_columns(filename, fileformat=None, testmode=False):
         fileformat = request.args['fileformat']
 
     if 'testmode' in request.args:
-        if r.args['testmode'].lower() == 'skip':
+        if request.args['testmode'].lower() == 'skip':
             testmode = 'skip'
         else:
             testmode = request.args['testmode'].lower() == 'true'
