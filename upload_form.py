@@ -34,18 +34,17 @@ from simple_plot import plotData, plotData_Sigma_sigma
 from werkzeug import secure_filename
 import difflib
 import glob
-import random
 import keyring
 import __builtin__
 import time
-import datetime
 from datetime import datetime
 from astropy.io import registry, ascii
 from ipac_writer import ipac_writer
-from astropy.table import Table, vstack
+from astropy.table import Table
 from astropy.table.jsviewer import write_table_jsviewer
 from astropy import units as u
 from astropy import log
+import jinja2
 if os.getenv('DEBUG'):
     log.setLevel(10)
 import hashlib
@@ -56,19 +55,20 @@ DATABASE_FOLDER = 'database/'
 MPLD3_FOLDER = 'static/mpld3/'
 PNG_PLOT_FOLDER = 'static/figures/'
 TABLE_FOLDER = 'static/jstables/'
-ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv', 'ecsv', 'cds'])
+ALLOWED_EXTENSIONS = set(['fits', 'csv', 'txt', 'ipac', 'dat', 'tsv',
+                          'ecsv', 'cds'])
 valid_column_names = ['Ignore', 'IDs', 'SurfaceDensity', 'VelocityDispersion',
-                      'Radius', 'IsSimulated', 'IsGalactic', 'Username', 'Filename',
-                      'DataURL', 'synthimURL']
+                      'Radius', 'IsSimulated', 'IsGalactic', 'Username',
+                      'Filename', 'DataURL', 'synthimURL']
 dimensionless_column_names = ['Ignore', 'IDs', 'IsSimulated', 'IsGalactic',
                               'Username', 'Filename', 'Email', 'ObsSim',
-                              'GalExgal', "ADS_ID", "DOI_or_URL", 'doi', 'adsid',
-                              'DataURL', 'synthimURL']
-use_column_names = ['SurfaceDensity', 'VelocityDispersion','Radius']
-use_units = ['Msun/pc^2','km/s','pc']
-FigureStrBase='Output_Sigma_sigma_r_'
-TableStrBase='Output_Table_'
-TooOld=300 # age in seconds of files to delete
+                              'GalExgal', "ADS_ID", "DOI_or_URL", 'doi',
+                              'adsid', 'DataURL', 'synthimURL']
+use_column_names = ['SurfaceDensity', 'VelocityDispersion', 'Radius']
+use_units = ['Msun/pc^2', 'km/s', 'pc']
+FigureStrBase = 'Output_Sigma_sigma_r_'
+TableStrBase = 'Output_Table_'
+TooOld = 300 # age in seconds of files to delete
 git_user = 'SirArthurTheSubmitter'
 submitter_gmail = '{0}@gmail.com'.format(git_user)
 
@@ -82,7 +82,7 @@ app.config['MPLD3_FOLDER'] = MPLD3_FOLDER
 app.config['DATABASE_FOLDER'] = DATABASE_FOLDER
 app.config['PNG_PLOT_FOLDER'] = PNG_PLOT_FOLDER
 app.config['TABLE_FOLDER'] = TABLE_FOLDER
-#app.config['DEBUG']=True
+# app.config['DEBUG']=True
 
 # this might be subject to a race condition?  How?!
 for path in (MPLD3_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
@@ -112,22 +112,23 @@ for path in (MPLD3_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
 # Load the metadata unit mapping
 with open('alternate_allowed_metadata.json') as f:
     additional_metadata = json.load(f)
-    additional_metadata_names = {k:v[0] for k,v in
+    additional_metadata_names = {k: v[0] for k, v in
                                  additional_metadata.items()}
-    unit_mapping = dict({k:v[1] for k,v in additional_metadata.items()},
+    unit_mapping = dict({k: v[1] for k, v in additional_metadata.items()},
                         **unit_mapping)
 
-# Allow zipping in jinja templates: http://stackoverflow.com/questions/5208252/ziplist1-list2-in-jinja2
-import jinja2
+# Allow zipping in jinja templates:
+# http://stackoverflow.com/questions/5208252/ziplist1-list2-in-jinja2
 env = jinja2.Environment()
 env.globals.update(zip=zip)
 env.globals['offline_mode'] = False
 
 # http://stackoverflow.com/questions/21306134/iterating-over-multiple-lists-in-python-flask-jinja2-templates
 @app.template_global(name='zip')
-def _zip(*args, **kwargs): #to not overwrite builtin zip in globals
+def _zip(*args, **kwargs):  # to not overwrite builtin zip in globals
     """ This function allows the use of "zip" in jinja2 templates """
     return __builtin__.zip(*args, **kwargs)
+
 
 def allowed_file(filename):
     """
@@ -136,20 +137,25 @@ def allowed_file(filename):
     return ('.' in filename and filename.rsplit('.', 1)[1] in
             ALLOWED_EXTENSIONS)
 
+
 def get_file_extension(filename):
     return filename.rsplit('.', 1)[1]
+
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
+
 @app.route('/upload_form')
 def upload_form():
     return render_template('upload_form.html')
 
+
 @app.route('/credits')
 def credits():
     return render_template('credits.html')
+
 
 @app.route('/upload', methods=['POST'])
 @app.route('/upload/<fileformat>', methods=['POST'])
@@ -171,7 +177,9 @@ def upload_file(fileformat=None):
                                 filename=filename,
                                 fileformat=fileformat))
     else:
-        return render_template("upload_form.html", error="File type not supported")
+        return render_template("upload_form.html",
+                               error="File type not supported")
+
 
 @app.route('/uploads/<filename>')
 @app.route('/uploads/<filename>/<fileformat>')
@@ -186,33 +194,37 @@ def uploaded_file(filename, fileformat=None):
         table = Table.read(os.path.join(app.config['UPLOAD_FOLDER'], filename),
                            format=fileformat)
     except Exception as ex:
-        print("Did not read table with format={0}.  Trying to handle ambiguous version.".format(fileformat))
+        print("Did not read table with format={0}."
+              " Trying to handle ambiguous version.".format(fileformat))
         return handle_ambiguous_table(filename, ex)
 
-    best_matches = {difflib.get_close_matches(vcn, table.colnames,  n=1,
+    best_matches = {difflib.get_close_matches(vcn, table.colnames, n=1,
                                               cutoff=0.4)[0]: vcn
                     for vcn in valid_column_names
-                    if any(difflib.get_close_matches(vcn, table.colnames, n=1, cutoff=0.4))
-                   }
+                    if any(difflib.get_close_matches(vcn, table.colnames, n=1,
+                                                     cutoff=0.4))}
 
-    best_column_names = [best_matches[colname] if colname in best_matches else 'Ignore'
-                         for colname in table.colnames]
+    best_column_names = [best_matches[colname] if colname in best_matches
+                         else 'Ignore' for colname in table.colnames]
 
     # column names can't have non-letters in them or javascript fails
     fix_bad_colnames(table)
 
     # read units and keywords from table
-    column_units=[table[cln].unit for cln in table.colnames]
-    tab_metadata={'Author':'','ADS_ID':'','DOI or URL':'','Submitter':'',
-                  'IsObserved':False,'IsSimulated':False,
-                  'IsGalactic':False,'IsExtragalactic':False,
-                  'DataURL': False, 'synthimURL': False}
+    column_units = [table[cln].unit for cln in table.colnames]
+    tab_metadata = {'Author': '', 'ADS_ID': '', 'DOI or URL': '',
+                    'Submitter': '', 'IsObserved': False,
+                    'IsSimulated': False, 'IsGalactic': False,
+                    'IsExtragalactic': False,
+                    'DataURL': False, 'synthimURL': False}
     metadata_name_mapping = {'author': 'Author',
                              'ads': 'ADS_ID', 'ads_id': 'ADS_ID',
                              'doi': 'DOI or URL', 'url': 'DOI or URL',
                              'email': 'Submitter', 'submitter': 'Submitter',
-                             'isobserved': 'IsObserved', 'issimulated': 'IsSimulated',
-                             'isgalactic': 'IsGalactic', 'isextragalactic': 'IsExtragalactic',
+                             'isobserved': 'IsObserved',
+                             'issimulated': 'IsSimulated',
+                             'isgalactic': 'IsGalactic',
+                             'isextragalactic': 'IsExtragalactic',
                              'dataurl': 'DataURL', 'synthimurl': 'synthimURL'}
     if len(table.meta) > 0:
         for name, keyword in table.meta['keywords'].items():
@@ -227,15 +239,16 @@ def uploaded_file(filename, fileformat=None):
                            unit_mapping=unit_mapping,
                            default_units=column_units,
                            tab_metadata=tab_metadata,
-                           fileformat=fileformat,
-                          )
+                           fileformat=fileformat)
+
 
 def handle_ambiguous_table(filename, exception):
     """
     Deal with an uploaded file that doesn't autodetect
     """
     extension = os.path.splitext(filename)[-1]
-    best_match = difflib.get_close_matches(extension[1:], table_formats, n=1, cutoff=0.05)
+    best_match = difflib.get_close_matches(extension[1:], table_formats, n=1,
+                                           cutoff=0.05)
     if any(best_match):
         best_match = best_match[0]
     else:
@@ -245,7 +258,8 @@ def handle_ambiguous_table(filename, exception):
                            best_match_extension=best_match,
                            exception=exception)
 
-@app.route('/autocomplete_units',methods=['GET'])
+
+@app.route('/autocomplete_units', methods=['GET'])
 def autocomplete_units():
     """
     Autocompletion for units.  NOT USED ANY MORE.
@@ -253,7 +267,7 @@ def autocomplete_units():
     search = request.args.get('term')
 
     allunits = set()
-    for unitname,unit in inspect.getmembers(u):
+    for unitname, unit in inspect.getmembers(u):
         if isinstance(unit, u.UnitBase):
             try:
                 for name in unit.names:
@@ -263,9 +277,11 @@ def autocomplete_units():
     app.logger.debug(search)
     return jsonify(json_list=list(allunits))
 
+
 @app.route('/unit_map_page')
 def unit_map_page():
-    return jsonify({k:str(v) for k,v in unit_mapping.items()})
+    return jsonify({k: str(v) for k, v in unit_mapping.items()})
+
 
 @app.route('/validate_units', methods=['GET', 'POST'])
 def validate_units():
@@ -276,7 +292,8 @@ def validate_units():
                                             request.args.get('equivalent_unit')))
     try:
         unit_str = request.args.get('unit_str', 'error', type=str)
-        equivalent_unit = request.args.get('equivalent_unit', 'error', type=str)
+        equivalent_unit = request.args.get('equivalent_unit', 'error',
+                                           type=str)
         if equivalent_unit in ('None', 'none', None):
             u.Unit(unit_str)
             OK = 'green'
@@ -293,21 +310,24 @@ def validate_units():
         OK = 'red'
     return jsonify(OK=OK)
 
-@app.route('/autocomplete_filetypes',methods=['GET'])
+
+@app.route('/autocomplete_filetypes', methods=['GET'])
 def autocomplete_filetypes():
     """
     Autocompletion for filetypes.  Used, but presently not working.  =(
     """
-    search = request.args.get('term')
-    readable_formats = table_formats[table_formats['Read']=='Yes']['Format']
+    # search = request.args.get('term')  # Not used??
+    readable_formats = table_formats[table_formats['Read'] == 'Yes']['Format']
     return jsonify(json_list=list(readable_formats))
 
-@app.route('/autocomplete_column_names',methods=['GET'])
+
+@app.route('/autocomplete_column_names', methods=['GET'])
 def autocomplete_column_names():
     """
     NOT USED
     """
     return jsonify(json_list=valid_column_names)
+
 
 @app.route('/set_columns/<path:filename>', methods=['POST', 'GET'])
 def set_columns(filename, fileformat=None, testmode='skip'):
@@ -324,7 +344,7 @@ def set_columns(filename, fileformat=None, testmode='skip'):
         fileformat = request.args['fileformat']
 
     if 'testmode' in request.args:
-        if request.args['testmode'].lower() == 'skip':
+        if r.args['testmode'].lower() == 'skip':
             testmode = 'skip'
         else:
             testmode = request.args['testmode'].lower() == 'true'
@@ -347,25 +367,27 @@ def set_columns(filename, fileformat=None, testmode='skip'):
 
     log.debug("Parsing column data.")
     log.debug("form: {0}".format(request.form))
-    column_data = {field:{'Name':value}
-                   for field,value in request.form.items()
+    column_data = {field: {'Name': value}
+                   for field, value in request.form.items()
                    if '_units' not in field}
     log.debug("Looping through form items.")
-    for field,value in request.form.items():
+    for field, value in request.form.items():
         if '_units' in field:
             column_data[field[:-6]]['unit'] = value
 
     log.debug("Looping through column_data.")
     units_data = {}
     for key, pair in column_data.items():
-        if key not in dimensionless_column_names and pair['Name'] not in dimensionless_column_names:
+        if (key not in dimensionless_column_names and
+            pair['Name'] not in dimensionless_column_names):
+
             units_data[pair['Name']] = pair['unit']
 
     log.debug("Created mapping.")
-    mapping = {filename: [column_data, units_data]}
+    mapping = {filename: [column_data, units_data]}  # Not used??
 
     log.debug("Further table handling.")
-    key_rename_mapping = {k: v['Name'] for k,v in column_data.items()}
+    key_rename_mapping = {k: v['Name'] for k, v in column_data.items()}
     log.debug("Mapping: {0}".format(key_rename_mapping))
     # Parse the table file, step-by-step
     rename_columns(table, key_rename_mapping)
@@ -377,12 +399,13 @@ def set_columns(filename, fileformat=None, testmode='skip'):
         if testmode:
             raise ex
         else:
-            return render_template('error.html', error=str(ex), traceback=traceback.format_exc(ex))
+            return render_template('error.html', error=str(ex),
+                                   traceback=traceback.format_exc(ex))
     add_repeat_column(table, column_data.get('Username')['Name'], 'Names')
     if 'ADS_ID' not in table.colnames:
-        table.add_column(table.Column(name='ADS_ID', data=[request.form['adsid']]*len(table)))
+        add_repeat_column(table, request.form['adsid'], 'ADS_ID')
     if 'DOI_or_URL' not in table.colnames:
-        table.add_column(table.Column(name='DOI_or_URL', data=[request.form['doi']]*len(table)))
+        add_repeat_column(table, request.form['doi'], 'DOI_or_URL')
     timestamp = datetime.now()
     add_repeat_column(table, timestamp, 'Timestamp')
 
@@ -397,15 +420,19 @@ def set_columns(filename, fileformat=None, testmode='skip'):
     else:
         add_is_gal_if_needed(table, True)
 
-    # Rename the uploaded file to something unique, and store this name in the table
+    # Rename the uploaded file to something unique, and store this name
+    # in the table
     extension = os.path.splitext(filename)[-1]
     full_filename_old = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     with open(full_filename_old) as file:
-        unique_filename = hashlib.sha1(file.read()).hexdigest()[0:36-len(extension)] + extension
-    full_filename_new = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        unique_filename = \
+            hashlib.sha1(file.read()).hexdigest()[0:36 - len(extension)] + \
+            extension
+    full_filename_new = os.path.join(app.config['UPLOAD_FOLDER'],
+                                     unique_filename)
     os.rename(full_filename_old, full_filename_new)
     add_repeat_column(table, unique_filename, 'Filename')
-    log.debug("Table column names after add_filename_column: ",table.colnames)
+    log.debug("Table column names after add_filename_column: ", table.colnames)
 
     store_form_data(request, fileformat, unique_filename)
 
@@ -417,14 +444,17 @@ def set_columns(filename, fileformat=None, testmode='skip'):
         name = row['Names']
         id = row['IDs']
         if id in seen:
-            raise InvalidUsage("Duplicate ID detected in table: username = {0}, id = {1}. All IDs must be unique.".format(name, id))
+            raise InvalidUsage("Duplicate ID detected in table: username = {0}"
+                               ", id = {1}. All IDs must be"
+                               " unique.".format(name, id))
         else:
             seen[id] = name
 
     # If merged table already exists, then append the new entries.
     # Otherwise, create the table
 
-    merged_table_name = os.path.join(app.config['DATABASE_FOLDER'], 'merged_table.ipac')
+    merged_table_name = os.path.join(app.config['DATABASE_FOLDER'],
+                                     'merged_table.ipac')
     if os.path.isfile(merged_table_name):
         merged_table = Table.read(merged_table_name,
                                   converters={'Names':
@@ -439,11 +469,13 @@ def set_columns(filename, fileformat=None, testmode='skip'):
                                               [ascii.convert_numpy('S36')]},
                                   format='ascii.ipac')
         if 'IsGalactic' not in merged_table.colnames:
-            # Assume that anything we didn't already tag as Galactic is probably Galactic
+            # Assume that anything we didn't already tag as Galactic is
+            # probably Galactic
             add_repeat_column(merged_table, True, 'IsGalactic')
 
         if 'Timestamp' not in merged_table.colnames:
-            # Create a fake timestamp for the previous entries if they don't already have one
+            # Create a fake timestamp for the previous entries if they don't
+            # already have one
             fake_timestamp = datetime.min
             add_repeat_column(merged_table, fake_timestamp, "Timestamp")
 
@@ -453,22 +485,27 @@ def set_columns(filename, fileformat=None, testmode='skip'):
 
         if 'ADS_ID' not in merged_table.colnames:
             # If we don't know the filename, flag it as unknown
-            merged_table.add_column(table.Column(name='ADS_ID', data=['Unknown'+' '*13]*len(merged_table)))
+            add_repeat_column(merged_table, 'Unknown' + ' ' * 13, 'ADS_ID')
 
         if 'DOI_or_URL' not in merged_table.colnames:
             # If we don't know the filename, flag it as unknown
-            merged_table.add_column(table.Column(name='DOI_or_URL', data=['Unknown'+' '*57]*len(merged_table)))
+            add_repeat_column(merged_table, 'Unknown' + ' ' * 57, 'DOI_or_URL')
 
     else:
-        # Maximum string length of 64 for username, ID -- larger strings are silently truncated
-        # TODO: Adjust these numbers to something more reasonable, once we figure out what that is,
-        #       and verify that submitted data obeys these limits
-        merged_table = Table(data=None, names=['Names','IDs','SurfaceDensity',
-                       'VelocityDispersion','Radius','IsSimulated', 'IsGalactic', 'Timestamp', 'Filename',
-                                              'ADS_ID', 'DOI_or_URL'],
-                       dtype=[('str', 64),('str', 64),'float','float','float','bool','bool',
-                              ('str', 26),('str', 36), ('str',20), ('str',64)])
-        dts = merged_table.dtype
+        # Maximum string length of 64 for username, ID -- larger strings are
+        # silently truncated
+        # TODO: Adjust these numbers to something more reasonable, once we
+        #       figure out what that is, and verify that submitted data obeys
+        #       these limits
+        # XXX add in the extra columns here
+        names = ['Names', 'IDs', 'SurfaceDensity',
+                 'VelocityDispersion', 'Radius', 'IsSimulated', 'IsGalactic',
+                 'Timestamp', 'Filename', 'ADS_ID', 'DOI_or_URL']
+        col_dtypes = [('str', 64), ('str', 64), 'float', 'float', 'float',
+                      'bool', 'bool', ('str', 26), ('str', 36), ('str', 20),
+                      ('str', 64)]
+        merged_table = Table(data=None, names=names, dtype=col_dtypes)
+        # dts = merged_table.dtype
         # Hack to force fixed-width: works only on strings
         # merged_table.add_row(["_"*dts[ind].itemsize if dts[ind].kind=='S'
         #                       else False if dts[ind].kind == 'b'
@@ -477,10 +514,12 @@ def set_columns(filename, fileformat=None, testmode='skip'):
         set_units(merged_table)
 
     table = reorder_columns(table, merged_table.colnames)
-    print("Table column names after reorder_columns: ",table.colnames)
-    print("Merged table column names after reorder_columns: ",merged_table.colnames)
+    print("Table column names after reorder_columns: ", table.colnames)
+    print("Merged table column names after reorder_columns: ",
+          merged_table.colnames)
 
-    # Detect whether any username, ID pairs match entries already in the merged table
+    # Detect whether any username, ID pairs match entries already in the
+    # merged table
     duplicates = {}
     for row in merged_table:
         name = row['Names']
@@ -498,12 +537,12 @@ def set_columns(filename, fileformat=None, testmode='skip'):
     if testmode != 'skip':
         try:
             link_pull_database, link_pull_uploads = \
-                    create_pull_request(username=username,
-                                        merged_table=merged_table,
-                                        merged_table_name=merged_table_name,
-                                        table_widths=table_widths,
-                                        unique_filename=unique_filename,
-                                        testmode=testmode)
+                create_pull_request(username=username,
+                                    merged_table=merged_table,
+                                    merged_table_name=merged_table_name,
+                                    table_widths=table_widths,
+                                    unique_filename=unique_filename,
+                                    testmode=testmode)
         except Exception as ex:
             if testmode:
                 raise ex
@@ -515,7 +554,7 @@ def set_columns(filename, fileformat=None, testmode='skip'):
             return render_template('error.html', error=str(ex),
                                    traceback=traceback.format_exc(ex))
     else:
-        link_pull_database, link_pull_uploads = 'placeholder','placeholder'
+        link_pull_database, link_pull_uploads = 'placeholder', 'placeholder'
 
     outfilename = os.path.splitext(filename)[0]
     log.debug("Creating plot {0}.".format(outfilename))
@@ -526,19 +565,20 @@ def set_columns(filename, fileformat=None, testmode='skip'):
 
     log.debug("Creating table.")
     tablecss = "table,th,td,tr,tbody {border: 1px solid black; border-collapse: collapse;}"
+    table_name = os.path.join(TABLE_FOLDER, '{fn}.html'.format(fn=outfilename))
     write_table_jsviewer(table,
-                         os.path.join(TABLE_FOLDER, '{fn}.html'.format(fn=outfilename)),
+                         table_name,
                          css=tablecss,
-                         jskwargs={'use_local_files':False},
+                         jskwargs={'use_local_files': False},
                          table_id=outfilename)
 
     if myplot_html is None:
-        assert myplot_png is None # should be both or neither
+        assert myplot_png is None  # should be both or neither
         imagename = None
         png_imagename = None
     else:
-        imagename = '/'+myplot_html
-        png_imagename = "/"+myplot_png
+        imagename = '/' + myplot_html
+        png_imagename = "/" + myplot_png
 
     return render_template('show_plot.html',
                            imagename=imagename,
@@ -546,6 +586,7 @@ def set_columns(filename, fileformat=None, testmode='skip'):
                            tablefile='{fn}.html'.format(fn=outfilename),
                            link_pull_uploads=link_pull_uploads,
                            link_pull_database=link_pull_database)
+
 
 def create_pull_request(username, merged_table, merged_table_name,
                         table_widths, unique_filename, testmode=False):
@@ -560,31 +601,31 @@ def create_pull_request(username, merged_table, merged_table_name,
                                                 workingdir='uploads/',
                                                 database='uploads',
                                                 timestamp=timestamp,
-                                                branch=branch_database,
-                                               )
+                                                branch=branch_database)
 
     # write the modified table
     ipac_writer(merged_table, merged_table_name, widths=table_widths)
 
     print("Committing changes")
     # Add merged data to database
-    branch_database,timestamp = commit_change_to_database(username,
-                                                          branch=branch_database,
-                                                          timestamp=timestamp)
+    branch_database, timestamp = \
+        commit_change_to_database(username,
+                                  branch=branch_database,
+                                  timestamp=timestamp)
 
     uploads = [unique_filename,
-               os.path.splitext(unique_filename)[0]+"_formdata.json"]
+               os.path.splitext(unique_filename)[0] + "_formdata.json"]
     try:
         # Adding raw file to uploads
-        branch_uploads,timestamp = commit_change_to_database(username,
-                                                             tablename=uploads,
-                                                             workingdir='uploads/',
-                                                             database='uploads',
-                                                             branch=branch_database,
-                                                             timestamp=timestamp)
+        branch_uploads, timestamp = \
+            commit_change_to_database(username, tablename=uploads,
+                                      workingdir='uploads/',
+                                      database='uploads',
+                                      branch=branch_database,
+                                      timestamp=timestamp)
     except Exception as ex:
         cleanup_git_directory('uploads/', allow_fail=False)
-        return ex,ex
+        return ex, ex
 
     try:
         log.debug("Creating pull requests")
@@ -600,7 +641,7 @@ def create_pull_request(username, merged_table, merged_table_name,
     except Exception as ex:
         cleanup_git_directory('uploads/', allow_fail=False)
         cleanup_git_directory('database/', allow_fail=False)
-        return ex,ex
+        return ex, ex
 
     return link_pull_database, link_pull_uploads
 
@@ -611,7 +652,7 @@ def setup_submodule(username, remote='origin', workingdir='database/',
     """
     """
     if timestamp is None:
-        timestamp = datetime.now().isoformat().replace(":","_")
+        timestamp = datetime.now().isoformat().replace(":", "_")
 
     if branch is None:
         if testmode:
@@ -620,9 +661,10 @@ def setup_submodule(username, remote='origin', workingdir='database/',
             branch = '{0}_{1}'.format(username, timestamp)
         log.debug("Branch name: {0}".format(branch))
 
-    check_upstream = subprocess.check_output(['git', 'config', '--get',
-                                              'remote.{remote}.url'.format(remote=remote)],
-                                             cwd=workingdir)
+    check_upstream = \
+        subprocess.check_output(['git', 'config', '--get',
+                                 'remote.{remote}.url'.format(remote=remote)],
+                                cwd=workingdir)
     name = os.path.split(check_upstream)[1][:-5]
     if name != database:
         raise Exception("Error: the remote URL {0} "
@@ -634,27 +676,31 @@ def setup_submodule(username, remote='origin', workingdir='database/',
                         " after splitting."
                         .format(check_upstream, database, name))
 
-    branch_result = subprocess.call(['git','branch', '-a'], cwd=workingdir)
-    print("git branch -a: ",branch_result)
+    branch_result = subprocess.call(['git', 'branch', '-a'], cwd=workingdir)
+    print("git branch -a: ", branch_result)
 
-    checkout_master_result = subprocess.call(['git','checkout',
-                                              '{remote}/master'.format(remote=remote)],
-                                             cwd=workingdir)
+    checkout_master_result = \
+        subprocess.call(['git', 'checkout',
+                         '{remote}/master'.format(remote=remote)],
+                        cwd=workingdir)
 
     if checkout_master_result != 0:
-        raise Exception("Checking out the {remote}/master branch in the database failed.  "
-                        "Try 'cd {workingdir}; git checkout {remote}/master'"
+        raise Exception("Checking out the {remote}/master branch in the "
+                        "database failed. Try 'cd {workingdir}; git checkout "
+                        "{remote}/master'"
                         .format(remote=remote, workingdir=workingdir))
 
-    checkout_result = subprocess.call(['git','checkout','-b', branch,
-                                       '{remote}/master'.format(remote=remote)],
-                                      cwd=workingdir)
+    checkout_result = \
+        subprocess.call(['git', 'checkout', '-b', branch,
+                         '{remote}/master'.format(remote=remote)],
+                        cwd=workingdir)
     if checkout_result != 0:
         raise Exception("Checking out a new branch in the database failed.  "
                         "Attempted to checkout branch {0} in {1}"
                         .format(branch, workingdir))
 
     return branch, timestamp
+
 
 def commit_change_to_database(username, remote='origin',
                               tablename='merged_table.ipac',
@@ -663,31 +709,34 @@ def commit_change_to_database(username, remote='origin',
     """
     """
     if timestamp is None:
-        timestamp = datetime.now().isoformat().replace(":","_")
+        timestamp = datetime.now().isoformat().replace(":", "_")
 
     if branch is None:
         re.compile('[A-Za-z0-9]_')
         branch = '{0}_{1}'.format(re.sub("", username), timestamp)
 
-    check_upstream = subprocess.check_output(['git', 'config', '--get',
-                                              'remote.{remote}.url'.format(remote=remote)],
-                                             cwd=workingdir)
+    check_upstream = \
+        subprocess.check_output(['git', 'config', '--get',
+                                 'remote.{remote}.url'.format(remote=remote)],
+                                cwd=workingdir)
     name = os.path.split(check_upstream)[1][:-5]
     if name != database:
-        raise Exception("Error: the remote URL {0} (which is really '{2}') does not match the expected one '{1}'"
+        raise Exception("Error: the remote URL {0} (which is really '{2}') "
+                        "does not match the expected one '{1}'"
                         .format(check_upstream, database, name))
 
-    if isinstance(tablename, (list,tuple)):
-        add_result = subprocess.call(['git','add',]+tablename, cwd=workingdir)
+    if isinstance(tablename, (list, tuple)):
+        add_result = \
+            subprocess.call(['git', 'add'] + tablename, cwd=workingdir)
     else:
-        add_result = subprocess.call(['git','add',tablename], cwd=workingdir)
+        add_result = subprocess.call(['git', 'add', tablename], cwd=workingdir)
     if add_result != 0:
         raise Exception("Adding {tablename} to the commit failed in {cwd}."
                         .format(tablename=tablename, cwd=workingdir))
 
     print("Staged diff")
     # diff checking with --cached includes staged files
-    diff_result = subprocess.check_output(['git','diff', '--cached'],
+    diff_result = subprocess.check_output(['git', 'diff', '--cached'],
                                           cwd=workingdir)
     # if there is no difference, it is not possible to commit
     if diff_result == '':
@@ -697,19 +746,24 @@ def commit_change_to_database(username, remote='origin',
                         "  Possibly the submitted data "
                         "file contains no data.".format(workingdir))
 
-    commit_result = subprocess.call(['git','commit','-m',
-                      'Add changes to table from {0} at {1}'.format(username,
-                                                                    timestamp)],
-                     cwd=workingdir)
+    commit_result = \
+        subprocess.call(['git', 'commit', '-m',
+                         'Add changes to table from {0} at {1}'
+                         .format(username, timestamp)],
+                        cwd=workingdir)
     if commit_result != 0:
         raise Exception("Committing the new branch failed")
 
-    push_result = subprocess.call(['git','push', remote, branch,], cwd=workingdir)
+    push_result = subprocess.call(['git', 'push', remote, branch],
+                                  cwd=workingdir)
     if push_result != 0:
-        raise Exception("Pushing to the remote {0} folder failed".format(workingdir))
+        raise Exception("Pushing to the remote {0} folder failed"
+                        .format(workingdir))
 
     # Check that pushing succeeded
-    api_url_branch = 'https://api.github.com/repos/camelot-project/{0}/branches/{1}'.format(database,branch)
+    api_url_branch = \
+        'https://api.github.com/repos/camelot-project/{0}/branches/{1}'.format(database, branch)
+
     for ii in range(retry):
         branch_exists = requests.get(api_url_branch)
         if branch_exists.ok:
@@ -720,16 +774,20 @@ def commit_change_to_database(username, remote='origin',
 
     checkout_master(remote, workingdir)
 
-    return branch,timestamp
+    return branch, timestamp
+
 
 def checkout_master(remote, workingdir):
-    checkout_master_result = subprocess.call(['git','checkout',
-                                              '{remote}/master'.format(remote=remote)],
-                                             cwd=workingdir)
+    checkout_master_result = \
+        subprocess.call(['git', 'checkout',
+                         '{remote}/master'.format(remote=remote)],
+                        cwd=workingdir)
     if checkout_master_result != 0:
-        raise Exception("Checking out the {remote}/master branch in the database failed.  "
-                        "This will prevent future uploads from working, which is bad!!"
+        raise Exception("Checking out the {remote}/master branch in the "
+                        "database failed. This will prevent future uploads "
+                        "from working, which is bad!!"
                         .format(remote=remote, workingdir=workingdir))
+
 
 def pull_request(branch, user, timestamp, database='database', retry=5,
                  testmode=False):
@@ -744,9 +802,8 @@ def pull_request(branch, user, timestamp, database='database', retry=5,
     https://developer.github.com/v3/pulls/#create-a-pull-request
     """
 
-
     S = requests.Session()
-    S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
+    S.headers['User-Agent'] = 'camelot-project ' + S.headers['User-Agent']
     password = keyring.get_password('github', git_user)
     if password is None:
         password = os.getenv('GITHUB_PASSWORD')
@@ -754,22 +811,21 @@ def pull_request(branch, user, timestamp, database='database', retry=5,
         raise Exception("No password specified for the submitter account.  "
                         "Configure your server to use either keyring or the "
                         "appropriate environmental variable")
-    #S.get('https://api.github.com/', data={'access_token':'e4942f7d7cc9468ffd0e'})
+    # S.get('https://api.github.com/', data={'access_token':'e4942f7d7cc9468ffd0e'})
 
     if testmode:
         prtitle = "**TEST** data table from {user}".format(user=user)
     else:
         prtitle = "New data table from {user}".format(user=user)
 
-    data = {
-      "title": prtitle,
-      "body": "Data table added by {user} at {timestamp}".format(user=user, timestamp=timestamp),
-      "head": "camelot-project:{0}".format(branch),
-      "base": "master"
-    }
+    data = {"title": prtitle,
+            "body": "Data table added by {user} at {timestamp}"
+                    .format(user=user, timestamp=timestamp),
+            "head": "camelot-project:{0}".format(branch),
+            "base": "master"}
 
-
-    api_url_branch = 'https://api.github.com/repos/camelot-project/{0}/branches/{1}'.format(database,branch)
+    api_url_branch = \
+        'https://api.github.com/repos/camelot-project/{0}/branches/{1}'.format(database, branch)
     branch_exists = S.get(api_url_branch)
     if (not branch_exists.ok):
         for ii in range(retry):
@@ -779,137 +835,153 @@ def pull_request(branch, user, timestamp, database='database', retry=5,
 
     branch_exists.raise_for_status()
 
-    api_url = 'https://api.github.com/repos/camelot-project/{0}/pulls'.format(database)
-    response = S.post(url=api_url, data=json.dumps(data), auth=(git_user, password))
+    api_url = \
+        'https://api.github.com/repos/camelot-project/{0}/pulls'.format(database)
+    response = S.post(url=api_url, data=json.dumps(data),
+                      auth=(git_user, password))
     response.raise_for_status()
     pull_url = response.json()['html_url']
 
     return response, pull_url
 
+
 def handle_duplicates(table, merged_table, duplicates):
     print("TODO: DO SOMETHING HERE (handle duplicates)")
+
 
 @app.route('/query_form')
 def query_form(filename="merged_table.ipac"):
 
-    table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.ipac')
+    table = Table.read(os.path.join(app.config['DATABASE_FOLDER'],
+                       filename), format='ascii.ipac')
 
-    tolerance=1.2
+    tolerance = 1.2
 
-    sd = np.ma.masked_where(table['SurfaceDensity']==0, table['SurfaceDensity'])
-    vd = np.ma.masked_where(table['VelocityDispersion']==0, table['VelocityDispersion'])
-    rd = np.ma.masked_where(table['Radius']==0, table['Radius'])
+    sd = np.ma.masked_where(table['SurfaceDensity'] == 0,
+                            table['SurfaceDensity'])
+    vd = np.ma.masked_where(table['VelocityDispersion'] == 0,
+                            table['VelocityDispersion'])
+    rd = np.ma.masked_where(table['Radius'] == 0, table['Radius'])
 
-    min_values=[np.round(min(sd)/tolerance,4),
-                np.round(min(vd)/tolerance,4),
-                np.round(min(rd)/tolerance,4)]
+    min_values = [np.round(min(sd) / tolerance, 4),
+                  np.round(min(vd) / tolerance, 4),
+                  np.round(min(rd) / tolerance, 4)]
 
-    max_values=[np.round(max(table['SurfaceDensity'])*tolerance,1),
-                np.round(max(table['VelocityDispersion'])*tolerance,1),
-                np.round(max(table['Radius'])*tolerance,1)]
+    max_values = [np.round(max(table['SurfaceDensity']) * tolerance, 1),
+                  np.round(max(table['VelocityDispersion']) * tolerance, 1),
+                  np.round(max(table['Radius']) * tolerance, 1)]
 
     usetable = table[use_column_names]
 
-    best_matches = {difflib.get_close_matches(vcn, usetable.colnames,  n=1,
+    best_matches = {difflib.get_close_matches(vcn, usetable.colnames, n=1,
                                               cutoff=0.4)[0]: vcn
                     for vcn in use_column_names
-                    if any(difflib.get_close_matches(vcn, usetable.colnames, n=1, cutoff=0.4))
-                   }
+                    if any(difflib.get_close_matches(vcn, usetable.colnames,
+                                                     n=1, cutoff=0.4))}
 
-    best_column_names = [best_matches[colname] if colname in best_matches else 'Ignore'
-                         for colname in usetable.colnames]
+    best_column_names = [best_matches[colname] if colname in best_matches
+                         else 'Ignore' for colname in usetable.colnames]
 
     return render_template("query_form.html", table=table, usetable=usetable,
                            use_units=use_units, filename=filename,
                            use_column_names=use_column_names,
                            best_column_names=best_column_names,
                            min_values=min_values,
-                           max_values=max_values
-                          )
+                           max_values=max_values)
 
-def clearOutput() :
 
-    for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase+"*.png")):
+def clearOutput():
+    for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'],
+                        FigureStrBase + "*.png")):
         now = time.time()
-        if os.stat(fl).st_mtime < now - TooOld :
+        if os.stat(fl).st_mtime < now - TooOld:
             os.remove(fl)
 
-    for fl in glob.glob(os.path.join(app.config['TABLE_FOLDER'], TableStrBase+"*.ipac")):
+    for fl in glob.glob(os.path.join(app.config['TABLE_FOLDER'],
+                                     TableStrBase + "*.ipac")):
         now = time.time()
-        if os.stat(fl).st_mtime < now - TooOld :
+        if os.stat(fl).st_mtime < now - TooOld:
             os.remove(fl)
 
-    for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'], FigureStrBase+"*.html")):
+    for fl in glob.glob(os.path.join(app.config['MPLD3_FOLDER'],
+                                     FigureStrBase + "*.html")):
         now = time.time()
-        if os.stat(fl).st_mtime < now - TooOld :
+        if os.stat(fl).st_mtime < now - TooOld:
             os.remove(fl)
+
 
 def timeString():
-    TimeString=datetime.now().strftime("%Y%m%d%H%M%S%f")
+    TimeString = datetime.now().strftime("%Y%m%d%H%M%S%f")
     return TimeString
+
 
 @app.route('/query/<path:filename>', methods=['POST'])
 def query(filename, fileformat=None):
-    SurfMin = float(request.form['SurfaceDensity_min'])*u.Unit(request.form['SurfaceDensity_unit'])
-    SurfMax = float(request.form['SurfaceDensity_max'])*u.Unit(request.form['SurfaceDensity_unit'])
-    VDispMin = float(request.form['VelocityDispersion_min'])*u.Unit(request.form['VelocityDispersion_unit'])
-    VDispMax = float(request.form['VelocityDispersion_max'])*u.Unit(request.form['VelocityDispersion_unit'])
-    RadMin = float(request.form['Radius_min'])*u.Unit(request.form['Radius_unit'])
-    RadMax = float(request.form['Radius_max'])*u.Unit(request.form['Radius_unit'])
+    SurfMin = float(request.form['SurfaceDensity_min']) * \
+        u.Unit(request.form['SurfaceDensity_unit'])
+    SurfMax = float(request.form['SurfaceDensity_max']) * \
+        u.Unit(request.form['SurfaceDensity_unit'])
+    VDispMin = float(request.form['VelocityDispersion_min']) * \
+        u.Unit(request.form['VelocityDispersion_unit'])
+    VDispMax = float(request.form['VelocityDispersion_max']) * \
+        u.Unit(request.form['VelocityDispersion_unit'])
+    RadMin = float(request.form['Radius_min']) * \
+        u.Unit(request.form['Radius_unit'])
+    RadMax = float(request.form['Radius_max']) * \
+        u.Unit(request.form['Radius_unit'])
 
-    ShowObs=(request.form['ObsSimBoth'] == 'IsObserved') or (request.form['ObsSimBoth'] == 'IsObsSim')
-    ShowSim=(request.form['ObsSimBoth'] == 'IsSimulated') or (request.form['ObsSimBoth'] == 'IsObsSim')
-    ShowGal=(request.form['GalExgalBoth'] == 'IsGalactic') or (request.form['GalExgalBoth'] == 'IsGalExgal')
-    ShowExgal=(request.form['GalExgalBoth'] == 'IsExtragalactic') or (request.form['GalExgalBoth'] == 'IsGalExgal')
+    ShowObs = (request.form['ObsSimBoth'] == 'IsObserved') or \
+        (request.form['ObsSimBoth'] == 'IsObsSim')
+    ShowSim = (request.form['ObsSimBoth'] == 'IsSimulated') or \
+        (request.form['ObsSimBoth'] == 'IsObsSim')
+    ShowGal = (request.form['GalExgalBoth'] == 'IsGalactic') or \
+        (request.form['GalExgalBoth'] == 'IsGalExgal')
+    ShowExgal = (request.form['GalExgalBoth'] == 'IsExtragalactic') or \
+        (request.form['GalExgalBoth'] == 'IsGalExgal')
 
-    NQuery=timeString()
+    NQuery = timeString()
 
     clearOutput()
 
-    table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename), format='ascii.ipac')
+    table = Table.read(os.path.join(app.config['DATABASE_FOLDER'], filename),
+                       format='ascii.ipac')
     set_units(table)
-    Author = table['Names']
-    Run = table['IDs']
-    SurfDens = table['SurfaceDensity']
-    VDisp = table['VelocityDispersion']
-    Rad = table['Radius']
-    IsSim = (table['IsSimulated'] == 'True')
 
     temp_table = [table[index].index for index, (surfdens, vdisp, radius) in
                   enumerate(zip(table['SurfaceDensity'],
                                 table['VelocityDispersion'],
                                 table['Radius']))
-                  if (SurfMin < surfdens*table['SurfaceDensity'].unit < SurfMax
-                      and VDispMin < vdisp*table['VelocityDispersion'].unit < VDispMax
-                      and RadMin < radius*table['Radius'].unit < RadMax)
-                 ]
+                  if (SurfMin < surfdens * table['SurfaceDensity'].unit < SurfMax and
+                      VDispMin < vdisp * table['VelocityDispersion'].unit < VDispMax and
+                      RadMin < radius * table['Radius'].unit < RadMax)]
     use_table = table[temp_table]
 
-    if not ShowObs :
-        temp_table = [use_table[h].index for h,i in
-                      zip(range(len(use_table)),use_table['IsSimulated'])
+    if not ShowObs:
+        temp_table = [use_table[h].index for h, i in
+                      zip(range(len(use_table)), use_table['IsSimulated'])
                       if i == 'False']
         use_table.remove_rows(temp_table)
 
-    if not ShowSim :
-        temp_table = [use_table[h].index for h,i in
-                      zip(range(len(use_table)),use_table['IsSimulated'])
+    if not ShowSim:
+        temp_table = [use_table[h].index for h, i in
+                      zip(range(len(use_table)), use_table['IsSimulated'])
                       if i == 'True']
         use_table.remove_rows(temp_table)
 
-    if not ShowGal :
-        temp_table = [use_table[h].index for h,i in
-                      zip(range(len(use_table)),use_table['IsGalactic'])
+    if not ShowGal:
+        temp_table = [use_table[h].index for h, i in
+                      zip(range(len(use_table)), use_table['IsGalactic'])
                       if i == 'True']
         use_table.remove_rows(temp_table)
 
-    if not ShowExgal :
-        temp_table = [use_table[h].index for h,i in
-                      zip(range(len(use_table)),use_table['IsGalactic'])
+    if not ShowExgal:
+        temp_table = [use_table[h].index for h, i in
+                      zip(range(len(use_table)), use_table['IsGalactic'])
                       if i == 'False']
         use_table.remove_rows(temp_table)
 
-    tablefile = os.path.join(app.config['TABLE_FOLDER'], TableStrBase+NQuery+'.ipac')
+    tablefile = os.path.join(app.config['TABLE_FOLDER'],
+                             TableStrBase + NQuery + '.ipac')
 
     use_table.write(tablefile, format='ipac')
 
@@ -925,16 +997,17 @@ def query(filename, fileformat=None):
     if myplot_html is None or myplot_png is None:
         return render_template('error.html',
                                error="No data were found matching your query.",
-                               traceback="",
-                              )
+                               traceback="")
 
-    return render_template('show_plot.html', imagename='/'+myplot_html,
-                           png_imagename="/"+myplot_png,
+    return render_template('show_plot.html', imagename='/' + myplot_html,
+                           png_imagename="/" + myplot_png,
                            tablefile=tablefile)
+
 
 @app.route('/query/static/jstables/<path:path>')
 def send_js(path):
     return send_from_directory('static/jstables/', path)
+
 
 @app.before_first_request
 def setup_authenticate_with_github():
@@ -956,18 +1029,22 @@ def setup_authenticate_with_github():
     import shutil
     shutil.rmtree('uploads')
     shutil.rmtree('database')
-    clone_result_database = subprocess.call(['git', 'clone',
-                                             'https://github.com/camelot-project/database.git',
-                                             'database'])
+    clone_result_database = \
+        subprocess.call(['git', 'clone',
+                         'https://github.com/camelot-project/database.git',
+                         'database'])
     assert clone_result_database == 0
-    clone_result_uploads = subprocess.call(['git', 'clone',
-                                             'https://github.com/camelot-project/uploads.git',
-                                             'uploads'])
+    clone_result_uploads = \
+        subprocess.call(['git', 'clone',
+                         'https://github.com/camelot-project/uploads.git',
+                         'uploads'])
     assert clone_result_uploads == 0
 
-    config_result_1 = subprocess.call(['git', 'config', '--global',
-                                       'credential.https://github.com.{user}'.format(user=git_user),
-                                       git_user])
+    config_result_1 = \
+        subprocess.call(['git', 'config', '--global',
+                         'credential.https://github.com.{user}'
+                         .format(user=git_user),
+                         git_user])
     assert config_result_1 == 0
     config_result_2 = subprocess.call(['git', 'config', '--global',
                                        'credential.helper',
@@ -1013,6 +1090,7 @@ machine https://github.com
 
     return check_authenticate_with_github()
 
+
 def check_authenticate_with_github():
     """
     Check that fetch permissions are set up for the upload and database
@@ -1024,27 +1102,36 @@ def check_authenticate_with_github():
     assert fetch_database == 0
     print("Fetching uploads and database worked.")
 
+
 def cleanup_git_directory(directory='database/', delete_untracked=False,
                           allow_fail=True):
 
-    uncommitted_files = subprocess.call(['git','diff-files','--quiet'], cwd=directory)
+    uncommitted_files = subprocess.call(['git', 'diff-files', '--quiet'],
+                                        cwd=directory)
     if uncommitted_files:
         log.debug("Found uncommitted file changes in {0}.".format(directory))
-        reset = subprocess.call(['git','reset','--hard','HEAD'], cwd=directory)
+        reset = subprocess.call(['git', 'reset', '--hard', 'HEAD'],
+                                cwd=directory)
         if allow_fail:
             assert reset == 0
 
         if delete_untracked:
-            untracked_deleted = subprocess.call(['git','clean','-f'], cwd=directory)
+            untracked_deleted = subprocess.call(['git', 'clean', '-f'],
+                                                cwd=directory)
             if allow_fail:
                 assert untracked_deleted == 0
 
-    uncommited_staged_changes = subprocess.call(['git','diff-index','--quiet','--cached','HEAD'], cwd=directory)
+    uncommited_staged_changes = \
+        subprocess.call(['git', 'diff-index', '--quiet', '--cached', 'HEAD'],
+                        cwd=directory)
     if uncommited_staged_changes:
-        log.debug("Found uncommitted, staged changes in {0}.".format(directory))
-        reset = subprocess.call(['git','reset','--hard','HEAD'], cwd=directory)
+        log.debug("Found uncommitted, staged changes in {0}."
+                  .format(directory))
+        reset = subprocess.call(['git', 'reset', '--hard', 'HEAD'],
+                                cwd=directory)
         if allow_fail:
             assert reset == 0
+
 
 @app.route('/update_database')
 def update_database():
@@ -1053,23 +1140,29 @@ def update_database():
     """
     fetch_database = subprocess.call(['git', 'fetch'], cwd='database/')
     assert fetch_database == 0
-    pull_database = subprocess.call(['git', 'pull', 'origin', 'master'], cwd='database/')
+    pull_database = subprocess.call(['git', 'pull', 'origin', 'master'],
+                                    cwd='database/')
     assert pull_database == 0
-    commit_hash = subprocess.check_output(['git','rev-parse','HEAD'], cwd='database/').strip()
-    commit_name = subprocess.check_output(['git','rev-parse','--abbrev-ref','HEAD'], cwd='database/').strip()
+    commit_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD'],
+                                          cwd='database/').strip()
+    commit_name = \
+        subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+                                cwd='database/').strip()
 
     cleanup_git_directory('database/')
     cleanup_git_directory('uploads/')
 
     S = requests.Session()
-    S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
+    S.headers['User-Agent'] = 'camelot-project ' + S.headers['User-Agent']
 
     apiroot = 'https://api.github.com/'
-    api_pulls = '{apiroot}repos/camelot-project/database/pulls'.format(apiroot=apiroot)
-    pulls_result = S.get(api_pulls, params={'state':'closed'})
+    api_pulls = '{apiroot}repos/camelot-project/database/pulls'\
+        .format(apiroot=apiroot)
+    pulls_result = S.get(api_pulls, params={'state': 'closed'})
     pulls_result.raise_for_status()
 
-    api_commits = '{apiroot}repos/camelot-project/database/commits'.format(apiroot=apiroot)
+    api_commits = '{apiroot}repos/camelot-project/database/commits'\
+        .format(apiroot=apiroot)
     commits_result = S.get(api_commits)
     commits_result.raise_for_status()
 
@@ -1084,18 +1177,16 @@ def update_database():
     last_commit_hash = data_last_commit['sha']
 
     if last_commit_hash != commit_hash:
-        commit_disagree_message = (
-                                   "The hashes github: {0} and server: {1} "
+        commit_disagree_message = ("The hashes github: {0} and server: {1} "
                                    "don't match; the "
-                                   "server database is not up to date with the "
-                                   "github database.  This is a significant "
+                                   "server database is not up to date with the"
+                                   " github database.  This is a significant "
                                    "error and should be reported."
                                    .format(last_commit_hash, commit_hash))
         cls = 'red'
     else:
-        commit_disagree_message = (
-                                   "The server version of the database matches "
-                                   "that on github.  All is well!")
+        commit_disagree_message = ("The server version of the database matches"
+                                   " that on github.  All is well!")
         cls = 'green'
 
     return render_template("updated_database.html",
@@ -1106,8 +1197,8 @@ def update_database():
                            commit_hash=commit_hash,
                            commit_name=commit_name,
                            commit_disagree_message=commit_disagree_message,
-                           cls=cls,
-                          )
+                           cls=cls)
+
 
 def store_form_data(request, fileformat, unique_filename):
 
@@ -1119,7 +1210,7 @@ def store_form_data(request, fileformat, unique_filename):
 
     filebase = os.path.splitext(unique_filename)[0]
     json_filename = os.path.join(app.config['UPLOAD_FOLDER'],
-                                 filebase+"_formdata.json")
+                                 filebase + "_formdata.json")
     print("Storing form data to {0}".format(json_filename))
     with open(json_filename, 'w') as f:
         json.dump(form_data, f)
@@ -1129,7 +1220,7 @@ def handle_email(email, filename):
     form_url = 'https://docs.google.com/forms/d/1nzdc8jOMlwZEYqdJSvNo6B60gNrUZ9trrhUeYRtUM8g/formResponse'
 
     S = requests.Session()
-    S.headers['User-Agent']= 'camelot-project '+S.headers['User-Agent']
+    S.headers['User-Agent'] = 'camelot-project ' + S.headers['User-Agent']
 
     response = S.post(form_url, params={'entry.151369084': email,
                                         'entry.1302661889': filename})
@@ -1151,17 +1242,20 @@ class InvalidUsage(Exception):
         rv['Error'] = self.message
         return rv
 
+
 @app.errorhandler(InvalidUsage)
 def handle_invalid_usage(error):
     response = jsonify(error.to_dict())
     response.status_code = error.status_code
     return response
 
+
 @app.route('/version')
 def version():
     # WIP: does not work because heroku's app is not a git repo
     git_id = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-    git_database_id = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd='database/')
+    git_database_id = subprocess.check_output(['git', 'rev-parse', 'HEAD'],
+                                              cwd='database/')
 
     return git_id, git_database_id
 
@@ -1170,7 +1264,7 @@ if __name__ == '__main__':
     try:
         requests.get('http://www.github.com')
     except requests.ConnectionError:
-        env.globals['offline_mode']=True
+        env.globals['offline_mode'] = True
 
     if os.getenv('HEROKU_SERVER'):
         app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT')))
