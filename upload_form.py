@@ -213,14 +213,15 @@ def uploaded_file(filename, fileformat=None):
 
     # read units and keywords from table
     column_units = [table[cln].unit for cln in table.colnames]
-    tab_metadata = {'Author': '', 'ADS_ID': '', 'DOI or URL': '',
+    tab_metadata = {'Author': '', 'ADS_ID': '', 'Publication DOI or URL': '',
                     'Submitter': '', 'IsObserved': False,
                     'IsSimulated': False, 'IsGalactic': False,
                     'IsExtragalactic': False,
                     'DataURL': False, 'synthimURL': False}
     metadata_name_mapping = {'author': 'Author',
                              'ads': 'ADS_ID', 'ads_id': 'ADS_ID',
-                             'doi': 'DOI or URL', 'url': 'DOI or URL',
+                             'doi': 'Publication DOI or URL',
+                             'url': 'Publication DOI or URL',
                              'email': 'Submitter', 'submitter': 'Submitter',
                              'isobserved': 'IsObserved',
                              'issimulated': 'IsSimulated',
@@ -331,7 +332,7 @@ def autocomplete_column_names():
 
 
 @app.route('/set_columns/<path:filename>', methods=['POST', 'GET'])
-def set_columns(filename, fileformat=None, testmode='skip'):  # XXX
+def set_columns(filename, fileformat=None, testmode=False):
     """
     Meat of the program: takes the columns from the input table and matches
     them to the columns provided by the user in the column form.
@@ -494,7 +495,8 @@ def set_columns(filename, fileformat=None, testmode='skip'):  # XXX
 
         if 'Publication_DOI_or_URL' not in merged_table.colnames:
             # If we don't know the filename, flag it as unknown
-            add_repeat_column(merged_table, 'Unknown' + ' ' * 57, 'Publication_DOI_or_URL')
+            add_repeat_column(merged_table, 'Unknown' + ' ' * 57,
+                              'Publication_DOI_or_URL')
 
         if 'DataURL' not in merged_table.colnames:
             # If we don't know the filename, flag it as unknown
@@ -513,8 +515,8 @@ def set_columns(filename, fileformat=None, testmode='skip'):  # XXX
         #       these limits
         names = ['Names', 'IDs', 'SurfaceDensity',
                  'VelocityDispersion', 'Radius', 'IsSimulated', 'IsGalactic',
-                 'Timestamp', 'Filename', 'ADS_ID', 'Publication_DOI_or_URL', 'DataURL',
-                 'synthimURL']
+                 'Timestamp', 'Filename', 'ADS_ID', 'Publication_DOI_or_URL',
+                 'DataURL', 'synthimURL']
         col_dtypes = [('str', 64), ('str', 64), 'float', 'float', 'float',
                       'bool', 'bool', ('str', 26), ('str', 36), ('str', 20),
                       ('str', 64), ('str', 64), ('str', 64)]
