@@ -330,7 +330,7 @@ def autocomplete_column_names():
 
 
 @app.route('/set_columns/<path:filename>', methods=['POST', 'GET'])
-def set_columns(filename, fileformat=None, testmode='skip'):
+def set_columns(filename, fileformat=None, testmode='skip'):  # XXX
     """
     Meat of the program: takes the columns from the input table and matches
     them to the columns provided by the user in the column form.
@@ -491,19 +491,28 @@ def set_columns(filename, fileformat=None, testmode='skip'):
             # If we don't know the filename, flag it as unknown
             add_repeat_column(merged_table, 'Unknown' + ' ' * 57, 'DOI_or_URL')
 
+        if 'DataURL' not in merged_table.colnames:
+            # If we don't know the filename, flag it as unknown
+            add_repeat_column(merged_table, 'Unknown' + ' ' * 57, 'DataURL')
+
+        if 'synthimURL' not in merged_table.colnames:
+            # If we don't know the filename, flag it as unknown
+            add_repeat_column(merged_table, 'Unknown' + ' ' * 57,
+                              'synthimURL')
+
     else:
         # Maximum string length of 64 for username, ID -- larger strings are
         # silently truncated
         # TODO: Adjust these numbers to something more reasonable, once we
         #       figure out what that is, and verify that submitted data obeys
         #       these limits
-        # XXX add in the extra columns here
         names = ['Names', 'IDs', 'SurfaceDensity',
                  'VelocityDispersion', 'Radius', 'IsSimulated', 'IsGalactic',
-                 'Timestamp', 'Filename', 'ADS_ID', 'DOI_or_URL']
+                 'Timestamp', 'Filename', 'ADS_ID', 'DOI_or_URL', 'DataURL',
+                 'synthimURL']
         col_dtypes = [('str', 64), ('str', 64), 'float', 'float', 'float',
                       'bool', 'bool', ('str', 26), ('str', 36), ('str', 20),
-                      ('str', 64)]
+                      ('str', 64), ('str', 64), ('str', 64)]
         merged_table = Table(data=None, names=names, dtype=col_dtypes)
         # dts = merged_table.dtype
         # Hack to force fixed-width: works only on strings
