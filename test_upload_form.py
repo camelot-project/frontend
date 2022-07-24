@@ -61,7 +61,7 @@ def test_upload_file(email,
 
     dictdata = ast.literal_eval(data)
     jsondata = json.dumps(dictdata)
-    print("JSON data: ", jsondata)
+    print(("JSON data: ", jsondata))
 
     r3 = S.post(base_url + '/set_columns/{filename}?{fileformat}testmode={testmode}'
                 .format(filename=filename, testmode=testmode,
@@ -165,7 +165,7 @@ def test_upload_rathborne(email,
 
     dictdata = ast.literal_eval(data)
     jsondata = json.dumps(dictdata)
-    print("JSON data: ", jsondata)
+    print(("JSON data: ", jsondata))
 
     #/set_columns/rathborne2009_table2.ecsv?fileformat=ascii.ecsv
     r3 = S.post(base_url + '/set_columns/{filename}?fileformat=ascii.ecsv&testmode={testmode}'.format(filename=filename, testmode=testmode),

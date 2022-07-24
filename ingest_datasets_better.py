@@ -16,7 +16,7 @@ def fix_logical(t):
     Convert a boolean column from string to boolean
     """
     newcols = []
-    for col in t.columns.values():
+    for col in list(t.columns.values()):
         if col.dtype.str.endswith('S5') or col.dtype.str.endswith('S4'):
             falses = col == 'False'
             trues = col == 'True'
@@ -44,7 +44,7 @@ def rename_columns(tbl, mapping={'name': 'Names', 'id': 'IDs',
     Rename table columns inplace
     """
 
-    for k, v in mapping.items():
+    for k, v in list(mapping.items()):
         if k in tbl.colnames:
             if v == remove_column:
                 tbl.remove_column(k)
@@ -60,7 +60,7 @@ def fix_bad_colnames(tbl):
     for k in tbl.colnames:
         if badchars.search(k):
             tbl.rename_column(k, badchars.sub("", k))
-            print("Renamed {0} to {1}".format(k, badchars.sub("", k)))
+            print(("Renamed {0} to {1}".format(k, badchars.sub("", k))))
 
 
 def fix_bad_types(tbl):
@@ -69,7 +69,7 @@ def fix_bad_types(tbl):
     """
     log.debug("Fixing bad types")
     columns = []
-    for columnname, column in tbl.columns.items():
+    for columnname, column in list(tbl.columns.items()):
         try:
             col = Column(data=column.astype('float'), name=column.name,
                          unit=column.unit)
@@ -86,7 +86,7 @@ def set_units(tbl, units=unit_mapping):
     Set the units of the table to the specified units.
     WARNING: this *overwrites* existing units, it does not convert them!
     """
-    for k, v in units.items():
+    for k, v in list(units.items()):
         if k not in tbl.colnames:
             raise KeyError("{0} not in table: run `rename_columns`"
                            " first.".format(k))
@@ -102,7 +102,7 @@ def convert_units(tbl, units=unit_mapping):
     Convert from the units used in the table to the specified units.
     """
     log.debug("unit mapping: {0}".format(unit_mapping))
-    for k, v in units.items():
+    for k, v in list(units.items()):
         if k not in tbl.colnames:
             raise KeyError("{0} not in table: run `rename_columns` "
                            "first.".format(k))

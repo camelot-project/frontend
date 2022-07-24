@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 import os
 import glob
 import numpy as np
@@ -46,9 +46,9 @@ label_dict_html = \
      'Radius': '$R$ [pc]'}
 
 label_dict_png = \
-    {'SurfaceDensity': u'$\Sigma$ [M$_{\odot}$ pc$^{-2}$]',
-     'VelocityDispersion': u"$\sigma$ [km s$^{-1}$]",
-     'Radius': u'$R$ [pc]'}
+    {'SurfaceDensity': '$\Sigma$ [M$_{\odot}$ pc$^{-2}$]',
+     'VelocityDispersion': "$\sigma$ [km s$^{-1}$]",
+     'Radius': '$R$ [pc]'}
 
 
 def plotData_Sigma_sigma(NQuery, table, FigureStrBase,

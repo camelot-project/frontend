@@ -82,7 +82,7 @@ class IpacSpecifiableWidth(ipac.Ipac):
                 col.width = 0
 
         if widths is None:
-            widths = [max(col.width, col.headwidth) for col in table.columns.values()]
+            widths = [max(col.width, col.headwidth) for col in list(table.columns.values())]
         # then write table
         self.header.write(lines, widths)
         self.data.write(lines, widths, data_str_vals)

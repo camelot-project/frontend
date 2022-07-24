@@ -12,7 +12,7 @@ Print statements will show up in the terminal.  Feel free to use them for
 debugging, but try to remove them when you're done.
 
 """
-from __future__ import print_function
+
 import re
 import os
 import inspect
@@ -35,7 +35,7 @@ from werkzeug import secure_filename
 import difflib
 import glob
 import keyring
-import __builtin__
+import builtins
 import time
 from datetime import datetime
 from astropy.io import registry, ascii
@@ -114,8 +114,8 @@ for path in (MPLD3_FOLDER, PNG_PLOT_FOLDER, TABLE_FOLDER):
 with open('alternate_allowed_metadata.json') as f:
     additional_metadata = json.load(f)
     additional_metadata_names = {k: v[0] for k, v in
-                                 additional_metadata.items()}
-    unit_mapping = dict({k: v[1] for k, v in additional_metadata.items()},
+                                 list(additional_metadata.items())}
+    unit_mapping = dict({k: v[1] for k, v in list(additional_metadata.items())},
                         **unit_mapping)
 
 # Allow zipping in jinja templates:
@@ -128,7 +128,7 @@ env.globals['offline_mode'] = False
 @app.template_global(name='zip')
 def _zip(*args, **kwargs):  # to not overwrite builtin zip in globals
     """ This function allows the use of "zip" in jinja2 templates """
-    return __builtin__.zip(*args, **kwargs)
+    return builtins.zip(*args, **kwargs)
 
 
 def allowed_file(filename):
@@ -229,7 +229,7 @@ def uploaded_file(filename, fileformat=None):
                              'isextragalactic': 'IsExtragalactic',
                              'dataurl': 'DataURL', 'synthimurl': 'synthimURL'}
     if len(table.meta) > 0:
-        for name, keyword in table.meta['keywords'].items():
+        for name, keyword in list(table.meta['keywords'].items()):
             if name.lower() in metadata_name_mapping:
                 outkey = metadata_name_mapping[name.lower()]
                 tab_metadata[outkey] = keyword['value']
@@ -282,7 +282,7 @@ def autocomplete_units():
 
 @app.route('/unit_map_page')
 def unit_map_page():
-    return jsonify({k: str(v) for k, v in unit_mapping.items()})
+    return jsonify({k: str(v) for k, v in list(unit_mapping.items())})
 
 
 @app.route('/validate_units', methods=['GET', 'POST'])
@@ -370,16 +370,16 @@ def set_columns(filename, fileformat=None, testmode=False):
     log.debug("Parsing column data.")
     log.debug("form: {0}".format(request.form))
     column_data = {field: {'Name': value}
-                   for field, value in request.form.items()
+                   for field, value in list(request.form.items())
                    if '_units' not in field}
     log.debug("Looping through form items.")
-    for field, value in request.form.items():
+    for field, value in list(request.form.items()):
         if '_units' in field:
             column_data[field[:-6]]['unit'] = value
 
     log.debug("Looping through column_data.")
     units_data = {}
-    for key, pair in column_data.items():
+    for key, pair in list(column_data.items()):
         if (key not in dimensionless_column_names and
             pair['Name'] not in dimensionless_column_names):
 
@@ -389,7 +389,7 @@ def set_columns(filename, fileformat=None, testmode=False):
     mapping = {filename: [column_data, units_data]}  # Not used??
 
     log.debug("Further table handling.")
-    key_rename_mapping = {k: v['Name'] for k, v in column_data.items()}
+    key_rename_mapping = {k: v['Name'] for k, v in list(column_data.items())}
     log.debug("Mapping: {0}".format(key_rename_mapping))
     # Parse the table file, step-by-step
     rename_columns(table, key_rename_mapping)
@@ -974,25 +974,25 @@ def query(filename, fileformat=None):
 
     if not ShowObs:
         temp_table = [use_table[h].index for h, i in
-                      zip(range(len(use_table)), use_table['IsSimulated'])
+                      zip(list(range(len(use_table))), use_table['IsSimulated'])
                       if i == 'False']
         use_table.remove_rows(temp_table)
 
     if not ShowSim:
         temp_table = [use_table[h].index for h, i in
-                      zip(range(len(use_table)), use_table['IsSimulated'])
+                      zip(list(range(len(use_table))), use_table['IsSimulated'])
                       if i == 'True']
         use_table.remove_rows(temp_table)
 
     if not ShowGal:
         temp_table = [use_table[h].index for h, i in
-                      zip(range(len(use_table)), use_table['IsGalactic'])
+                      zip(list(range(len(use_table))), use_table['IsGalactic'])
                       if i == 'True']
         use_table.remove_rows(temp_table)
 
     if not ShowExgal:
         temp_table = [use_table[h].index for h, i in
-                      zip(range(len(use_table)), use_table['IsGalactic'])
+                      zip(list(range(len(use_table))), use_table['IsGalactic'])
                       if i == 'False']
         use_table.remove_rows(temp_table)
 
