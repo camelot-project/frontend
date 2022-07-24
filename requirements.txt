@@ -7,4 +7,4 @@ astropy==1.0.1
 requests==2.7.0
 matplotlib==1.4.3
 keyring==3.8
--e git+https://github.com/jakevdp/mpld3.git@c1b7fb0e3a2b0e3fd061f976c0fd19435028e611#egg=mpld3-master
+mpld3=0.5.8
