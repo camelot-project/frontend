@@ -7,3 +7,4 @@ To bridge the fundamental disconnect between inherently 2D observational data an
 CAMELOT is an acronym for *Cloud Archive for MEtadata, Library & Online Toolkit*.
 
 [![DOI](https://zenodo.org/badge/3821/camelot-project/frontend.svg)](https://zenodo.org/badge/latestdoi/3821/camelot-project/frontend)
+
